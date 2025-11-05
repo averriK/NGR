@@ -1,0 +1,33 @@
+Package: smartReports
+Version: 0.3.3
+Title: Comprehensive Report Generation with Enhanced Plots and Tables
+Description: The smartReports package provides comprehensive tools for generating professional and customizable reports in R. It offers advanced functions to create high-quality plots and well-formatted tables effortlessly. It streamlines the process of data visualization and presentation, allowing users to build detailed reports that combine insightful graphics and tables seamlessly. It integrates Quarto for multi-format rendering (HTML/PDF/DOCX) with configurable templates.
+License: GPL (>= 3)
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports: 
+    yaml,
+    brio,
+    data.table,
+    flextable,
+    gt,
+    officer,
+    kableExtra,
+    grDevices,
+    highcharter,
+    htmlwidgets,
+    webshot2,
+    stats,
+    graphics,
+    plotly
+Suggests:
+    devtools,
+    roxygen2,
+    knitr,
+    rmarkdown
+Config/testthat/edition: 3 
+Authors@R: 
+    person("Alejandro", "Verri Kozlowski", , "averri@fi.uba.ar", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-8535-1170"))
