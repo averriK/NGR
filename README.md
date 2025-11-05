@@ -1,4 +1,4 @@
-# smartReports
+# ngr
 
 Professional report generation for R with interactive plots, formatted tables, Quarto YAML assembly, and revealjs typewriter effects.
 
@@ -19,7 +19,7 @@ R package for precise, reproducible report generation. Implements:
 All features documented below reflect the actual code behavior in `R/*.R` with line references where appropriate.
 
 [![R Version](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue)](https://www.r-project.org/)
-[![Version](https://img.shields.io/badge/version-0.3.3-green)](https://github.com/averriK/smartReports)
+[![Version](https://img.shields.io/badge/version-0.3.3-green)](https://github.com/averriK/ngr)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE)
 
 ## Contents
@@ -94,13 +94,13 @@ All features documented below reflect the actual code behavior in `R/*.R` with l
 # Install devtools if needed
 install.packages("devtools")
 
-# Install smartReports from GitHub
-devtools::install_github("averriK/smartReports")
+# Install ngr from GitHub
+devtools::install_github("averriK/ngr")
 ```
 
 ### Dependencies
 
-smartReports requires several packages that are automatically installed:
+ngr requires several packages that are automatically installed:
 
 **Core:**
 - `data.table`: Fast data manipulation
@@ -127,7 +127,7 @@ smartReports requires several packages that are automatically installed:
 ### 1. Create Interactive Plot
 
 ```r
-library(smartReports)
+library(ngr)
 library(data.table)
 
 # Prepare data with ID, X, Y columns
@@ -233,7 +233,7 @@ quarto::quarto_render(
 ## Complete Workflow Example
 
 ```r
-library(smartReports)
+library(ngr)
 library(data.table)
 
 # ============================================================================
@@ -763,7 +763,7 @@ showMarkdownRendered(
 
 ### File-Based Configuration
 
-smartReports uses a modular configuration system:
+ngr uses a modular configuration system:
 
 ```
 project/
@@ -856,7 +856,7 @@ Loads:
 ## Project Structure
 
 ```
-smartReports/
+ngr/
 ├── DESCRIPTION              # Package metadata
 ├── NAMESPACE                # Exported functions
 ├── LICENSE.md               # GPL-3.0
@@ -882,6 +882,42 @@ smartReports/
 
 ---
 
+## Documentation
+
+Function documentation is available via R help system:
+
+```r
+# Plotting functions
+?buildPlot              # Main plotting function
+?buildPlot.Bar          # Bar charts
+?buildPlot.Histogram    # Histograms with density
+?buildPlot.Model        # Model comparison plots
+?buildPlot.Hist2D       # 2D heatmaps/contours
+?buildPlot.Hist3D       # 3D bar histograms
+
+# Table functions
+?buildTable             # Format tables (gt/flextable/kable)
+
+# Report functions
+?buildYAML              # Assemble Quarto configuration
+
+# Presentation utilities
+?showTypewriter         # Typewriter effect
+?rotateTypewriter       # Rotating typewriter
+?buildIndexTypewriter   # Chapter index
+
+# Viewers
+?showASCII              # Display raw text
+?showMarkdownRendered   # Render and embed markdown
+```
+
+For package overview:
+```r
+?ngr
+```
+
+---
+
 ## License
 
 GPL-3.0
@@ -897,12 +933,12 @@ This program is free software: you can redistribute it and/or modify it under th
 If you use this package in your research or professional work, please cite:
 
 ```bibtex
-@software{smartReports2025,
+@software{ngr2025,
   author = {Verri Kozlowski, Alejandro},
-  title = {smartReports: Professional Report Generation for R},
+  title = {ngr: Professional Report Generation for R},
   year = {2025},
   version = {0.3.3},
-  url = {https://github.com/averriK/smartReports}
+  url = {https://github.com/averriK/ngr}
 }
 ```
 
@@ -997,7 +1033,7 @@ If you use this package in your research or professional work, please cite:
 
 ## Contributing
 
-Issues and pull requests are welcome at the [GitHub repository](https://github.com/averriK/smartReports).
+Issues and pull requests are welcome at the [GitHub repository](https://github.com/averriK/ngr).
 
 For bug reports, please include:
 - R version and platform
@@ -1048,7 +1084,7 @@ If you find discrepancies between documentation and actual behavior, please file
 
 ### Overview
 
-smartReports includes vintage terminal typewriter effects for Quarto revealjs presentations. Three main functions:
+ngr includes vintage terminal typewriter effects for Quarto revealjs presentations. Three main functions:
 
 1. **`showTypewriter()`** - Single typewriter animation from text or file
 2. **`rotateTypewriter()`** - Rotating animations through multiple files or text strings
@@ -1080,7 +1116,7 @@ smartReports includes vintage terminal typewriter effects for Quarto revealjs pr
 #### 1. Simple Typewriter from Text
 
 ```r
-library(smartReports)
+library(ngr)
 
 showTypewriter(
   text = ">> SYSTEM READY\n>> LOADING...",
@@ -1292,7 +1328,7 @@ format: revealjs
 ---
 
 ```{r setup}
-library(smartReports)
+library(ngr)
 ```
 
 ## Chapter I
@@ -1325,7 +1361,7 @@ rotateTypewriter(
 For fonts not in Google Fonts (like Data70):
 
 1. **Download font file** (`.ttf`, `.woff`, or `.woff2`)
-2. **Place in** `smartReports/inst/fonts/`
+2. **Place in** `ngr/inst/fonts/`
 3. **Add configuration** in R helpers (edit `typewriter.R`)
 
 ```r
@@ -1353,7 +1389,7 @@ See `inst/fonts/README.md` for detailed instructions.
 
 1. Download from: https://www.dafont.com/data70.font
 2. Extract `data70.ttf`
-3. Place in `smartReports/inst/fonts/`
+3. Place in `ngr/inst/fonts/`
 4. (Optional) Convert to WOFF2:
    ```bash
    pip3 install fonttools brotli
