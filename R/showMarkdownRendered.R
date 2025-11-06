@@ -71,8 +71,10 @@ showMarkdownRendered <- function(filePath, height = "500px", theme = "spacelab",
     message("[showMarkdownRendered] Using cached HTML for ", basename(filePath))
   }
   
+  HTML_RELATIVE <- basename(HTML_PATH)
+  
   cat('\n<iframe\n')
-  cat('  src="', HTML_PATH, '"\n', sep = "")
+  cat('  src="', HTML_RELATIVE, '"\n', sep = "")
   cat('  width="100%"\n')
   cat('  height="', height, '"\n', sep = "")
   cat('  style="border:0; max-width: 100%;"\n')
@@ -80,6 +82,6 @@ showMarkdownRendered <- function(filePath, height = "500px", theme = "spacelab",
   cat('></iframe>\n\n')
   
   cat('<p style="font-size: 0.8em; margin-top: 5px; text-align: center;">\n')
-  cat('<a href="', HTML_PATH, '" target="_blank">Open in new window</a>\n', sep = "")
+  cat('<a href="', HTML_RELATIVE, '" target="_blank">Open in new window</a>\n', sep = "")
   cat('</p>\n\n')
 }
