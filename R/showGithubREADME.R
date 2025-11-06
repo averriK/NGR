@@ -6,7 +6,7 @@
 #' @return Prints iframe HTML using cat() for results: asis
 #' @export
 showGithubREADME <- function(repo, user = "averriK", height = "500px") {
-  url <- paste0("https://github.com/", user, "/", repo, "#readme")
+  url <- paste0("https://", user, ".github.io/", repo, "/")
   
   cat('\n<iframe\n')
   cat('  src="', url, '"\n', sep = "")
