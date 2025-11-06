@@ -1327,13 +1327,13 @@ title: "My Presentation"
 format: revealjs
 ---
 
-```{r setup}
+```r setup}
 library(ngr)
 ```
 
 ## Chapter I
 
-```{r}
+```r}
 #| echo: false
 #| results: asis
 buildIndexTypewriter(
@@ -1345,7 +1345,7 @@ buildIndexTypewriter(
 
 ## Terminal Demo
 
-```{r}
+```r}
 #| echo: false
 #| results: asis
 rotateTypewriter(
