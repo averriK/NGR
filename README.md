@@ -1,8 +1,6 @@
-# ngr
+# NGR
 
-Professional report generation for R with interactive plots, formatted tables, Quarto YAML assembly, and revealjs typewriter effects.
-
-IMPORTANT: This README documents only what is actually implemented in the source code (`R/*.R`, `NAMESPACE`). No speculative features are listed.
+NextGen Report Generation for data-driven technical documents
 
 - Version: 0.3.3 (from DESCRIPTION)
 - License: GPL (>= 3)
