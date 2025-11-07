@@ -4,21 +4,22 @@
 #' @param language Programming language (auto-detected from extension if NULL)
 #' @param lineNumbers Show line numbers (default TRUE)
 #' @param cleanWolfram Convert Mathematica Unicode notation to plain ASCII (default TRUE)
-#' @param height Optional fixed height with scrollbar (e.g., "400px", "20em"). If NULL, uses default Quarto rendering.
+#' @param height Fixed height with scrollbar (default "400px" for slide compatibility). Use NULL for full expansion without scroll.
 #' @return Prints formatted code block using cat() for results: asis
 #' @export
 #' @examples
 #' \dontrun{
-#' showCode("script.py")
+#' showCode("script.py")                      # Default: 400px with scroll
 #' showCode("script.wls", cleanWolfram = TRUE)
-#' showCode("long_file.R", height = "300px")  # Fixed height with scroll
+#' showCode("long_file.R", height = "300px")  # Custom height
+#' showCode("short.R", height = NULL)         # No scroll, full expansion
 #' }
 showCode <- function(
   filePath,
   language = NULL,
   lineNumbers = TRUE,
   cleanWolfram = TRUE,
-  height = NULL
+  height = "400px"
 ) {
   
   # Validate file exists
