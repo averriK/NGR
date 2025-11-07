@@ -245,12 +245,15 @@ For feature requests:
 ### Version 0.4.1 (Current - Development Branch)
 
 **Typewriter Enhancements:**
+- Added `height=` parameter to both `showTypewriter()` and `rotateTypewriter()` (default "300px")
+- Fixed-height terminal windows with automatic vertical scroll for long content
+- Prevents infinite vertical growth in slides/presentations
+- Set `height=NULL` to restore original behavior (unlimited growth)
 - Added `texts=` parameter to `rotateTypewriter()` for direct string vectors
 - Added `terminalWidth=` parameter to both `showTypewriter()` and `rotateTypewriter()`
 - Emulate classic terminal widths: 40, 60, or 80 columns
 - Auto-calculated width based on fontSize
 - Validates terminalWidth input (40/60/80) with warning for invalid values
-- Backward compatible: default behavior unchanged
 
 **Histogram Functions:**
 - Renamed `buildHist2D` → `buildPlot.Hist2D` for naming consistency
