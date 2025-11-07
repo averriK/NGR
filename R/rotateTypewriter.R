@@ -19,7 +19,8 @@ rotateTypewriter <- function(filePaths = NULL,
                              fontSize = NULL,
                              color = "#00ff00",
                              bgColor = "#000",
-                             terminalWidth = 80) {
+                             terminalWidth = 80,
+                             height = "300px") {
 
   # Validate input: either texts or filePaths must be provided
   if (is.null(texts) && is.null(filePaths)) {
@@ -176,10 +177,18 @@ rotateTypewriter <- function(filePaths = NULL,
   
   width_css <- sprintf("width: %dpx", container_width_px)
   
-  style <- sprintf(
-    "%s; white-space: pre-wrap; font-size: %sem; color: %s; background-color: %s; padding: 20px; border-radius: 5px; %s; margin: 0 auto; overflow-wrap: break-word;",
-    font_decl, fontSize, color, bgColor, width_css
-  )
+  # Build style with optional fixed height and scroll
+  if (!is.null(height)) {
+    style <- sprintf(
+      "%s; white-space: pre-wrap; font-size: %sem; color: %s; background-color: %s; padding: 20px; border-radius: 5px; %s; margin: 0 auto; overflow-wrap: break-word; height: %s; overflow-y: auto;",
+      font_decl, fontSize, color, bgColor, width_css, height
+    )
+  } else {
+    style <- sprintf(
+      "%s; white-space: pre-wrap; font-size: %sem; color: %s; background-color: %s; padding: 20px; border-radius: 5px; %s; margin: 0 auto; overflow-wrap: break-word;",
+      font_decl, fontSize, color, bgColor, width_css
+    )
+  }
 
   # Escape all contents for JavaScript
   escaped_contents <- sapply(contents, function(content) {
