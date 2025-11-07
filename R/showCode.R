@@ -4,18 +4,21 @@
 #' @param language Programming language (auto-detected from extension if NULL)
 #' @param lineNumbers Show line numbers (default TRUE)
 #' @param cleanWolfram Convert Mathematica Unicode notation to plain ASCII (default TRUE)
+#' @param height Optional fixed height with scrollbar (e.g., "400px", "20em"). If NULL, uses default Quarto rendering.
 #' @return Prints formatted code block using cat() for results: asis
 #' @export
 #' @examples
 #' \dontrun{
 #' showCode("script.py")
 #' showCode("script.wls", cleanWolfram = TRUE)
+#' showCode("long_file.R", height = "300px")  # Fixed height with scroll
 #' }
 showCode <- function(
   filePath,
   language = NULL,
   lineNumbers = TRUE,
-  cleanWolfram = TRUE
+  cleanWolfram = TRUE,
+  height = NULL
 ) {
   
   # Validate file exists
@@ -114,13 +117,25 @@ showCode <- function(
     CONTENT <- gsub("\\\\\\[Omega\\]", "omega", CONTENT)
   }
   
-  # Escape HTML entities (no need, Quarto handles this)
-  # CONTENT is already properly encoded
-
-  # Output code block for Quarto syntax highlighting
-  cat("```", language, "\n", sep = "")
-  cat(paste(CONTENT, collapse = "\n"), "\n", sep = "")
-  cat("```\n\n")
+  # Output code block
+  if (!is.null(height)) {
+    # Use HTML pre/code with fixed height and scroll
+    # Escape HTML entities manually
+    escaped_content <- gsub("&", "&amp;", paste(CONTENT, collapse = "\n"))
+    escaped_content <- gsub("<", "&lt;", escaped_content)
+    escaped_content <- gsub(">", "&gt;", escaped_content)
+    
+    cat('<div style="max-height: ', height, '; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; margin: 1em 0;">\n', sep = "")
+    cat('<pre style="margin: 0; padding: 1em; background: #f5f5f5;"><code class="language-', language, '">', sep = "")
+    cat(escaped_content)
+    cat('</code></pre>\n')
+    cat('</div>\n\n')
+  } else {
+    # Standard Quarto markdown code block (default behavior)
+    cat("```", language, "\n", sep = "")
+    cat(paste(CONTENT, collapse = "\n"), "\n", sep = "")
+    cat("```\n\n")
+  }
 
   invisible(NULL)
 }
