@@ -17,7 +17,8 @@ showTypewriter <- function(filePath = NULL,
                         fontSize = NULL,
                         color = "#00ff00",
                         bgColor = "#000",
-                        terminalWidth = 80) {
+                        terminalWidth = 80,
+                        height = "300px") {
   
   # Generate unique ID based on timestamp with microseconds
   id <- paste0("typewriter-", gsub("[^0-9]", "", format(Sys.time(), "%Y%m%d%H%M%OS6")))
@@ -152,10 +153,18 @@ showTypewriter <- function(filePath = NULL,
   
   width_css <- sprintf("width: %dpx", container_width_px)
   
-  style <- sprintf(
-    "%s; white-space: pre; font-size: %sem; color: %s; background-color: %s; padding: 20px; border-radius: 5px; %s; margin: 0 auto;",
-    font_decl, fontSize, color, bgColor, width_css
-  )
+  # Build style with optional fixed height and scroll
+  if (!is.null(height)) {
+    style <- sprintf(
+      "%s; white-space: pre; font-size: %sem; color: %s; background-color: %s; padding: 20px; border-radius: 5px; %s; margin: 0 auto; height: %s; overflow-y: auto;",
+      font_decl, fontSize, color, bgColor, width_css, height
+    )
+  } else {
+    style <- sprintf(
+      "%s; white-space: pre; font-size: %sem; color: %s; background-color: %s; padding: 20px; border-radius: 5px; %s; margin: 0 auto;",
+      font_decl, fontSize, color, bgColor, width_css
+    )
+  }
   
   # Escape for JavaScript (order matters!)
   content_escaped <- gsub("\\\\", "\\\\\\\\", content)  # Escape backslashes first

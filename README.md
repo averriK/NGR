@@ -9,7 +9,7 @@ R package for precise, reproducible report generation with interactive plots, pr
 - R: >= 4.1.0
 
 [![R Version](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue)](https://www.r-project.org/)
-[![Version](https://img.shields.io/badge/version-0.3.3-green)](https://github.com/averriK/ngr)
+[![Version](https://img.shields.io/badge/version-0.3.3-green)](https://github.com/averriK/NGR)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE)
 
 ## Contents
@@ -52,8 +52,8 @@ R package for precise, reproducible report generation with interactive plots, pr
 # Install devtools if needed
 install.packages("devtools")
 
-# Install ngr from GitHub
-devtools::install_github("averriK/ngr")
+# Install NGR from GitHub
+devtools::install_github("averriK/NGR")
 ```
 
 ---
@@ -158,7 +158,7 @@ From NAMESPACE, the following are exported:
 ## Project Structure
 
 ```
-ngr/
+NGR/
 ├── DESCRIPTION              # Package metadata
 ├── NAMESPACE                # Exported functions
 ├── LICENSE.md               # GPL-3.0
@@ -218,14 +218,14 @@ Function documentation is available via R help system:
 
 For package overview:
 ```r
-?ngr
+?NGR
 ```
 
 ---
 
 ## Contributing
 
-Issues and pull requests are welcome at the [GitHub repository](https://github.com/averriK/ngr).
+Issues and pull requests are welcome at the [GitHub repository](https://github.com/averriK/NGR).
 
 For bug reports, please include:
 - R version and platform
@@ -245,12 +245,15 @@ For feature requests:
 ### Version 0.4.1 (Current - Development Branch)
 
 **Typewriter Enhancements:**
+- Added `height=` parameter to both `showTypewriter()` and `rotateTypewriter()` (default "300px")
+- Fixed-height terminal windows with automatic vertical scroll for long content
+- Prevents infinite vertical growth in slides/presentations
+- Set `height=NULL` to restore original behavior (unlimited growth)
 - Added `texts=` parameter to `rotateTypewriter()` for direct string vectors
 - Added `terminalWidth=` parameter to both `showTypewriter()` and `rotateTypewriter()`
 - Emulate classic terminal widths: 40, 60, or 80 columns
 - Auto-calculated width based on fontSize
 - Validates terminalWidth input (40/60/80) with warning for invalid values
-- Backward compatible: default behavior unchanged
 
 **Histogram Functions:**
 - Renamed `buildHist2D` → `buildPlot.Hist2D` for naming consistency
@@ -323,12 +326,12 @@ This program is free software: you can redistribute it and/or modify it under th
 When using this package in research or professional work, please cite:
 
 ```bibtex
-@software{ngr2025,
+@software{NGR2025,
   author = {Verri Kozlowski, Alejandro},
-  title = {ngr: Professional Report Generation for R},
+  title = {NGR: NextGen Report Generation for R},
   year = {2025},
   version = {0.3.3},
-  url = {https://github.com/averriK/ngr}
+  url = {https://github.com/averriK/NGR}
 }
 ```
 
