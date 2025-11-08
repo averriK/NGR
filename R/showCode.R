@@ -4,18 +4,22 @@
 #' @param language Programming language (auto-detected from extension if NULL)
 #' @param lineNumbers Show line numbers (default TRUE)
 #' @param cleanWolfram Convert Mathematica Unicode notation to plain ASCII (default TRUE)
+#' @param height Fixed height with scrollbar (default "400px" for slide compatibility). Use NULL for full expansion without scroll.
 #' @return Prints formatted code block using cat() for results: asis
 #' @export
 #' @examples
 #' \dontrun{
-#' showCode("script.py")
+#' showCode("script.py")                    # Default: 400px with scroll
 #' showCode("script.wls", cleanWolfram = TRUE)
+#' showCode("long_file.R", height = "300px") # Custom height
+#' showCode("short.R", height = NULL)        # No scroll, full expansion
 #' }
 showCode <- function(
   filePath,
   language = NULL,
   lineNumbers = TRUE,
-  cleanWolfram = TRUE
+  cleanWolfram = TRUE,
+  height = "400px"
 ) {
   
   # Validate file exists
@@ -114,13 +118,18 @@ showCode <- function(
     CONTENT <- gsub("\\\\\\[Omega\\]", "omega", CONTENT)
   }
   
-  # Escape HTML entities (no need, Quarto handles this)
-  # CONTENT is already properly encoded
-
-  # Output code block for Quarto syntax highlighting
+  # Output code block with optional fixed height wrapper
+  if (!is.null(height)) {
+    cat('<div style="height: ', height, '; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; margin: 1em 0;">\n\n', sep = "")
+  }
+  
   cat("```", language, "\n", sep = "")
   cat(paste(CONTENT, collapse = "\n"), "\n", sep = "")
   cat("```\n\n")
+  
+  if (!is.null(height)) {
+    cat('</div>\n\n')
+  }
 
   invisible(NULL)
 }

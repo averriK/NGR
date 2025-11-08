@@ -12,7 +12,8 @@ showTypewriter(
   fontSize = NULL,
   color = "#00ff00",
   bgColor = "#000",
-  terminalWidth = 80
+  terminalWidth = 80,
+  height = "300px"
 )
 }
 \arguments{

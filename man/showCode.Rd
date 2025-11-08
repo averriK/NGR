@@ -4,7 +4,13 @@
 \alias{showCode}
 \title{Display source code with syntax highlighting}
 \usage{
-showCode(filePath, language = NULL, lineNumbers = TRUE, cleanWolfram = TRUE)
+showCode(
+  filePath,
+  language = NULL,
+  lineNumbers = TRUE,
+  cleanWolfram = TRUE,
+  height = "400px"
+)
 }
 \arguments{
 \item{filePath}{Path to the source code file}
@@ -14,6 +20,8 @@ showCode(filePath, language = NULL, lineNumbers = TRUE, cleanWolfram = TRUE)
 \item{lineNumbers}{Show line numbers (default TRUE)}
 
 \item{cleanWolfram}{Convert Mathematica Unicode notation to plain ASCII (default TRUE)}
+
+\item{height}{Fixed height with scrollbar (default "400px" for slide compatibility). Use NULL for full expansion without scroll.}
 }
 \value{
 Prints formatted code block using cat() for results: asis
@@ -23,7 +31,9 @@ Display source code with syntax highlighting
 }
 \examples{
 \dontrun{
-showCode("script.py")
+showCode("script.py")                    # Default: 400px with scroll
 showCode("script.wls", cleanWolfram = TRUE)
+showCode("long_file.R", height = "300px") # Custom height
+showCode("short.R", height = NULL)        # No scroll, full expansion
 }
 }
