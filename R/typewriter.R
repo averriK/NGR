@@ -156,12 +156,12 @@ showTypewriter <- function(filePath = NULL,
   # Build style with optional fixed height and scroll
   if (!is.null(height)) {
     style <- sprintf(
-      "%s; white-space: pre; font-size: %sem; color: %s; background-color: %s; padding: 20px; border-radius: 5px; %s; margin: 0 auto; height: %s; overflow-y: auto;",
+      "%s; white-space: pre-wrap; font-size: %sem; color: %s; background-color: %s; padding: 20px; border-radius: 5px; %s; margin: 0 auto; overflow-wrap: break-word; height: %s; overflow-y: auto;",
       font_decl, fontSize, color, bgColor, width_css, height
     )
   } else {
     style <- sprintf(
-      "%s; white-space: pre; font-size: %sem; color: %s; background-color: %s; padding: 20px; border-radius: 5px; %s; margin: 0 auto;",
+      "%s; white-space: pre-wrap; font-size: %sem; color: %s; background-color: %s; padding: 20px; border-radius: 5px; %s; margin: 0 auto; overflow-wrap: break-word;",
       font_decl, fontSize, color, bgColor, width_css
     )
   }
