@@ -4,9 +4,11 @@
 #' @param height Height of iframe (default "500px")
 #' @param theme HTML theme (default "spacelab")
 #' @param toc Show table of contents (default FALSE)
+#' @param force Force re-render even if HTML is up to date (default FALSE)
+#' @param fontsize Base font size (e.g., "0.8em", "14px", "90%", default NULL = theme default)
 #' @return Prints iframe HTML using cat() for results: asis
 #' @export
-showMarkdownRendered <- function(filePath, height = "500px", theme = "spacelab", toc = FALSE) {
+showMarkdownRendered <- function(filePath, height = "500px", theme = "spacelab", toc = FALSE, force = FALSE, fontsize = NULL) {
   if (!file.exists(filePath)) {
     stop(paste("File not found:", filePath))
   }
@@ -14,7 +16,7 @@ showMarkdownRendered <- function(filePath, height = "500px", theme = "spacelab",
   HTML_PATH <- sub("\\.md$", ".html", filePath)
   
   # OPTIMIZATION: Only render if HTML doesn't exist or is older than MD
-  SHOULD_RENDER <- !file.exists(HTML_PATH) || 
+  SHOULD_RENDER <- force || !file.exists(HTML_PATH) || 
     file.info(filePath)$mtime > file.info(HTML_PATH)$mtime
   
   if (SHOULD_RENDER) {
@@ -42,6 +44,10 @@ showMarkdownRendered <- function(filePath, height = "500px", theme = "spacelab",
       "    code-tools: true",
       "    embed-resources: true"
     )
+    
+    if (!is.null(fontsize)) {
+      YAML_HEADER <- c(YAML_HEADER, paste0("fontsize: ", fontsize))
+    }
     
     if (!is.null(BIB_FILE)) {
       YAML_HEADER <- c(YAML_HEADER, paste0("bibliography: ", BIB_FILE))
@@ -71,7 +77,7 @@ showMarkdownRendered <- function(filePath, height = "500px", theme = "spacelab",
     message("[showMarkdownRendered] Using cached HTML for ", basename(filePath))
   }
   
-  HTML_RELATIVE <- basename(HTML_PATH)
+  HTML_RELATIVE <- HTML_PATH
   
   cat('\n<iframe\n')
   cat('  src="', HTML_RELATIVE, '"\n', sep = "")
