@@ -5,9 +5,10 @@
 #' @param theme HTML theme (default "spacelab")
 #' @param toc Show table of contents (default FALSE)
 #' @param force Force re-render even if HTML is up to date (default FALSE)
+#' @param fontsize Base font size (e.g., "0.8em", "14px", "90%", default NULL = theme default)
 #' @return Prints iframe HTML using cat() for results: asis
 #' @export
-showMarkdownRendered <- function(filePath, height = "500px", theme = "spacelab", toc = FALSE, force = FALSE) {
+showMarkdownRendered <- function(filePath, height = "500px", theme = "spacelab", toc = FALSE, force = FALSE, fontsize = NULL) {
   if (!file.exists(filePath)) {
     stop(paste("File not found:", filePath))
   }
@@ -43,6 +44,10 @@ showMarkdownRendered <- function(filePath, height = "500px", theme = "spacelab",
       "    code-tools: true",
       "    embed-resources: true"
     )
+    
+    if (!is.null(fontsize)) {
+      YAML_HEADER <- c(YAML_HEADER, paste0("fontsize: ", fontsize))
+    }
     
     if (!is.null(BIB_FILE)) {
       YAML_HEADER <- c(YAML_HEADER, paste0("bibliography: ", BIB_FILE))
