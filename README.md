@@ -1,399 +1,264 @@
 # NGR
 
-**NextGen Report Generation for data-driven technical documents**
+**Next Generation Reporting: Advanced Tools for Professional Report Generation in R**
 
-R package providing visualization, table formatting, and document embedding tools for Quarto-based reproducible research workflows.
+The NGR package provides comprehensive tools for generating professional and customizable reports in R. It offers advanced functions to create high-quality plots and well-formatted tables effortlessly, streamlining the process of data visualization and presentation. NGR integrates Quarto for multi-format rendering (HTML/PDF/DOCX) with configurable templates, enabling reproducible computational documents combining insightful graphics and tables seamlessly.
 
-[![R Version](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue)](https://www.r-project.org/)
-[![Version](https://img.shields.io/badge/version-0.4.1-green)](https://github.com/averriK/NGR)
-[![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![R](https://img.shields.io/badge/R-%E2%89%A54.1.0-blue)](https://www.r-project.org/)
 
----
+## Contents
 
-## Quick Start
-
-```r
-# Install from GitHub
-devtools::install_github("averriK/NGR")
-
-# Load package
-library(NGR)
-
-# Create interactive plot
-data <- data.table(ID = "Series1", X = 1:10, Y = rnorm(10))
-buildPlot(data.lines = data)
-
-# Format table
-buildTable(iris[1:5,], library = "gt")
-
-# Embed rendered markdown
-showMarkdownRendered("document.md", theme = "sketchy")
-```
-
----
-
-## Features
-
-NGR provides **19 exported functions** organized into 5 categories:
-
-### 📊 Visualization (6 functions)
-Interactive highcharter and plotly visualizations with extensive customization
-
-### 📋 Tables (1 function)
-Format-aware table generation with gt, flextable, and kable support
-
-### 📄 Document Embedding (6 functions)
-Inline viewers for HTML, PDF, Markdown, ASCII, code, and GitHub READMEs
-
-### 🎬 Presentation Effects (3 functions)
-Vintage typewriter animations and chapter indices for RevealJS slides
-
-### 🔧 Report Assembly (3 functions)
-Quarto configuration management and multi-format rendering
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Core Features](#core-features)
+- [Documentation](#documentation)
+- [Dependencies](#dependencies)
+- [References](#references)
+- [Contributing](#contributing)
+- [License](#license)
+- [Citation](#citation)
+- [Author](#author)
 
 ---
 
 ## Installation
 
-### Requirements
-- **R 4.1.0+**
-- **Quarto CLI**: https://quarto.org/docs/get-started/
-- **LaTeX** (PDF output): `quarto install tinytex`
-
-### Install Package
+Install NGR from GitHub using devtools:
 
 ```r
-# Install devtools if needed
-install.packages("devtools")
+# Install devtools if not already installed
+if (!requireNamespace("devtools", quietly = TRUE)) {
+  install.packages("devtools")
+}
 
 # Install NGR from GitHub
 devtools::install_github("averriK/NGR")
+
+# Load the package
+library(NGR)
 ```
 
 ---
 
-## Function Reference
+## Quick Start
 
-### 📊 Visualization
+### Display Content in Quarto/RMarkdown Documents
 
-| Function | Description | Output |
-|----------|-------------|--------|
-| `buildPlot()` | Interactive line/scatter/area plots | highchart |
-| `buildPlot.Bar()` | Bar and column charts | highchart |
-| `buildPlot.Histogram()` | 1D histograms with optional density curves | highchart |
-| `buildPlot.Model()` | Model comparison plots (lines + points) | highchart |
-| `buildPlot.Hist2D()` | 2D heatmaps and contour plots | plotly |
-| `buildPlot.Hist3D()` | 3D bar histograms | plotly |
+NGR provides specialized functions for embedding external content with `results: asis` chunk option:
 
-**Example:**
 ```r
-# Line plot with area shading
-data <- data.table(
-  ID = rep("A", 10),
-  X = 1:10,
-  Y = rnorm(10),
-  fill = rnorm(10, sd = 0.5)
-)
-buildPlot(data.lines = data, line.type = "spline")
+# Display GitHub README pages
+showGithubREADME("NGR", user = "averriK", height = "500px")
+
+# Embed HTML content (presentations, reports, web apps)
+showHTML("https://example.com/presentation.html", height = "600px")
+
+# Display PDF documents using PDF.js viewer
+showPDF("document.pdf", height = "850px", pagemode = "none")
+
+# Show syntax-highlighted source code
+showCode("script.R")
+
+# Display ASCII art with typewriter animation
+showTypewriter(filePath = "banner.txt", font = "vt323", speed = 5)
 ```
 
-### 📋 Tables
+### Create Highcharts Visualizations
 
-| Function | Description | Libraries |
-|----------|-------------|-----------|
-| `buildTable()` | Format data.table as professional table | gt, flextable, kable |
-
-**Features:**
-- Automatic format detection (HTML/PDF/DOCX)
-- Global font controls (size, family, bold)
-- Border customization (show/hide, color, size)
-- Caption support across all libraries
-
-**Example:**
 ```r
+# Build interactive highchart plots
+library(data.table)
+
+# Prepare line data
+lines <- data.table(
+  ID = rep(c("Series A", "Series B"), each = 10),
+  X = rep(1:10, 2),
+  Y = c(rnorm(10, 5), rnorm(10, 8))
+)
+
+# Create plot
+buildPlot(
+  data.lines = lines,
+  plot.title = "Sample Plot",
+  xAxis.legend = "Time",
+  yAxis.legend = "Value",
+  color.palette = "Dark 3"
+)
+```
+
+### Generate Tables
+
+```r
+# Create formatted tables for reports
 buildTable(
-  data = iris[1:10,],
-  library = "gt",
-  caption = "Iris Dataset Sample",
-  font.size.all = 12,
-  font.family.all = "Arial"
+  data = iris[1:10, ],
+  output.format = "html"
 )
-```
-
-### 📄 Document Embedding
-
-| Function | Description | Use Case |
-|----------|-------------|----------|
-| `showMarkdownRendered()` | Render markdown with themes (sketchy/water) | Agent session outputs |
-| `showHTML()` | Embed HTML files in iframe | Interactive dashboards |
-| `showPDF()` | Display PDF via PDF.js viewer | Technical reports |
-| `showASCII()` | Display raw text with syntax highlighting | Log files, configs |
-| `showCode()` | Display source code with line numbers | Code examples |
-| `showGithubREADME()` | Fetch and render GitHub README | Package documentation |
-
-**Example:**
-```r
-# Render markdown with sketchy theme
-showMarkdownRendered(
-  "analysis.md",
-  theme = "sketchy",
-  force = TRUE
-)
-
-# Embed PDF document
-showPDF("report.pdf", height = "600px")
-
-# Display code with syntax highlighting
-showCode("script.R", language = "r")
-```
-
-### 🎬 Presentation Effects
-
-| Function | Description | Use Case |
-|----------|-------------|----------|
-| `showTypewriter()` | Vintage typewriter animation | Terminal session playback |
-| `rotateTypewriter()` | Rotating typewriter displays | Multi-file showcase |
-| `buildIndexTypewriter()` | Chapter index with typewriter effect | Presentation navigation |
-
-**Features:**
-- Configurable speed, font, colors
-- Terminal width emulation (40/60/80 columns)
-- Fixed-height containers with auto-scroll
-- Multiple text rotation
-
-**Example:**
-```r
-# Display terminal session
-showTypewriter(
-  filePaths = "session.out",
-  speed = 5,
-  terminalWidth = 80,
-  height = "400px"
-)
-
-# Rotate multiple displays
-rotateTypewriter(
-  filePaths = c("log1.txt", "log2.txt"),
-  speed = 3,
-  interval = 5000
-)
-```
-
-### 🔧 Report Assembly
-
-| Function | Description | Output |
-|----------|-------------|--------|
-| `buildYAML()` | Assemble `_quarto.yml` from modular configs | Quarto config file |
-| `export.highchart()` | Save highchart as standalone HTML | Interactive widget |
-| `export.plotly()` | Save plotly as standalone HTML | Interactive widget |
-
-**Example:**
-```r
-# Build Quarto configuration
-buildYAML(
-  root = ".",
-  language = "EN",
-  project_type = "book"
-)
-
-# Export standalone plot
-chart <- buildPlot(data.lines = data)
-export.highchart(chart, file = "plot.html")
 ```
 
 ---
 
-## Use Cases
+## Core Features
 
-### Scientific Reports
-- **Seismic hazard analysis**: Acceleration spectra, hazard curves
-- **Engineering calculations**: Displacement time-histories, capacity curves
-- **Statistical analysis**: Correlation plots, distribution histograms
+### Content Display Functions
 
-### Research Publications
-- **Multi-format output**: HTML (web), PDF (journals), Word (preprints)
-- **Reproducible workflows**: Version-controlled Quarto + embedded R code
-- **Interactive visualizations**: Standalone HTML exports for web
+- **`showGithubREADME()`**: Embeds GitHub Pages README with automatic fallback for repositories without Pages or redirects blocking iframes
+- **`showHTML()`**: Displays external HTML content (presentations, reports, web applications) in iframes
+- **`showPDF()`**: Renders PDF documents using PDF.js viewer with configurable sidebar modes (none, thumbs, bookmarks)
+- **`showCode()`**: Displays syntax-highlighted source code with automatic language detection from file extensions (supports 30+ languages)
+- **`showTypewriter()`**: Animates ASCII art or text with typewriter effect, supporting 18 monospace fonts (Google Fonts and system fonts)
+- **`rotateTypewriter()`**: Cycles through multiple text content with typewriter animations and configurable rotation intervals
+- **`showASCII()`**: Displays static ASCII art with monospace font rendering
 
-### Technical Documentation
-- **API documentation**: Code examples with syntax highlighting
-- **Method descriptions**: Mathematical formulas + validation plots
-- **Session playback**: Terminal typewriter effects for demos
+### Plotting Functions
 
-### Agent-Assisted Workflows
-- **RAG review sessions**: Embed agent outputs with sketchy/water themes
-- **Verification audits**: Display footnoted markdown with inline citations
-- **Code generation logs**: Typewriter animation of agent sessions
+- **`buildPlot()`**: Creates interactive Highcharts plots with support for lines, scatter points, arearange fills, log scales, custom color palettes, and configurable legends
+- **`buildPlot.Bar()`**: Generates bar charts with grouping and stacking options
+- **`buildPlot.Histogram()`**: Creates histogram distributions with customizable bins
+- **`buildPlot.Hist2D()`**: Produces 2D heatmap histograms
+- **`buildPlot.Hist3D()`**: Generates 3D surface plots from histogram data
+- **`buildPlot.Model()`**: Visualizes statistical model fits and predictions
+
+### Table Functions
+
+- **`buildTable()`**: Generates formatted tables supporting multiple output formats (HTML, PDF, DOCX) using gt, flextable, or kableExtra backends
+
+### Utility Functions
+
+- **`buildYAML()`**: Constructs YAML front matter for Quarto/RMarkdown documents
+- **`export()`**: Saves Highcharts visualizations as PNG/JPEG using webshot2
+- **`local()`**: Manages local configuration and paths
 
 ---
 
 ## Documentation
 
-Function documentation via R help system:
+### Function Reference
+
+All exported functions include comprehensive documentation accessible via R's help system:
 
 ```r
-# Package overview
-?NGR
-
-# Visualization
-?buildPlot
-?buildPlot.Bar
-?buildPlot.Histogram
-?buildPlot.Model
-?buildPlot.Hist2D
-?buildPlot.Hist3D
-
-# Tables
-?buildTable
-
-# Document embedding
-?showMarkdownRendered
-?showHTML
-?showPDF
-?showASCII
-?showCode
+# View function documentation
 ?showGithubREADME
-
-# Presentation
+?buildPlot
 ?showTypewriter
-?rotateTypewriter
-?buildIndexTypewriter
-
-# Report assembly
-?buildYAML
 ```
+
+### Chunk Options for Display Functions
+
+When using content display functions (`showGithubREADME`, `showHTML`, `showPDF`, `showCode`, `showTypewriter`), use these Quarto/RMarkdown chunk options:
+
+```r
+#| results: asis
+#| echo: false  # Optional: hide code, show only output
+```
+
+### Font Support in Typewriter Functions
+
+Available fonts for `showTypewriter()` and `rotateTypewriter()`:
+
+**Google Fonts**: vt323 (default), ibm, courier, space, anonymous, press, silkscreen, atari, c64, dotgothic, overpass, nova, syne, orbitron, electrolize
+
+**System Fonts**: printchar21, prnumber3, data70
 
 ---
 
 ## Dependencies
 
-### Core Requirements
-- **R 4.1.0+**
-- **Quarto CLI**: https://quarto.org
+### Core Packages
 
-### R Packages (auto-installed)
+- `yaml`: YAML configuration parsing
+- `brio`: Fast file operations
+- `data.table`: Efficient data manipulation
+- `highcharter`: Interactive Highcharts visualizations
+- `htmlwidgets`: HTML widget framework
+- `webshot2`: Screenshot functionality for saving plots
 
-**Visualization (5):**
-- `highcharter`: JavaScript charts
-- `plotly`: 3D plots
-- `htmlwidgets`: Widget export
-- `webshot2`: Screenshots
-- `grDevices`, `graphics`, `stats`: Base graphics
+### Table Generation
 
-**Tables (4):**
+- `flextable`: Flexible table formatting
 - `gt`: Grammar of tables
-- `flextable`: Flexible layouts
-- `kableExtra`: Enhanced kable
-- `officer`: Office formats
+- `kableExtra`: Enhanced kable tables
+- `officer`: Office document generation
 
-**Data (1):**
-- `data.table`: Fast manipulation
+### Visualization
 
-**Reports (2):**
-- `yaml`: Config parsing
-- `brio`: File I/O
+- `plotly`: Interactive plotly charts
+- `grDevices`: Graphics device interface
+- `graphics`: Base R graphics
+- `stats`: Statistical functions
 
----
+### Development Dependencies
 
-## Project Structure
-
-```
-NGR/
-├── DESCRIPTION              # Package metadata
-├── NAMESPACE                # Exported functions (19 total)
-├── LICENSE.md               # GPL-3.0
-├── README.md                # This file
-├── R/                       # Source code (19 files)
-│   ├── buildPlot*.R        # Visualization (6 files)
-│   ├── buildTable.R        # Tables
-│   ├── show*.R             # Document embedding (6 files)
-│   ├── *typewriter*.R      # Presentation effects (3 files)
-│   ├── buildYAML.R         # Report assembly
-│   ├── export.R            # Export utilities
-│   └── local.R             # Internal helpers
-├── man/                     # Documentation (auto-generated)
-├── inst/                    # Installed files
-│   ├── extdata/            # Report templates
-│   ├── examples/           # Usage examples
-│   └── docx/               # Word styles
-└── tests/                   # Unit tests
-```
+- `devtools`: Package development tools
+- `roxygen2`: Documentation generation
+- `knitr`: Dynamic report generation
+- `rmarkdown`: R Markdown rendering
 
 ---
 
-## Changelog
+## References
 
-### Version 0.4.1 (Development)
+### Related Tools
 
-**New Features:**
-- Added `height=` parameter to typewriter functions (default "300px")
-- Added `texts=` parameter to `rotateTypewriter()` for string vectors
-- Added `terminalWidth=` parameter (40/60/80 column emulation)
+NGR integrates with the following ecosystem:
 
-**Bug Fixes:**
-- Fixed `get_decimal_places()` processing only first element
-- Fixed typewriter infinite vertical growth in slides
-
-**Breaking Changes:**
-- Renamed `buildHist2D` → `buildPlot.Hist2D`
-- Renamed `buildHist3D` → `buildPlot.Hist3D`
-
-### Version 0.3.3
-
-**Plot Enhancements:**
-- Refactored `buildPlot()` with separate `data.lines`/`data.points`
-- Added `line.type` parameter: "line", "spline"
-- Area range shading via `fill` column
-- Enhanced color palette validation
-
-**Table Improvements:**
-- Global font controls (`font.size.all`, `font.family.all`)
-- Border customization (show/hide, color, size)
-- Caption support for gt, flextable, kable
-
-**Report Features:**
-- Multi-language templates (_params_ES.yml, _html_EN.yml)
-- Modular YAML configuration
-- Bibliography integration (references.bib auto-detection)
-
-**Breaking Changes:**
-- `buildPlot()` requires `data.lines` or `data.points` (not `data`)
-- `library` and `plot.type` parameters deprecated
+1. **Quarto**: Scientific and technical publishing system. [https://quarto.org/](https://quarto.org/)
+2. **Highcharts**: Interactive charting library. [https://www.highcharts.com/](https://www.highcharts.com/)
+3. **PDF.js**: PDF rendering in web browsers. [https://mozilla.github.io/pdf.js/](https://mozilla.github.io/pdf.js/)
 
 ---
 
 ## Contributing
 
-Issues and pull requests: [GitHub repository](https://github.com/averriK/NGR)
+Issues and pull requests are welcome at the [GitHub repository](https://github.com/averriK/NGR).
 
-**Bug reports include:**
-- R version and platform (`sessionInfo()`)
-- Minimal reproducible example
-- Expected vs actual output
-
-**Feature requests include:**
-- Use case description
-- Proposed API
-- Example code
+For bug reports, please include:
+- Operating system and version
+- R version (check with `R.version.string`)
+- Complete command that caused the issue
+- Error messages and logs
+- Session info output (`sessionInfo()`)
 
 ---
 
 ## License
 
-GPL-3.0 - Copyright (c) 2025 Alejandro Verri Kozlowski
+MIT License
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+Copyright (c) 2025 Alejandro Verri Kozlowski
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ---
 
 ## Citation
 
+When using this package in research or professional work, please cite:
+
 ```bibtex
 @software{NGR2025,
   author = {Verri Kozlowski, Alejandro},
-  title = {NGR: NextGen Report Generation for R},
+  title = {NGR: Next Generation Reporting},
   year = {2025},
-  version = {0.4.1},
+  version = {0.3.3},
   url = {https://github.com/averriK/NGR}
 }
 ```
@@ -407,15 +272,6 @@ This program is free software: you can redistribute it and/or modify it under th
 - Email: averri@fi.uba.ar
 - ORCID: [0000-0002-8535-1170](https://orcid.org/0000-0002-8535-1170)
 - GitHub: [@averriK](https://github.com/averriK)
-- Affiliation: Facultad de Ingeniería, Universidad de Buenos Aires
 
----
-
-## Acknowledgments
-
-Built on excellent R packages:
-- Highcharts.js via `highcharter` (Joshua Kunst)
-- `gt` Grammar of Tables (RStudio)
-- `flextable` (David Gohel)
-- Quarto (Posit PBC)
-- `data.table` (Matt Dowle, Arun Srinivasan)
+**Affiliation:**
+- Facultad de Ingeniería, Universidad de Buenos Aires
