@@ -65,6 +65,13 @@ See function documentation via R help:
 
 Full API: `buildPlot()`, `buildTable()`, `buildYAML()`, `showCode()`, `showHTML()`, `showPDF()`, `showMarkdownRendered()`, `showGithubREADME()`, `showASCII()`, `typewriter()`, `rotateTypewriter()`, specialized plot functions (Bar, Histogram, Hist2D, Hist3D, Model)
 
+### Main functions
+- buildPlot(...): High-level plotting with consistent styling; specialized variants for Bar/Histogram/Hist2D/Hist3D/Model.
+- buildTable(...): Publication-quality tables via gt/flextable/kableExtra backends with captions and styles.
+- buildYAML(...): Compose Quarto YAML blocks for multi-format rendering.
+- Display utilities: showCode(), showHTML(), showPDF(), showMarkdownRendered(), showGithubREADME(), showASCII().
+- Presentation effects: showTypewriter(), rotateTypewriter(), buildIndexTypewriter().
+
 ## Dependencies
 
 - R (>= 4.1.0)
