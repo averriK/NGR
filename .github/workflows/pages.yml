@@ -29,8 +29,16 @@ jobs:
       - name: Setup Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
+      - name: Show environment and tool versions
+        run: |
+          echo "Runner: $(uname -a)"
+          echo "Node: $(node --version 2>/dev/null || echo 'n/a')"
+          echo "Pandoc: $(pandoc --version 2>/dev/null | head -1 || echo 'n/a')"
+          echo "Quarto: $(quarto --version 2>/dev/null || echo 'n/a')"
+
       - name: Create Quarto project configuration
         run: |
+          test -f README.md || { echo 'README.md not found'; exit 1; }
           cat > _quarto.yml << 'EOFQMD'
           project:
             type: website
@@ -54,8 +62,13 @@ jobs:
           
           cp README.md index.qmd
 
-      - name: Render Quarto project
-        run: quarto render
+      - name: Render Quarto project (debug)
+        run: |
+          set -x
+          quarto render --log-level=debug
+          set +x
+          ls -la || true
+          ls -la _site || true
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
