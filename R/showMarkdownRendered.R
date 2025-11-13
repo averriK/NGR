@@ -24,11 +24,17 @@ showMarkdownRendered <- function(filePath, height = "500px", theme = "spacelab",
     
     CONTENT <- readLines(filePath, warn = FALSE)
     
+    # Search for bibliography file in the same directory as the markdown file
+    MD_DIR <- dirname(filePath)
     BIB_FILE <- NULL
-    if (file.exists("biblatex.bib")) {
-      BIB_FILE <- normalizePath("biblatex.bib")
-    } else if (file.exists("references.bib")) {
-      BIB_FILE <- normalizePath("references.bib")
+    
+    BIB_PATH_1 <- file.path(MD_DIR, "biblatex.bib")
+    BIB_PATH_2 <- file.path(MD_DIR, "references.bib")
+    
+    if (file.exists(BIB_PATH_1)) {
+      BIB_FILE <- basename(BIB_PATH_1)  # Use relative path for Quarto
+    } else if (file.exists(BIB_PATH_2)) {
+      BIB_FILE <- basename(BIB_PATH_2)  # Use relative path for Quarto
     }
     
     YAML_HEADER <- c(
