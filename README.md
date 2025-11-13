@@ -2,13 +2,9 @@
 
 **Next Generation Reporting**
 
-> **Last updated:** November 13, 2025
+[![R Version](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue)](https://www.r-project.org/) [![Version](https://img.shields.io/badge/version-0.3.3-green)](https://github.com/averriK/NGR) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 R package for generating professional multi-format reports with advanced plotting and table formatting capabilities.
-
-[![R Version](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue)](https://www.r-project.org/)
-[![Version](https://img.shields.io/badge/version-0.3.3-green)](https://github.com/averriK/NGR)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## What is it?
 
@@ -21,6 +17,7 @@ NGR streamlines data visualization and presentation by providing high-level func
 - **Multi-format output**: HTML, PDF, DOCX via Quarto integration
 - **Interactive visualizations**: highcharter and plotly support
 - **Configurable templates**: YAML-based report customization
+- **Display utilities**: Built-in rendering functions for code, HTML, PDF, Markdown
 
 ## Installation
 
@@ -32,48 +29,48 @@ devtools::install_github("averriK/NGR")
 
 ```r
 library(NGR)
-
-# Show code with syntax highlighting
-showCode(code_file)
-
-# Display rendered HTML
-showHTML(html_file)
+library(data.table)
 
 # Create publication-quality plots
-buildPlot(data, config)
+plt <- buildPlot(
+  data = my_data,
+  type = "scatter",
+  x = "variable1",
+  y = "variable2"
+)
 
 # Generate formatted tables
-buildTable(data, format = "flextable")
+tbl <- buildTable(
+  data = my_data,
+  format = "flextable",
+  caption = "Summary statistics"
+)
 
-# Show rendered markdown
-showMarkdownRendered(md_file)
-
-# Display GitHub README
-showGithubREADME(repo)
+# Display utilities
+showCode("script.R")                 # Syntax-highlighted code
+showHTML("report.html")              # Rendered HTML
+showPDF("document.pdf")              # PDF viewer
+showMarkdownRendered("README.md")   # Rendered markdown
 ```
-
-## Examples
-
-Complete examples available in:
-
-- `~/github/inno/revealjs/_slides/` - Presentation workflows
-- `~/github/psha/_fig/` - Plot examples
-- `~/github/psha/_tbl/` - Table examples
 
 ## Documentation
 
-Function documentation available via R help:
+See function documentation via R help:
 
 ```r
 ?NGR
+?buildPlot
+?buildTable
 ```
+
+Full API: `buildPlot()`, `buildTable()`, `buildYAML()`, `showCode()`, `showHTML()`, `showPDF()`, `showMarkdownRendered()`, `showGithubREADME()`, `showASCII()`, `typewriter()`, `rotateTypewriter()`, specialized plot functions (Bar, Histogram, Hist2D, Hist3D, Model)
 
 ## Dependencies
 
 - R (>= 4.1.0)
 - yaml, brio, data.table
-- flextable, gt, officer, kableExtra
-- highcharter, htmlwidgets, webshot2, plotly
+- flextable, gt, officer, kableExtra (table backends)
+- highcharter, htmlwidgets, webshot2, plotly (interactive plots)
 - grDevices, stats, graphics
 
 ## License
