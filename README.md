@@ -2,6 +2,8 @@
 
 **Next Generation Reporting**
 
+> **Last updated:** November 13, 2025
+
 R package for generating professional multi-format reports with advanced plotting and table formatting capabilities.
 
 [![R Version](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue)](https://www.r-project.org/)
