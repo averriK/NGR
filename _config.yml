@@ -16,5 +16,3 @@ exclude:
   - tests/
   - src/
   - docs/
-  - R/
-  - man/
