@@ -90,7 +90,7 @@ MIT License - see [LICENSE](LICENSE)
 @software{ngr,
   author = {Verri Kozlowski, Alejandro},
   title = {NGR: Next Generation Reporting},
-  year = {2024},
+  year = {2020},
   version = {0.3.3},
   url = {https://github.com/averriK/NGR}
 }
@@ -98,6 +98,9 @@ MIT License - see [LICENSE](LICENSE)
 
 ---
 
-**Author:** Alejandro Verri Kozlowski  
+## Author
+
+**Alejandro Verri Kozlowski**  
 **Email:** averri@fi.uba.ar  
-**ORCID:** [0000-0002-8535-1170](https://orcid.org/0000-0002-8535-1170)
+**ORCID:** [0000-0002-8535-1170](https://orcid.org/0000-0002-8535-1170)  
+**Affiliation:** Universidad de Buenos Aires, Facultad de Ingeniería
