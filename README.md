@@ -63,7 +63,7 @@ See function documentation via R help:
 ?buildTable
 ```
 
-Full API: `buildPlot()`, `buildTable()`, `buildYAML()`, `showCode()`, `showHTML()`, `showPDF()`, `showMarkdownRendered()`, `showGithubREADME()`, `showASCII()`, `typewriter()`, `rotateTypewriter()`, specialized plot functions (Bar, Histogram, Hist2D, Hist3D, Model)
+Full API: `buildPlot()`, `buildTable()`, `buildYAML()`, `showCode()`, `showHTML()`, `showPDF()`, `showMarkdownRendered()`, `showGithubREADME()`, `showASCII()`, `showTypewriter()`, `rotateTypewriter()`, `buildIndexTypewriter()`, specialized plot functions (Bar, Histogram, Hist2D, Hist3D, Model)
 
 ### Main functions
 - buildPlot(...): High-level plotting with consistent styling; specialized variants for Bar/Histogram/Hist2D/Hist3D/Model.
@@ -82,7 +82,19 @@ Full API: `buildPlot()`, `buildTable()`, `buildYAML()`, `showCode()`, `showHTML(
 
 ## License
 
-[MIT License](LICENSE)
+MIT License - see [LICENSE](LICENSE)
+
+## Citation
+
+```bibtex
+@software{ngr,
+  author = {Verri Kozlowski, Alejandro},
+  title = {NGR: Next Generation Reporting},
+  year = {2024},
+  version = {0.3.3},
+  url = {https://github.com/averriK/NGR}
+}
+```
 
 ---
 
