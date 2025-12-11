@@ -8,7 +8,9 @@ showMarkdownRendered(
   filePath,
   height = "500px",
   theme = "spacelab",
-  toc = FALSE
+  toc = FALSE,
+  force = FALSE,
+  fontsize = NULL
 )
 }
 \arguments{
@@ -19,6 +21,10 @@ showMarkdownRendered(
 \item{theme}{HTML theme (default "spacelab")}
 
 \item{toc}{Show table of contents (default FALSE)}
+
+\item{force}{Force re-render even if HTML is up to date (default FALSE)}
+
+\item{fontsize}{Base font size (e.g., "0.8em", "14px", "90\%", default NULL = theme default)}
 }
 \value{
 Prints iframe HTML using cat() for results: asis

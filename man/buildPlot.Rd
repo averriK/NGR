@@ -47,6 +47,10 @@ buildPlot(
   point.dataLabels = FALSE,
   plot.filename = NULL,
   fill.opacity = 0.3,
+  fill.legend = NULL,
+  fill.max = ".max",
+  fill.min = ".min",
+  fill.minmax = FALSE,
   interpolation.method = "linear"
 )
 }
@@ -137,6 +141,15 @@ If invalid, \code{"line"} is used.}
 \item{plot.filename}{A string for the plot filename, if saving}
 
 \item{fill.opacity}{Opacity for arearange fill (0-1).}
+
+\item{fill.legend}{Optional legend label for the shaded arearange band. If NULL or empty, a default label is used.}
+
+\item{fill.max}{ID to use for the upper envelope series when auto-envelopes are enabled.}
+
+\item{fill.min}{ID to use for the lower envelope series when auto-envelopes are enabled.}
+
+\item{fill.minmax}{Logical flag; if TRUE and no explicit fill == TRUE is present in data.lines, automatically
+constructs upper/lower envelope series by X (using fill.max / fill.min as IDs) and shades between them.}
 
 \item{interpolation.method}{A string specifying the interpolation method used by \code{approx()}.}
 }

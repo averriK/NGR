@@ -54,6 +54,11 @@
 #' @param plot.filename A string for the plot filename, if saving
 #' @param interpolation.method A string specifying the interpolation method used by `approx()`.
 #' @param fill.opacity Opacity for arearange fill (0-1).
+#' @param fill.legend Optional legend label for the shaded arearange band. If NULL or empty, a default label is used.
+#' @param fill.max ID to use for the upper envelope series when auto-envelopes are enabled.
+#' @param fill.min ID to use for the lower envelope series when auto-envelopes are enabled.
+#' @param fill.minmax Logical flag; if TRUE and no explicit fill == TRUE is present in data.lines, automatically
+#'   constructs upper/lower envelope series by X (using fill.max / fill.min as IDs) and shades between them.
 #'
 #' @return A highchart object if either `data.lines` or `data.points` is provided.
 #'         Returns NULL if both are NULL, with a soft warning.
@@ -106,6 +111,10 @@ buildPlot <- function(
     point.dataLabels = FALSE,
     plot.filename = NULL,
     fill.opacity = 0.3,
+    fill.legend = NULL,
+    fill.max = ".max",
+    fill.min = ".min",
+    fill.minmax = FALSE,
     interpolation.method = "linear") {
     ## 1. Deprecation warnings for library, plot.type
     #    only trigger if the user explicitly set them (i.e. not missing)
@@ -297,6 +306,72 @@ buildPlot <- function(
 
     ## ============ LINES =============
     if (!is.null(data.lines)) {
+
+        ## Optional auto-envelope: compute .max/.min in plotting space when no
+        ## explicit fill column is provided by the caller. This uses only ID, X, Y.
+        if (isTRUE(fill.minmax) &&
+            !is.null(fill.max) && !is.null(fill.min) &&
+            (!"fill" %in% names(data.lines) || !any(data.lines$fill, na.rm = TRUE))) {
+
+            if (!inherits(data.lines, "data.table")) {
+                data.lines <- data.table::as.data.table(data.lines)
+            }
+
+            # Remove any existing envelope IDs from local copy
+            data.lines <- data.lines[!ID %in% c(fill.max, fill.min)]
+
+            # Ensure required columns are present
+            if (!all(c("ID", "X", "Y") %in% names(data.lines))) {
+                stop("data.lines must contain columns ID, X and Y when using fill.max/fill.min")
+            }
+
+            # Start with a logical fill column set to FALSE
+            if (!"fill" %in% names(data.lines)) {
+                data.lines[, fill := FALSE]
+            } else {
+                data.lines[, fill := FALSE]
+            }
+
+            COLS <- names(data.lines)
+
+            # Upper envelope: for each X, point with maximum Y among all IDs
+            MAX <- data.lines[, .SD[which.max(Y)], by = X]
+            MAX[, ID := fill.max]
+
+            # Lower envelope: for each X, point with minimum Y among all IDs
+            MIN <- data.lines[, .SD[which.min(Y)], by = X]
+            MIN[, ID := fill.min]
+
+            # Make sure MAX and MIN have exactly the same columns as data.lines
+            for (N in COLS) {
+                if (!N %in% names(MAX)) MAX[, (N) := NA]
+                if (!N %in% names(MIN)) MIN[, (N) := NA]
+            }
+            data.table::setcolorder(MAX, COLS)
+            data.table::setcolorder(MIN, COLS)
+
+            # Mark only envelopes for fill shading and enforce Solid style if present
+            MAX[, fill := TRUE]
+            MIN[, fill := TRUE]
+            if ("style" %in% COLS) {
+                MAX[, style := "Solid"]
+                MIN[, style := "Solid"]
+            }
+
+            data.lines <- data.table::rbindlist(list(data.lines, MAX, MIN), use.names = TRUE)
+
+            # Extend color map for new IDs if needed (reuse first existing color)
+            if (length(ID.COLOR.MAP) > 0L) {
+                base_color <- ID.COLOR.MAP[[1L]]
+                if (!fill.max %in% names(ID.COLOR.MAP)) {
+                    ID.COLOR.MAP[fill.max] <- base_color
+                }
+                if (!fill.min %in% names(ID.COLOR.MAP)) {
+                    ID.COLOR.MAP[fill.min] <- base_color
+                }
+            }
+        }
+
         unique_lines <- unique(data.lines$ID)
 
         for (gid in unique_lines) {
@@ -377,8 +452,8 @@ buildPlot <- function(
                     method = interpolation.method
                 )
                 fill_data <- data.frame(
-                    X = xvals,
-                    LOW = pmin(curve1$y, curve2$y),
+                    X    = xvals,
+                    LOW  = pmin(curve1$y, curve2$y),
                     HIGH = pmax(curve1$y, curve2$y)
                 )
 
@@ -387,7 +462,11 @@ buildPlot <- function(
                         data = fill_data,
                         type = "arearange",
                         hcaes(x = X, low = LOW, high = HIGH),
-                        name = paste("Area between", gid1, "and", gid2),
+                        name = if (!is.null(fill.legend) && nzchar(fill.legend)) {
+                            fill.legend
+                        } else {
+                            paste("Area between", gid1, "and", gid2)
+                        },
                         color = ID.COLOR.MAP[as.character(gid1)],
                         fillOpacity = fill.opacity
                     )
