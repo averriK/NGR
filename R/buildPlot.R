@@ -204,7 +204,8 @@ buildPlot <- function(
     validateData(data.points, "data.points")
 
     ## 9. Validate interpolation.method
-    valid.methods <- c("linear", "constant", "spline")
+    # stats::approx only supports "linear" and "constant"
+    valid.methods <- c("linear", "constant")
     if (!interpolation.method %in% valid.methods) {
         warning(sprintf(
             "Provided interpolation.method='%s' is invalid. Using 'linear' by default.",
