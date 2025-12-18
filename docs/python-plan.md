@@ -91,20 +91,25 @@ NGR/
 2. Implement these functions in Python using standard libraries:
    - file/path handling (`pathlib`, `os`),
    - appropriate rendering/visualisation for notebooks or terminal, etc.
-3. Add tests in `python/tests/` that exercise the same usage patterns as the
+3. For tables, prototype a `buildTable()` implementation backed by a modern
+   Python table library such as **Greater Tables** (`greater_tables.GT`), so
+   that Quarto can render high-quality HTML tables from Python chunks.
+4. Add tests in `python/tests/` that exercise the same usage patterns as the
    R examples.
-4. Release `0.1.x` versions on PyPI as soon as the subset is practically
+5. Release `0.1.x` versions on PyPI as soon as the subset is practically
    useful.
 
 ### Phase 4 — Grow coverage for plots and tables
 
-1. Design the mapping of `buildPlot*` to the Python plotting stack (e.g.
-   `matplotlib`/`plotly`) and `buildTable` to `pandas` + table-formatting
-   libraries.
+1. Design the mapping of `buildPlot*` to **Highcharts for Python**
+   (`highcharts-core`) so that the resulting charts closely match the
+   highcharter output in R. Finalise the Python-side data model for
+   `data_lines` / `data_points`.
 2. Implement progressively:
    - `buildPlot` plus variants (`.Bar`, `.Histogram`, `.Hist2D`, `.Hist3D`,
-     `.Model`),
-   - `buildTable`.
+     `.Model`) using `highcharts-core`,
+   - `buildTable` using `greater_tables` (or a similar library) as the main
+     backend.
 3. Where feasible, add tests that compare visual/structural characteristics of
    R and Python outputs.
 4. Add parallel examples in `docs/`: one snippet in R and the equivalent in

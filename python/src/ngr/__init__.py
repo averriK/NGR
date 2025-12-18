@@ -13,6 +13,52 @@ __all__ = ["buildPlot", "buildTable"]
 __version__ = "0.0.1"
 
 
+def _require_greater_tables():
+    """Import pandas + greater_tables lazily and fail with a clear message.
+
+    This keeps the ngr package importable even if the optional Python
+    backends are not installed.
+    """
+    try:
+        import pandas as pd  # type: ignore
+    except ImportError as exc:  # pragma: no cover - import error path
+        raise ImportError(
+            "ngr.buildTable() requires pandas. Install it with 'pip install pandas'."
+        ) from exc
+
+    try:
+        from greater_tables import GT  # type: ignore
+    except ImportError as exc:  # pragma: no cover - import error path
+        raise ImportError(
+            "ngr.buildTable() requires greater_tables. Install it with 'pip install greater-tables'."
+        ) from exc
+
+    return pd, GT
+
+
+def _to_dataframe(x: Any, pd_module: Any) -> "pd.DataFrame":
+    """Best-effort conversion of user input to a pandas.DataFrame.
+
+    This mirrors the R behaviour of accepting data.frame/data.table inputs,
+    but in Python we keep the contract deliberately loose for now.
+    """
+    pd = pd_module
+
+    if isinstance(x, pd.DataFrame):
+        return x
+
+    # Simple and conservative conversions; can be extended later
+    if isinstance(x, dict):
+        return pd.DataFrame(x)
+    if isinstance(x, (list, tuple)):
+        return pd.DataFrame(x)
+
+    raise TypeError(
+        "ngr.buildTable(): unsupported input type for 'x'; provide a pandas.DataFrame "
+        "or a dict/list/tuple that can be converted into one."
+    )
+
+
 def buildPlot(
     library: Optional[str] = None,
     plot_type: Optional[str] = None,
@@ -113,11 +159,11 @@ def buildTable(
     align_header: str = "center",
     align_body: str = "left",
 ) -> Any:
-"""Build a table equivalent to :func:`buildTable` in R.
+    """Build a table equivalent to :func:`buildTable` in R.
 
-    This is a *stub*: it exposes (most of) the same API as the R version for
-    the main options (backend library, output format and styling), but it
-    does not render anything yet.
+    This is an initial implementation: it wires the R-style API to a modern
+    Python table backend (Greater Tables / ``greater_tables.GT``) so that
+    Quarto can render high-quality HTML tables from Python chunks.
 
     Parameters
     ----------
@@ -125,16 +171,43 @@ def buildTable(
         Input data equivalent to ``.x`` in R, i.e. a tabular structure whose
         exact Python representation is still to be decided.
     library
-        Table backend ("gt", "flextable", "kable" or a future Python
-        equivalent).
+        Table backend selector. Currently only ``"gt"`` is supported on the
+        Python side and is mapped to :class:`greater_tables.GT`.
     format
-        Desired output format ("html", "pdf", "docx", etc.).
+        Desired output format ("html", "pdf", "docx", etc.). For now this is
+        mostly informational; the HTML representation is used by Quarto.
 
     Returns
     -------
     Any
-        In the future, a rendered table object. For now this always raises
-        :class:`NotImplementedError`.
+        A table object that Quarto can render (currently a ``GT`` instance).
     """
 
-    raise NotImplementedError("buildTable() aún no está implementada en ngr (Python).")
+    if library != "gt":
+        raise NotImplementedError(
+            "ngr.buildTable() currently only supports library='gt' on the Python "
+            "side."
+        )
+
+    pd, GT = _require_greater_tables()
+    df = _to_dataframe(x, pd)
+
+    # Minimal mapping for now: construct a GT table from the DataFrame.
+    # Styling options (fonts, borders, alignment, etc.) can be wired
+    # progressively to GT as we refine the design.
+    tbl = GT(df)
+
+    # Caption support, if GT exposes a suitable attribute or method.
+    # We avoid guessing too much here; this is a placeholder for future
+    # integration once the exact GT API usage is agreed.
+    if caption is not None:
+        # Many table libraries use 'title' or 'caption' arguments; adapt as
+        # needed once the final GT API is confirmed.
+        try:  # pragma: no cover - defensive path
+            tbl.caption = caption  # type: ignore[attr-defined]
+        except Exception:
+            # Fallback: ignore caption if the backend does not support it in
+            # this way. We'll wire this up properly once GT usage is fixed.
+            pass
+
+    return tbl

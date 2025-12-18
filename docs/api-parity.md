@@ -13,24 +13,22 @@ its Python implementation (`ngr`). For now we focus on:
 - `partial`          → exists but is missing options/behaviour
 - `complete`         → reasonably close parity with the R version
 
-## Funciones priorizadas
+## Prioritised functions
 
 ### buildPlot y derivados
 
-**R notes:** in addition to the original functions with a dot in the name
-(e.g. `buildPlot.Bar`, `buildPlot.Histogram`), the R package now also exports
-aliases without a dot: `buildPlotBar()`, `buildPlotHistogram()`,
-`buildPlotHist2D()`, `buildPlotHist3D()`, `buildPlotModel()`. These aliases
-simply wrap the original functions to preserve compatibility while offering
-names that match what we plan to use in Python.
+**R/Python mapping notes:** the R API uses function names with dots (e.g.
+`buildPlot.Bar`, `buildPlot.Histogram`). The Python API will use very similar
+names but in a Python-friendly style (e.g. `buildPlotBar`,
+`buildPlotHistogram`), keeping prefixes and semantics aligned.
 
-| R function             | Python name        | Estado          | Notas iniciales |
+| R function             | Python name        | Status          | Initial notes |
 |------------------------|--------------------|-----------------|-----------------|
 | `buildPlot`            | `buildPlot`        | partial         | Stub implemented in Python (`ngr.buildPlot`) with equivalent signature; plotting logic still missing. |
 | `buildPlotBar` (`buildPlot.Bar`) | `buildPlotBar`     | not-implemented | Specialised wrapper around `buildPlot` for bar/column charts. |
 | `buildPlotHistogram` (`buildPlot.Histogram`) | `buildPlotHistogram` | not-implemented | Specialised wrapper for histograms/densities. |
-| `buildPlotHist2D` (`buildPlot.Hist2D`)     | `buildPlotHist2D`  | not-implemented | 2D histogram / contour using `plotly`. |
-| `buildPlotHist3D` (`buildPlot.Hist3D`)     | `buildPlotHist3D`  | not-implemented | 3D bar histogram using `plotly`. |
+| `buildPlotHist2D` (`buildPlot.Hist2D`)     | `buildPlotHist2D`  | not-implemented | 2D histogram / contour; in Python planned via Highcharts for Python (`highcharts-core`). |
+| `buildPlotHist3D` (`buildPlot.Hist3D`)     | `buildPlotHist3D`  | not-implemented | 3D bar histogram; in Python planned via Highcharts for Python (`highcharts-core`). |
 | `buildPlotModel` (`buildPlot.Model`)      | `buildPlotModel`   | not-implemented | Model plot (lines + points in log–log space). |
 
 #### Firmas Python propuestas (resumen)
