@@ -21,8 +21,33 @@ NGR streamlines data visualization and presentation by providing high-level func
 
 ## Installation
 
+### R package
+
 ```r
+# From GitHub
 devtools::install_github("averriK/NGR")
+
+# From CRAN (when published)
+# install.packages("NGR")
+```
+
+### Python package (experimental)
+
+The same repository contains a Python package installable via `pip`. Its API
+will progressively mirror the main NGR functions available in R.
+
+Install from PyPI:
+
+```bash
+pip install ngr
+```
+
+Basic usage:
+
+```python
+import ngr
+
+print(ngr.__version__)
 ```
 
 ## Usage

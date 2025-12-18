@@ -1,0 +1,23 @@
+Metadata-Version: 2.4
+Name: ngr
+Version: 0.0.1
+Summary: Python interface for NGR (Next Generation Reporting)
+Author-email: Alejandro Verri Kozlowski <averri@fi.uba.ar>
+License: MIT
+Project-URL: Homepage, https://github.com/averriK/NGR
+Project-URL: Source, https://github.com/averriK/NGR
+Keywords: reporting,ngr,tables,plots
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+
+# ngr (Python)
+
+Python interface for the **NGR** (Next Generation Reporting) R package.
+
+Este subproyecto contiene la implementación en Python, instalable vía `pip`,
+que irá replicando progresivamente la API del paquete NGR en R.
+
+Para información general del proyecto consulta el README principal en `../README.md`.
