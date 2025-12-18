@@ -1,0 +1,7 @@
+README.md
+pyproject.toml
+src/ngr/__init__.py
+src/ngr.egg-info/PKG-INFO
+src/ngr.egg-info/SOURCES.txt
+src/ngr.egg-info/dependency_links.txt
+src/ngr.egg-info/top_level.txt

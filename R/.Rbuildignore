@@ -1,0 +1,12 @@
+^LICENSE\.md$
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.idea$
+^docs$
+^python$
+^venv$
+^\.venv$
+^dist$
+^build$
+^\.pytest_cache$
+^\.mypy_cache$

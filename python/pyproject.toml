@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ngr"
+version = "0.0.1"
+description = "Python interface for NGR (Next Generation Reporting)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+  { name = "Alejandro Verri Kozlowski", email = "averri@fi.uba.ar" }
+]
+keywords = ["reporting", "ngr", "tables", "plots"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/averriK/NGR"
+Source = "https://github.com/averriK/NGR"
+
+[tool.setuptools.packages.find]
+where = ["src"]
