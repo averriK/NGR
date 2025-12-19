@@ -46,3 +46,5 @@ html/
 .Rproj.user
 
 .idea/
+.vscode
+venv
