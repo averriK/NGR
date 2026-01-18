@@ -51,6 +51,10 @@ buildPlot(
   fill.max = ".max",
   fill.min = ".min",
   fill.minmax = FALSE,
+  fill.max.style = "Solid",
+  fill.min.style = "Solid",
+  fill.max.size = NULL,
+  fill.min.size = NULL,
   interpolation.method = "linear"
 )
 }
@@ -150,6 +154,14 @@ If invalid, \code{"line"} is used.}
 
 \item{fill.minmax}{Logical flag; if TRUE and no explicit fill == TRUE is present in data.lines, automatically
 constructs upper/lower envelope series by X (using fill.max / fill.min as IDs) and shades between them.}
+
+\item{fill.max.style}{Line style for upper envelope (default: "Solid").}
+
+\item{fill.min.style}{Line style for lower envelope (default: "Solid").}
+
+\item{fill.max.size}{Line width for upper envelope (default: NULL, uses global line.size).}
+
+\item{fill.min.size}{Line width for lower envelope (default: NULL, uses global line.size).}
 
 \item{interpolation.method}{A string specifying the interpolation method used by \code{approx()}.}
 }

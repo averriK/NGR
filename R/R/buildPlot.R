@@ -59,6 +59,10 @@
 #' @param fill.min ID to use for the lower envelope series when auto-envelopes are enabled.
 #' @param fill.minmax Logical flag; if TRUE and no explicit fill == TRUE is present in data.lines, automatically
 #'   constructs upper/lower envelope series by X (using fill.max / fill.min as IDs) and shades between them.
+#' @param fill.max.style Line style for upper envelope (default: "Solid").
+#' @param fill.min.style Line style for lower envelope (default: "Solid").
+#' @param fill.max.size Line width for upper envelope (default: NULL, uses global line.size).
+#' @param fill.min.size Line width for lower envelope (default: NULL, uses global line.size).
 #'
 #' @return A highchart object if either `data.lines` or `data.points` is provided.
 #'         Returns NULL if both are NULL, with a soft warning.
@@ -115,6 +119,10 @@ buildPlot <- function(
     fill.max = ".max",
     fill.min = ".min",
     fill.minmax = FALSE,
+    fill.max.style = "Solid",
+    fill.min.style = "Solid",
+    fill.max.size = NULL,
+    fill.min.size = NULL,
     interpolation.method = "linear") {
     ## 0. Declare data.table columns to avoid R CMD check NOTEs
     style <- size <- NULL  # data.table columns
@@ -354,15 +362,21 @@ buildPlot <- function(
             data.table::setcolorder(MAX, COLS)
             data.table::setcolorder(MIN, COLS)
 
-            # Mark only envelopes for fill shading and enforce Solid style
+            # Mark only envelopes for fill shading and set explicit style/size
             MAX[, fill := TRUE]
             MIN[, fill := TRUE]
+            
+            # Set style for envelopes
             if ("style" %in% COLS) {
-                MAX[, style := "Solid"]
-                MIN[, style := "Solid"]
+                MAX[, style := fill.max.style]
+                MIN[, style := fill.min.style]
             }
-            # Note: envelope lines inherit 'size' from original data if present,
-            # otherwise will use global line.size fallback in the plotting loop
+            
+            # Set size for envelopes
+            if ("size" %in% COLS) {
+                MAX[, size := if (!is.null(fill.max.size)) fill.max.size else line.size]
+                MIN[, size := if (!is.null(fill.min.size)) fill.min.size else line.size]
+            }
 
             data.lines <- data.table::rbindlist(list(data.lines, MAX, MIN), use.names = TRUE)
 
