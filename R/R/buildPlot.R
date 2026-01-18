@@ -30,8 +30,8 @@
 #' @param point.size A numeric for the point size
 #' @param xAxis.log A logical for the x-axis log scale
 #' @param yAxis.log A logical for the y-axis log scale
-#' @param xAxis.log.offset Offset value for X when xAxis.log=TRUE and data contains X<=0. NULL (default) calculates automatically as min(X[X>0])*0.1. FALSE disables transformation. Numeric value uses that as offset.
-#' @param yAxis.log.offset Offset value for Y when yAxis.log=TRUE and data contains Y<=0. NULL (default) calculates automatically as min(Y[Y>0])*0.1. FALSE disables transformation. Numeric value uses that as offset.
+#' @param xAxis.log.offset Offset value for X when xAxis.log=TRUE and data contains X<=0. NULL (default) calculates automatically as min(X[X>0]) * 0.1. FALSE disables transformation. Numeric value uses that as offset.
+#' @param yAxis.log.offset Offset value for Y when yAxis.log=TRUE and data contains Y<=0. NULL (default) calculates automatically as min(Y[Y>0]) * 0.1. FALSE disables transformation. Numeric value uses that as offset.
 #' @param xAxis.reverse A logical for the x-axis reverse
 #' @param yAxis.reverse A logical for the y-axis reverse
 #' @param xAxis.max A numeric for the x-axis max
