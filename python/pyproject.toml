@@ -10,6 +10,9 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [
+  { name = "Alejandro Verri Kozlowski", email = "averri@fi.uba.ar" }
+]
+maintainers = [
   { name = "Alejandro Verri Kozlowski", email = "averri@fi.uba.ar" },
   { name = "Alejandro Bueno Vera", email = "alejandro.bueno.vera.97@gmail.com" }
 ]
