@@ -10,7 +10,7 @@
 #'
 #' @param library DEPRECATED. A placeholder parameter that triggers a warning if used.
 #' @param plot.type DEPRECATED. A placeholder parameter that triggers a warning if used.
-#' @param data.lines A data.table containing columns "ID", "X", "Y", optional "style", optional "fill".
+#' @param data.lines A data.table containing columns "ID", "X", "Y", optional "style", optional "size", optional "fill".
 #'                   If NULL, no lines will be plotted.
 #' @param data.points A data.table containing columns "ID", "X", "Y", optional "style".
 #'                    If NULL, no scatter points will be plotted.
@@ -117,7 +117,7 @@ buildPlot <- function(
     fill.minmax = FALSE,
     interpolation.method = "linear") {
     ## 0. Declare data.table columns to avoid R CMD check NOTEs
-    style <- NULL  # data.table column
+    style <- size <- NULL  # data.table columns
     
     ## 1. Deprecation warnings for library, plot.type
     #    only trigger if the user explicitly set them (i.e. not missing)
@@ -397,7 +397,19 @@ buildPlot <- function(
                 dash_style <- LINE.STYLE[["solid"]] # final fallback
             }
 
-
+            ## --- line size (per-group or global fallback) ------------------
+            if ("size" %in% names(sub_data)) {
+                size_val <- as.numeric(sub_data$size[1])
+                if (is.na(size_val) || size_val <= 0) {
+                    warning(sprintf(
+                        "Invalid line size for ID='%s'. Using global line.size.",
+                        gid
+                    ))
+                    size_val <- line.size
+                }
+            } else {
+                size_val <- line.size  # global fallback
+            }
 
             ## --- geometry ("line" vs "spline") ------------------------------
             if ("type" %in% names(sub_data)) {
@@ -422,7 +434,7 @@ buildPlot <- function(
                     name = as.character(gid),
                     color = ID.COLOR.MAP[as.character(gid)],
                     dashStyle = dash_style,
-                    lineWidth = line.size,
+                    lineWidth = size_val,  # <- per-group size
                     marker = list(enabled = FALSE)
                 )
         }

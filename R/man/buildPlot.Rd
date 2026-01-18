@@ -59,7 +59,7 @@ buildPlot(
 
 \item{plot.type}{DEPRECATED. A placeholder parameter that triggers a warning if used.}
 
-\item{data.lines}{A data.table containing columns "ID", "X", "Y", optional "style", optional "fill".
+\item{data.lines}{A data.table containing columns "ID", "X", "Y", optional "style", optional "size", optional "fill".
 If NULL, no lines will be plotted.}
 
 \item{data.points}{A data.table containing columns "ID", "X", "Y", optional "style".
