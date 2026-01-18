@@ -55,6 +55,8 @@ buildPlot(
   fill.min.style = "Solid",
   fill.max.size = NULL,
   fill.min.size = NULL,
+  fill.max.color = "#00008B",
+  fill.min.color = "#8B0000",
   interpolation.method = "linear"
 )
 }
@@ -162,6 +164,10 @@ constructs upper/lower envelope series by X (using fill.max / fill.min as IDs) a
 \item{fill.max.size}{Line width for upper envelope (default: NULL, uses global line.size).}
 
 \item{fill.min.size}{Line width for lower envelope (default: NULL, uses global line.size).}
+
+\item{fill.max.color}{Color for upper envelope (default: "#00008B", dark blue).}
+
+\item{fill.min.color}{Color for lower envelope (default: "#8B0000", dark red).}
 
 \item{interpolation.method}{A string specifying the interpolation method used by \code{approx()}.}
 }

@@ -63,6 +63,8 @@
 #' @param fill.min.style Line style for lower envelope (default: "Solid").
 #' @param fill.max.size Line width for upper envelope (default: NULL, uses global line.size).
 #' @param fill.min.size Line width for lower envelope (default: NULL, uses global line.size).
+#' @param fill.max.color Color for upper envelope (default: "#00008B", dark blue).
+#' @param fill.min.color Color for lower envelope (default: "#8B0000", dark red).
 #'
 #' @return A highchart object if either `data.lines` or `data.points` is provided.
 #'         Returns NULL if both are NULL, with a soft warning.
@@ -123,6 +125,8 @@ buildPlot <- function(
     fill.min.style = "Solid",
     fill.max.size = NULL,
     fill.min.size = NULL,
+    fill.max.color = "#00008B",
+    fill.min.color = "#8B0000",
     interpolation.method = "linear") {
     ## 0. Declare data.table columns to avoid R CMD check NOTEs
     style <- size <- NULL  # data.table columns
@@ -380,15 +384,12 @@ buildPlot <- function(
 
             data.lines <- data.table::rbindlist(list(data.lines, MAX, MIN), use.names = TRUE)
 
-            # Extend color map for new IDs if needed (reuse first existing color)
-            if (length(ID.COLOR.MAP) > 0L) {
-                base_color <- ID.COLOR.MAP[[1L]]
-                if (!fill.max %in% names(ID.COLOR.MAP)) {
-                    ID.COLOR.MAP[fill.max] <- base_color
-                }
-                if (!fill.min %in% names(ID.COLOR.MAP)) {
-                    ID.COLOR.MAP[fill.min] <- base_color
-                }
+            # Set custom colors for envelope IDs
+            if (!fill.max %in% names(ID.COLOR.MAP)) {
+                ID.COLOR.MAP[fill.max] <- fill.max.color
+            }
+            if (!fill.min %in% names(ID.COLOR.MAP)) {
+                ID.COLOR.MAP[fill.min] <- fill.min.color
             }
         }
 
