@@ -30,6 +30,8 @@
 #' @param point.size A numeric for the point size
 #' @param xAxis.log A logical for the x-axis log scale
 #' @param yAxis.log A logical for the y-axis log scale
+#' @param xAxis.log.offset Offset value for X when xAxis.log=TRUE and data contains X<=0. NULL (default) calculates automatically as min of positive X values times 0.1. FALSE disables transformation. Numeric value uses that as offset.
+#' @param yAxis.log.offset Offset value for Y when yAxis.log=TRUE and data contains Y<=0. NULL (default) calculates automatically as min of positive Y values times 0.1. FALSE disables transformation. Numeric value uses that as offset.
 #' @param xAxis.reverse A logical for the x-axis reverse
 #' @param yAxis.reverse A logical for the y-axis reverse
 #' @param xAxis.max A numeric for the x-axis max
@@ -127,6 +129,8 @@ buildPlot <- function(
     fill.min.size = NULL,
     fill.max.color = "#00008B",
     fill.min.color = "#8B0000",
+    xAxis.log.offset = NULL,
+    yAxis.log.offset = NULL,
     interpolation.method = "linear") {
     ## 0. Declare data.table columns to avoid R CMD check NOTEs
     style <- size <- NULL  # data.table columns
@@ -242,10 +246,99 @@ buildPlot <- function(
         as.character(ALL.IDS)
     )
 
+    ## 10b. Handle logarithmic axis transformation for X<=0 or Y<=0
+    x_offset <- 0
+    y_offset <- 0
+    
+    # X-axis transformation
+    if (xAxis.log && !isFALSE(xAxis.log.offset)) {
+        all_x <- c(
+            if (!is.null(data.lines)) data.lines$X,
+            if (!is.null(data.points)) data.points$X
+        )
+        if (any(all_x <= 0, na.rm = TRUE)) {
+            if (is.null(xAxis.log.offset)) {
+                # Auto-calculate offset
+                x_positive <- all_x[all_x > 0]
+                if (length(x_positive) > 0) {
+                    x_offset <- min(x_positive, na.rm = TRUE) * 0.1
+                }
+            } else if (is.numeric(xAxis.log.offset)) {
+                x_offset <- xAxis.log.offset
+            }
+            
+            if (x_offset > 0) {
+                if (!is.null(data.lines)) {
+                    if (!inherits(data.lines, "data.table")) {
+                        data.lines <- data.table::as.data.table(data.lines)
+                    }
+                    data.lines[, X := X + x_offset]
+                }
+                if (!is.null(data.points)) {
+                    if (!inherits(data.points, "data.table")) {
+                        data.points <- data.table::as.data.table(data.points)
+                    }
+                    data.points[, X := X + x_offset]
+                }
+            }
+        }
+    }
+    
+    # Y-axis transformation  
+    if (yAxis.log && !isFALSE(yAxis.log.offset)) {
+        all_y <- c(
+            if (!is.null(data.lines)) data.lines$Y,
+            if (!is.null(data.points)) data.points$Y
+        )
+        if (any(all_y <= 0, na.rm = TRUE)) {
+            if (is.null(yAxis.log.offset)) {
+                # Auto-calculate offset
+                y_positive <- all_y[all_y > 0]
+                if (length(y_positive) > 0) {
+                    y_offset <- min(y_positive, na.rm = TRUE) * 0.1
+                }
+            } else if (is.numeric(yAxis.log.offset)) {
+                y_offset <- yAxis.log.offset
+            }
+            
+            if (y_offset > 0) {
+                if (!is.null(data.lines)) {
+                    if (!inherits(data.lines, "data.table")) {
+                        data.lines <- data.table::as.data.table(data.lines)
+                    }
+                    data.lines[, Y := Y + y_offset]
+                }
+                if (!is.null(data.points)) {
+                    if (!inherits(data.points, "data.table")) {
+                        data.points <- data.table::as.data.table(data.points)
+                    }
+                    data.points[, Y := Y + y_offset]
+                }
+            }
+        }
+    }
+
     ## 11. Initialize plot object
+    # Build axis label formatters if offset was applied
+    xAxis_labels <- list(enabled = xAxis.label)
+    if (x_offset > 0) {
+        xAxis_labels$formatter <- htmlwidgets::JS(sprintf(
+            "function() { var val = this.value - %f; return Math.abs(val) < 1e-10 ? '0' : val.toString(); }",
+            x_offset
+        ))
+    }
+    
+    yAxis_labels <- list(enabled = yAxis.label)
+    if (y_offset > 0) {
+        yAxis_labels$formatter <- htmlwidgets::JS(sprintf(
+            "function() { var val = this.value - %f; return Math.abs(val) < 1e-10 ? '0' : val.toString(); }",
+            y_offset
+        ))
+    }
+    
     plot.object <- highchart() |>
         hc_xAxis(
-            labels = list(enabled = xAxis.label),
+            labels = xAxis_labels,
             title = list(
                 text = xAxis.legend,
                 style = list(fontSize = xAxis.legend.fontsize)
@@ -256,7 +349,7 @@ buildPlot <- function(
             min = if (!is.na(xAxis.min)) xAxis.min else NULL
         ) |>
         hc_yAxis(
-            labels = list(enabled = yAxis.label),
+            labels = yAxis_labels,
             title = list(
                 text = yAxis.legend,
                 style = list(fontSize = yAxis.legend.fontsize)
@@ -319,6 +412,23 @@ buildPlot <- function(
             itemStyle = list(fontSize = group.legend.fontsize)
         ) |>
         hc_chart(style = list(fontFamily = "Helvetica"))
+    
+    ## 15b. Configure tooltip to show original values if offset was applied
+    if (x_offset > 0 || y_offset > 0) {
+        tooltip_formatter <- htmlwidgets::JS(sprintf(
+            "function() {
+                var x_val = this.x - %f;
+                var y_val = this.y - %f;
+                var x_str = Math.abs(x_val) < 1e-10 ? '0' : x_val.toString();
+                var y_str = Math.abs(y_val) < 1e-10 ? '0' : y_val.toString();
+                return '<b>' + this.series.name + '</b><br/>' + 
+                       'X: ' + x_str + '<br/>' +
+                       'Y: ' + y_str;
+            }",
+            x_offset, y_offset
+        ))
+        plot.object <- plot.object |> hc_tooltip(formatter = tooltip_formatter)
+    }
 
     ## ============ LINES =============
     if (!is.null(data.lines)) {
