@@ -73,8 +73,8 @@ showGithubREADME <- function(repo, user = "averriK", height = "500px") {
     cat('></iframe>\n\n')
   } else {
     cat('\n<div style="border: 1px solid #ddd; padding: 20px; text-align: center; background: #f9f9f9;">\n')
-    cat('  <p><strong>⚠️ ', fallback_message, '</strong></p>\n', sep = "")
-    cat('  <p><a href="', final_url, '" target="_blank" style="font-size: 1.1em;">📄 Open ', repo, ' on GitHub</a></p>\n', sep = "")
+    cat('  <p><strong>[!] ', fallback_message, '</strong></p>\n', sep = "")
+    cat('  <p><a href="', final_url, '" target="_blank" style="font-size: 1.1em;">Open ', repo, ' on GitHub</a></p>\n', sep = "")
     cat('</div>\n\n')
   }
   

@@ -116,6 +116,9 @@ buildPlot <- function(
     fill.min = ".min",
     fill.minmax = FALSE,
     interpolation.method = "linear") {
+    ## 0. Declare data.table columns to avoid R CMD check NOTEs
+    style <- NULL  # data.table column
+    
     ## 1. Deprecation warnings for library, plot.type
     #    only trigger if the user explicitly set them (i.e. not missing)
     if (!missing(library)) {

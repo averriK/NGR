@@ -7,6 +7,7 @@
 #' @param show_link Show link to open PDF in new window (default TRUE)
 #' @param pagemode PDF.js pagemode: "none" (no sidebar), "thumbs", "bookmarks", "attachments" (default "none")
 #' @return Prints iframe HTML using cat() for results: asis
+#' @importFrom utils URLencode
 #' @export
 #' @examples
 #' \dontrun{

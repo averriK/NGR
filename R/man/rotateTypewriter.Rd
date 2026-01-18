@@ -35,6 +35,8 @@ rotateTypewriter(
 \item{bgColor}{Background color in hex (default "#000")}
 
 \item{terminalWidth}{Terminal width in columns: 40, 60, 80. Default 80. fontSize will be auto-calculated to fit.}
+
+\item{height}{Height of the container (default "300px")}
 }
 \value{
 Prints HTML with rotating typewriter effect

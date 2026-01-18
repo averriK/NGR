@@ -8,6 +8,7 @@
 #' @param color Text color in hex (default "#00ff00")
 #' @param bgColor Background color in hex (default "#000")
 #' @param terminalWidth Terminal width in columns: 40, 60, 80. Default 80. fontSize will be auto-calculated to fit.
+#' @param height Height of the container (default "300px")
 #' @return Prints HTML with typewriter effect
 #' @export
 showTypewriter <- function(filePath = NULL,
