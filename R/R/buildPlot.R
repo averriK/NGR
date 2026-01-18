@@ -354,12 +354,17 @@ buildPlot <- function(
             data.table::setcolorder(MAX, COLS)
             data.table::setcolorder(MIN, COLS)
 
-            # Mark only envelopes for fill shading and enforce Solid style if present
+            # Mark only envelopes for fill shading and enforce Solid style
             MAX[, fill := TRUE]
             MIN[, fill := TRUE]
             if ("style" %in% COLS) {
                 MAX[, style := "Solid"]
                 MIN[, style := "Solid"]
+            }
+            # Ensure size is set for envelopes to avoid inheriting unwanted values
+            if ("size" %in% COLS) {
+                MAX[, size := line.size * 0.5]  # Thinner for envelope lines
+                MIN[, size := line.size * 0.5]
             }
 
             data.lines <- data.table::rbindlist(list(data.lines, MAX, MIN), use.names = TRUE)
@@ -484,7 +489,9 @@ buildPlot <- function(
                             paste("Area between", gid1, "and", gid2)
                         },
                         color = ID.COLOR.MAP[as.character(gid1)],
-                        fillOpacity = fill.opacity
+                        fillOpacity = fill.opacity,
+                        marker = list(enabled = FALSE),  # Disable markers on arearange
+                        lineWidth = 0  # No border line on arearange
                     )
             }
         }
