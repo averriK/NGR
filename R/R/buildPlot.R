@@ -361,11 +361,8 @@ buildPlot <- function(
                 MAX[, style := "Solid"]
                 MIN[, style := "Solid"]
             }
-            # Ensure size is set for envelopes to avoid inheriting unwanted values
-            if ("size" %in% COLS) {
-                MAX[, size := line.size * 0.5]  # Thinner for envelope lines
-                MIN[, size := line.size * 0.5]
-            }
+            # Note: envelope lines inherit 'size' from original data if present,
+            # otherwise will use global line.size fallback in the plotting loop
 
             data.lines <- data.table::rbindlist(list(data.lines, MAX, MIN), use.names = TRUE)
 
