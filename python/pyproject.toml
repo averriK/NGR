@@ -12,6 +12,10 @@ license = { text = "MIT" }
 authors = [
   { name = "Alejandro Verri Kozlowski", email = "averri@fi.uba.ar" }
 ]
+maintainers = [
+  { name = "Alejandro Verri Kozlowski", email = "averri@fi.uba.ar" },
+  { name = "Alejandro Bueno Vera", email = "alejandro.bueno.vera.97@gmail.com" }
+]
 keywords = ["reporting", "ngr", "tables", "plots"]
 classifiers = [
   "Programming Language :: Python :: 3",
