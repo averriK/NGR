@@ -57,6 +57,8 @@ buildPlot(
   fill.min.size = NULL,
   fill.max.color = "#00008B",
   fill.min.color = "#8B0000",
+  xAxis.log.offset = NULL,
+  yAxis.log.offset = NULL,
   interpolation.method = "linear"
 )
 }
@@ -168,6 +170,10 @@ constructs upper/lower envelope series by X (using fill.max / fill.min as IDs) a
 \item{fill.max.color}{Color for upper envelope (default: "#00008B", dark blue).}
 
 \item{fill.min.color}{Color for lower envelope (default: "#8B0000", dark red).}
+
+\item{xAxis.log.offset}{Offset value for X when xAxis.log=TRUE and data contains X<=0. NULL (default) calculates automatically as min of positive X values times 0.1. FALSE disables transformation. Numeric value uses that as offset.}
+
+\item{yAxis.log.offset}{Offset value for Y when yAxis.log=TRUE and data contains Y<=0. NULL (default) calculates automatically as min of positive Y values times 0.1. FALSE disables transformation. Numeric value uses that as offset.}
 
 \item{interpolation.method}{A string specifying the interpolation method used by \code{approx()}.}
 }
