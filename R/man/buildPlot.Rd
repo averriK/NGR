@@ -59,7 +59,8 @@ buildPlot(
   fill.min.color = "#8B0000",
   xAxis.log.offset = NULL,
   yAxis.log.offset = NULL,
-  interpolation.method = "linear"
+  interpolation.method = "linear",
+  yAxis2 = NULL
 )
 }
 \arguments{
@@ -176,6 +177,8 @@ constructs upper/lower envelope series by X (using fill.max / fill.min as IDs) a
 \item{yAxis.log.offset}{Offset value for Y when yAxis.log=TRUE and data contains Y<=0. NULL (default) calculates automatically as min of positive Y values times 0.1. FALSE disables transformation. Numeric value uses that as offset.}
 
 \item{interpolation.method}{A string specifying the interpolation method used by \code{approx()}.}
+
+\item{yAxis2}{Optional list with Highcharts \code{yAxis[1]} options. Typical use: opposite axis linked to primary with a custom \code{labels.formatter}.}
 }
 \value{
 A highchart object if either \code{data.lines} or \code{data.points} is provided.

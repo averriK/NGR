@@ -40,6 +40,7 @@
 #' @param yAxis.min A numeric for the y-axis min
 #' @param xAxis.label A logical for the x-axis label
 #' @param yAxis.label A logical for the y-axis label
+#' @param yAxis2 Optional list with Highcharts `yAxis[1]` options. Typical use: opposite axis linked to primary with a custom `labels.formatter`.
 #' @param legend.layout A string for the legend layout
 #' @param legend.align A string for the legend horizontal alignment (e.g. `"center"`, `"left"`, `"right"`)
 #' @param legend.valign A string for the legend vertical alignment (e.g. `"top"`, `"middle"`, `"bottom"`)
@@ -131,7 +132,8 @@ buildPlot <- function(
     fill.min.color = "#8B0000",
     xAxis.log.offset = NULL,
     yAxis.log.offset = NULL,
-    interpolation.method = "linear") {
+    interpolation.method = "linear",
+    yAxis2 = NULL) {
     ## 0. Declare data.table columns to avoid R CMD check NOTEs
     style <- size <- NULL  # data.table columns
     
@@ -231,6 +233,11 @@ buildPlot <- function(
             interpolation.method
         ))
         interpolation.method <- "linear"
+    }
+
+    ## 9b. Validate yAxis2
+    if (!is.null(yAxis2) && !is.list(yAxis2)) {
+        stop("buildPlot(): yAxis2 must be a list or NULL")
     }
 
     ## 10. Build color mapping (collect all IDs for consistent color usage)
@@ -336,19 +343,41 @@ buildPlot <- function(
         ))
     }
     
-    plot.object <- highchart() |>
-        hc_xAxis(
-            labels = xAxis_labels,
-            title = list(
-                text = xAxis.legend,
-                style = list(fontSize = xAxis.legend.fontsize)
-            ),
-            type = if (xAxis.log) "logarithmic" else "linear",
-            reversed = xAxis.reverse,
-            max = if (!is.na(xAxis.max)) xAxis.max else NULL,
-            min = if (!is.na(xAxis.min)) xAxis.min else NULL
-        ) |>
-        hc_yAxis(
+    if (is.null(yAxis2)) {
+        plot.object <- highchart() |>
+            hc_xAxis(
+                labels = xAxis_labels,
+                title = list(
+                    text = xAxis.legend,
+                    style = list(fontSize = xAxis.legend.fontsize)
+                ),
+                type = if (xAxis.log) "logarithmic" else "linear",
+                reversed = xAxis.reverse,
+                max = if (!is.na(xAxis.max)) xAxis.max else NULL,
+                min = if (!is.na(xAxis.min)) xAxis.min else NULL
+            ) |>
+            hc_yAxis(
+                labels = yAxis_labels,
+                title = list(
+                    text = yAxis.legend,
+                    style = list(fontSize = yAxis.legend.fontsize)
+                ),
+                type = if (yAxis.log) "logarithmic" else "linear",
+                reversed = yAxis.reverse,
+                max = if (!is.na(yAxis.max)) yAxis.max else NULL,
+                min = if (!is.na(yAxis.min)) yAxis.min else NULL
+            ) |>
+            hc_exporting(
+                enabled = TRUE,
+                filename = if (!is.null(plot.filename)) plot.filename else "highchart-plot",
+                buttons = list(
+                    contextButton = list(
+                        menuItems = c("downloadPNG", "downloadJPEG", "downloadPDF", "downloadSVG", "downloadCSV", "downloadXLS")
+                    )
+                )
+            )
+    } else {
+        yAxis_primary <- list(
             labels = yAxis_labels,
             title = list(
                 text = yAxis.legend,
@@ -358,16 +387,43 @@ buildPlot <- function(
             reversed = yAxis.reverse,
             max = if (!is.na(yAxis.max)) yAxis.max else NULL,
             min = if (!is.na(yAxis.min)) yAxis.min else NULL
-        ) |>
-      hc_exporting(
-        enabled = TRUE,
-        filename = if (!is.null(plot.filename)) plot.filename else "highchart-plot",
-        buttons = list(
-            contextButton = list(
-                menuItems = c("downloadPNG", "downloadJPEG", "downloadPDF", "downloadSVG", "downloadCSV", "downloadXLS")
-            )
         )
-    )
+
+        yAxis2_defaults <- list(
+            opposite = TRUE,
+            linkedTo = 0,
+            gridLineWidth = 0,
+            title = list(
+                text = NULL,
+                style = list(fontSize = yAxis.legend.fontsize)
+            ),
+            labels = yAxis_labels
+        )
+        yAxis_secondary <- utils::modifyList(yAxis2_defaults, yAxis2)
+
+        plot.object <- highchart() |>
+            hc_xAxis(
+                labels = xAxis_labels,
+                title = list(
+                    text = xAxis.legend,
+                    style = list(fontSize = xAxis.legend.fontsize)
+                ),
+                type = if (xAxis.log) "logarithmic" else "linear",
+                reversed = xAxis.reverse,
+                max = if (!is.na(xAxis.max)) xAxis.max else NULL,
+                min = if (!is.na(xAxis.min)) xAxis.min else NULL
+            ) |>
+            hc_yAxis_multiples(yAxis_primary, yAxis_secondary) |>
+            hc_exporting(
+                enabled = TRUE,
+                filename = if (!is.null(plot.filename)) plot.filename else "highchart-plot",
+                buttons = list(
+                    contextButton = list(
+                        menuItems = c("downloadPNG", "downloadJPEG", "downloadPDF", "downloadSVG", "downloadCSV", "downloadXLS")
+                    )
+                )
+            )
+    }
 
     ## 12. Theme handling
     if (!is.null(plot.theme)) {

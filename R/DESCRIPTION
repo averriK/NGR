@@ -28,6 +28,8 @@ Suggests:
     knitr,
     rmarkdown
 Config/testthat/edition: 3 
+Author: Alejandro Verri Kozlowski [aut, cre]
+Maintainer: Alejandro Verri Kozlowski <averri@fi.uba.ar>
 Authors@R: 
     person("Alejandro", "Verri Kozlowski", , "averri@fi.uba.ar", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-8535-1170"))
