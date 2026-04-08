@@ -23,6 +23,9 @@
 #' @param hlines.size Numeric. Thickness of horizontal lines.
 #' @param align.header Character. Alignment of header text. Options are `"center"`, `"left"`, `"right"`.
 #' @param align.body Character. Alignment of body text. Options are `"center"`, `"left"`, `"right"`.
+#' @param padding.header Numeric. Vertical cell padding (top and bottom, in pt) for header rows. Default 5.
+#' @param padding.body Numeric. Vertical cell padding (top and bottom, in pt) for body rows. Default 5.
+#' @param padding.all Numeric. Vertical cell padding for all rows. Overrides `padding.header` and `padding.body`.
 #' @param caption Character. The table caption.
 #' @return A formatted table rendered using the specified library and options.
 #' @examples
@@ -43,7 +46,7 @@
 #'   caption = "Iris Data Table"
 #' )
 #' @importFrom data.table as.data.table data.table is.data.table
-#' @importFrom flextable flextable fontsize font bold align border set_caption
+#' @importFrom flextable flextable fontsize font bold align border set_caption padding
 #' @importFrom gt gt tab_options tab_style cell_text cells_column_labels cells_body cell_borders px tab_caption
 #' @importFrom kableExtra kable kable_styling row_spec column_spec
 #' @importFrom officer fp_border
@@ -69,7 +72,10 @@ buildTable <- function(.x,
                        vlines.size = 1,
                        hlines.size = 1,
                        align.header = "center",
-                       align.body = "left") {
+                       align.body = "left",
+                       padding.header = 5,
+                       padding.body = 5,
+                       padding.all = NULL) {
 
   # Override individual font sizes if font.size.all is specified
   if (!is.null(font.size.all)) {
@@ -89,6 +95,12 @@ buildTable <- function(.x,
     font.bold.body <- font.bold.all
   }
 
+  # Override individual padding if padding.all is specified
+  if (!is.null(padding.all)) {
+    padding.header <- padding.all
+    padding.body <- padding.all
+  }
+
   # Ensure .x is a data.frame or data.table
   if (!is.data.frame(.x) && !is.data.table(.x)) {
     stop(".x must be a data.frame or data.table")
@@ -99,14 +111,15 @@ buildTable <- function(.x,
          "flextable" = .buildTable.ft(.x, format, font.size.header, font.size.body, font.family.header,
                                       font.family.body, font.bold.header, font.bold.body, vlines.show,
                                       hlines.show, vlines.color, hlines.color, vlines.size, hlines.size,
-                                      align.header, align.body, caption),
+                                      align.header, align.body, padding.header, padding.body, caption),
          "gt" = .buildTable.gt(.x, format, font.size.header, font.size.body, font.family.header,
                                font.family.body, font.bold.header, font.bold.body, vlines.show, hlines.show,
-                               vlines.color, hlines.color, vlines.size, hlines.size, align.header, align.body, caption),
+                               vlines.color, hlines.color, vlines.size, hlines.size, align.header, align.body,
+                               padding.header, padding.body, caption),
          "kable" = .buildTable.kable(.x, format, font.size.header, font.size.body, font.family.header,
                                      font.family.body, font.bold.header, font.bold.body, vlines.show,
                                      hlines.show, vlines.color, hlines.color, vlines.size, hlines.size,
-                                     align.header, align.body, caption),
+                                     align.header, align.body, padding.header, padding.body, caption),
          stop("Unsupported library. Please use 'flextable', 'gt', or 'kable'.")
   )
 }
@@ -115,7 +128,7 @@ buildTable <- function(.x,
 
 .buildTable.ft <- function(.x, format, font.size.header, font.size.body, font.family.header, font.family.body,
                            font.bold.header, font.bold.body, vlines.show, hlines.show, vlines.color, hlines.color,
-                           vlines.size, hlines.size, align.header, align.body, caption) {
+                           vlines.size, hlines.size, align.header, align.body, padding.header, padding.body, caption) {
 
   TABLE <- flextable::flextable(.x)
 
@@ -137,6 +150,10 @@ buildTable <- function(.x,
   TABLE <- flextable::align(TABLE, align = align.header, part = "header")
   TABLE <- flextable::align(TABLE, align = align.body, part = "body")
 
+  # Padding
+  TABLE <- flextable::padding(TABLE, padding.top = padding.header, padding.bottom = padding.header, part = "header")
+  TABLE <- flextable::padding(TABLE, padding.top = padding.body, padding.bottom = padding.body, part = "body")
+
   # Borders
   if (vlines.show) {
     TABLE <- flextable::vline(TABLE, border = officer::fp_border(color = vlines.color, width = vlines.size), part = "all")
@@ -155,7 +172,7 @@ buildTable <- function(.x,
 
 .buildTable.gt <- function(.x, format, font.size.header, font.size.body, font.family.header, font.family.body,
                            font.bold.header, font.bold.body, vlines.show, hlines.show, vlines.color, hlines.color,
-                           vlines.size, hlines.size, align.header, align.body, caption) {
+                           vlines.size, hlines.size, align.header, align.body, padding.header, padding.body, caption) {
 
   TABLE <- gt::gt(.x)
 
@@ -195,6 +212,13 @@ buildTable <- function(.x,
     gt::tab_style(
       style = gt::cell_text(align = align.body),
       locations = gt::cells_body()
+    )
+
+  # Padding
+  TABLE <- TABLE |>
+    gt::tab_options(
+      data_row.padding = gt::px(padding.body),
+      column_labels.padding = gt::px(padding.header)
     )
 
   # Borders
@@ -240,7 +264,7 @@ buildTable <- function(.x,
 
 .buildTable.kable <- function(.x, format, font.size.header, font.size.body, font.family.header, font.family.body,
                               font.bold.header, font.bold.body, vlines.show, hlines.show, vlines.color, hlines.color,
-                              vlines.size, hlines.size, align.header, align.body, caption) {
+                              vlines.size, hlines.size, align.header, align.body, padding.header, padding.body, caption) {
 
   # Normalize format for knitr/kable
   fmt <- if (tolower(format) == "pdf") "latex" else format
@@ -253,11 +277,11 @@ buildTable <- function(.x,
 
   # Header formatting
   TABLE <- TABLE |>
-    kableExtra::row_spec(0, bold = font.bold.header, font_size = font.size.header, align = align.header, extra_css = paste0("font-family: ", font.family.header, ";"))
+    kableExtra::row_spec(0, bold = font.bold.header, font_size = font.size.header, align = align.header, extra_css = paste0("font-family: ", font.family.header, "; padding-top: ", padding.header, "pt; padding-bottom: ", padding.header, "pt;"))
 
   # Body formatting
   TABLE <- TABLE |>
-    kableExtra::row_spec(1:nrow(.x), bold = font.bold.body, align = align.body, extra_css = paste0("font-family: ", font.family.body, ";"))
+    kableExtra::row_spec(1:nrow(.x), bold = font.bold.body, align = align.body, extra_css = paste0("font-family: ", font.family.body, "; padding-top: ", padding.body, "pt; padding-bottom: ", padding.body, "pt;"))
 
   # Borders
   if (vlines.show || hlines.show) {

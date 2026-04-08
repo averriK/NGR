@@ -60,7 +60,10 @@ buildPlot(
   xAxis.log.offset = NULL,
   yAxis.log.offset = NULL,
   interpolation.method = "linear",
-  yAxis2 = NULL
+  yAxis2 = NULL,
+  yAxis2.legend = NULL,
+  yAxis2.transform = NULL,
+  yAxis2.decimals = 0
 )
 }
 \arguments{
@@ -68,10 +71,10 @@ buildPlot(
 
 \item{plot.type}{DEPRECATED. A placeholder parameter that triggers a warning if used.}
 
-\item{data.lines}{A data.table containing columns "ID", "X", "Y", optional "style", optional "size", optional "fill".
+\item{data.lines}{A data.table containing columns "ID", "X", "Y", optional "style", optional "size", optional "fill", optional "yAxis" (0 or 1).
 If NULL, no lines will be plotted.}
 
-\item{data.points}{A data.table containing columns "ID", "X", "Y", optional "style".
+\item{data.points}{A data.table containing columns "ID", "X", "Y", optional "style", optional "yAxis" (0 or 1).
 If NULL, no scatter points will be plotted.}
 
 \item{line.type}{A string indicating the line series type. Options might include \code{"line"} or \code{"spline"}.
@@ -178,7 +181,13 @@ constructs upper/lower envelope series by X (using fill.max / fill.min as IDs) a
 
 \item{interpolation.method}{A string specifying the interpolation method used by \code{approx()}.}
 
-\item{yAxis2}{Optional list with Highcharts \code{yAxis[1]} options. Typical use: opposite axis linked to primary with a custom \code{labels.formatter}.}
+\item{yAxis2}{Advanced: optional list with Highcharts \code{yAxis[1]} options (secondary axis). If provided, it overrides \verb{yAxis2.*} convenience arguments.}
+
+\item{yAxis2.legend}{Optional string for the secondary Y axis title (right axis).}
+
+\item{yAxis2.transform}{Optional one-sided formula to transform primary Y tick values for secondary axis labels in linked mode. Use \code{Y} as the primary axis tick value (e.g. \code{~ 1 / Y}).}
+
+\item{yAxis2.decimals}{Integer number of decimals for secondary axis labels when using \code{yAxis2.transform} (passed to \code{Highcharts.numberFormat}).}
 }
 \value{
 A highchart object if either \code{data.lines} or \code{data.points} is provided.

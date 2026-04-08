@@ -31,50 +31,85 @@ devtools::install_github("averriK/NGR")
 # install.packages("NGR")
 ```
 
-### Python package (experimental)
-
-The same repository contains a Python package installable via `pip`. Its API
-will progressively mirror the main NGR functions available in R.
-
-Install from PyPI:
-
-```bash
-pip install ngr
-```
-
-Basic usage:
-
-```python
-import ngr
-
-print(ngr.__version__)
-```
-
 ## Usage
+
+### Plots (`buildPlot()`)
+
+`buildPlot()` consumes `data.table`s with:
+
+- **Lines**: `data.lines` with columns `ID`, `X`, `Y` (optional: `style`, `size`, `fill`, `yAxis`)
+- **Points**: `data.points` with columns `ID`, `X`, `Y` (optional: `style`, `yAxis`)
+
+#### Basic line plot
 
 ```r
 library(NGR)
 library(data.table)
 
-# Create publication-quality plots
+lines <- data.table(
+  ID = "Series",
+  X  = 1:10,
+  Y  = (1:10)^2
+)
+
 plt <- buildPlot(
-  data = my_data,
-  type = "scatter",
-  x = "variable1",
-  y = "variable2"
+  data.lines   = lines,
+  plot.title   = "Example plot",
+  xAxis.legend = "X",
+  yAxis.legend = "Y"
 )
+```
 
-# Generate formatted tables
+#### Secondary Y axis — linked (same curve, relabel ticks)
+
+Use this when you want **one curve** but the right axis shows a transformed label, e.g. `TR = 1 / AEP`.
+
+```r
+plt <- buildPlot(
+  data.lines = lines,
+  yAxis.legend  = "AEP [1/yr]",
+  yAxis2.legend = "TR [yr]",
+  yAxis2.transform = ~ 1 / Y,
+  yAxis2.decimals = 0
+)
+```
+
+#### Secondary Y axis — independent (two variables / two scales)
+
+Assign each series to axis 0 or 1 via a `yAxis` column.
+
+```r
+dt <- data.table::rbindlist(list(
+  data.table::data.table(ID = "Pressure", X = 1:50, Y = 10 + sin((1:50)/6), yAxis = 0),
+  data.table::data.table(ID = "Temp",     X = 1:50, Y = 20 + cos((1:50)/8), yAxis = 1)
+))
+
+plt <- buildPlot(
+  data.lines   = dt,
+  yAxis.legend  = "Pressure",
+  yAxis2.legend = "Temp"
+)
+```
+
+### Tables (`buildTable()`)
+
+```r
+library(NGR)
+
 tbl <- buildTable(
-  data = my_data,
-  format = "flextable",
-  caption = "Summary statistics"
+  iris,
+  library = "gt",
+  format  = "html",
+  caption = "Iris summary"
 )
+```
 
-# Display utilities
-showCode("script.R")                 # Syntax-highlighted code
-showHTML("report.html")              # Rendered HTML
-showPDF("document.pdf")              # PDF viewer
+### Display utilities
+
+```r
+showCode("script.R")                # Syntax-highlighted code
+showHTML("report.html")             # Rendered HTML
+showPDF("document.pdf")             # PDF viewer
 showMarkdownRendered("README.md")   # Rendered markdown
 ```
 
@@ -87,6 +122,12 @@ See function documentation via R help:
 ?buildPlot
 ?buildTable
 ```
+
+GitHub Pages notes (see `docs/`):
+
+- `docs/index.md`
+- `docs/secondary-y-axis.md`
+- `docs/themes-gridlines.md`
 
 Full API: `buildPlot()`, `buildTable()`, `buildYAML()`, `showCode()`, `showHTML()`, `showPDF()`, `showMarkdownRendered()`, `showGithubREADME()`, `showASCII()`, `showTypewriter()`, `rotateTypewriter()`, `buildIndexTypewriter()`, specialized plot functions (Bar, Histogram, Hist2D, Hist3D, Model)
 

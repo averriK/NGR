@@ -25,7 +25,10 @@ buildTable(
   vlines.size = 1,
   hlines.size = 1,
   align.header = "center",
-  align.body = "left"
+  align.body = "left",
+  padding.header = 5,
+  padding.body = 5,
+  padding.all = NULL
 )
 }
 \arguments{
@@ -70,6 +73,12 @@ buildTable(
 \item{align.header}{Character. Alignment of header text. Options are \code{"center"}, \code{"left"}, \code{"right"}.}
 
 \item{align.body}{Character. Alignment of body text. Options are \code{"center"}, \code{"left"}, \code{"right"}.}
+
+\item{padding.header}{Numeric. Vertical cell padding (top and bottom, in pt) for header rows. Default 5.}
+
+\item{padding.body}{Numeric. Vertical cell padding (top and bottom, in pt) for body rows. Default 5.}
+
+\item{padding.all}{Numeric. Vertical cell padding for all rows. Overrides \code{padding.header} and \code{padding.body}.}
 }
 \value{
 A formatted table rendered using the specified library and options.

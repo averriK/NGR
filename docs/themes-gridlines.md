@@ -1,3 +1,8 @@
+---
+layout: default
+title: Temas con Líneas de Grilla para Escalas Logarítmicas
+---
+
 # Temas con Líneas de Grilla para Escalas Logarítmicas
 
 ## Resumen

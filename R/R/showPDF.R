@@ -43,7 +43,7 @@ showPDF <- function(
   } else {
     # Local file - PDFs are in same directory as viewer, so just use filename
     viewer_src <- paste0(pdfjs_path, "?file=", file)
-    pdf_link <- paste0(pdf_base_path, file)
+    pdf_link <- if (startsWith(file, "/")) file else paste0(pdf_base_path, file)
     pdf_name <- tools::file_path_sans_ext(file)
   }
   

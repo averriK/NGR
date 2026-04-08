@@ -1,3 +1,8 @@
+---
+layout: default
+title: NGR R ↔ Python API parity
+---
+
 # NGR R ↔ Python API parity
 
 This document tracks the implementation status of the public NGR R API versus
@@ -83,6 +88,12 @@ def buildPlot(
     fill_min=".min",
     fill_minmax=False,
     interpolation_method="linear",
+
+    # Secondary Y axis (linked relabeling or independent axes)
+    yAxis2=None,
+    yAxis2_legend=None,
+    yAxis2_transform=None,
+    yAxis2_decimals=0,
 ):
     ...
 
