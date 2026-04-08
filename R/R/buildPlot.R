@@ -10,9 +10,9 @@
 #'
 #' @param library DEPRECATED. A placeholder parameter that triggers a warning if used.
 #' @param plot.type DEPRECATED. A placeholder parameter that triggers a warning if used.
-#' @param data.lines A data.table containing columns "ID", "X", "Y", optional "style", optional "size", optional "fill".
+#' @param data.lines A data.table containing columns "ID", "X", "Y", optional "style", optional "size", optional "fill", optional "yAxis" (0 or 1).
 #'                   If NULL, no lines will be plotted.
-#' @param data.points A data.table containing columns "ID", "X", "Y", optional "style".
+#' @param data.points A data.table containing columns "ID", "X", "Y", optional "style", optional "yAxis" (0 or 1).
 #'                    If NULL, no scatter points will be plotted.
 #' @param line.type A string indicating the line series type. Options might include `"line"` or `"spline"`.
 #'                  If invalid, `"line"` is used.
@@ -40,7 +40,10 @@
 #' @param yAxis.min A numeric for the y-axis min
 #' @param xAxis.label A logical for the x-axis label
 #' @param yAxis.label A logical for the y-axis label
-#' @param yAxis2 Optional list with Highcharts `yAxis[1]` options. Typical use: opposite axis linked to primary with a custom `labels.formatter`.
+#' @param yAxis2 Advanced: optional list with Highcharts `yAxis[1]` options (secondary axis). If provided, it overrides `yAxis2.*` convenience arguments.
+#' @param yAxis2.legend Optional string for the secondary Y axis title (right axis).
+#' @param yAxis2.transform Optional one-sided formula to transform primary Y tick values for secondary axis labels in linked mode. Use `Y` as the primary axis tick value (e.g. `~ 1 / Y`).
+#' @param yAxis2.decimals Integer number of decimals for secondary axis labels when using `yAxis2.transform` (passed to `Highcharts.numberFormat`).
 #' @param legend.layout A string for the legend layout
 #' @param legend.align A string for the legend horizontal alignment (e.g. `"center"`, `"left"`, `"right"`)
 #' @param legend.valign A string for the legend vertical alignment (e.g. `"top"`, `"middle"`, `"bottom"`)
@@ -133,9 +136,12 @@ buildPlot <- function(
     xAxis.log.offset = NULL,
     yAxis.log.offset = NULL,
     interpolation.method = "linear",
-    yAxis2 = NULL) {
+    yAxis2 = NULL,
+    yAxis2.legend = NULL,
+    yAxis2.transform = NULL,
+    yAxis2.decimals = 0) {
     ## 0. Declare data.table columns to avoid R CMD check NOTEs
-    style <- size <- NULL  # data.table columns
+    style <- size <- yAxis <- NULL  # data.table columns
     
     ## 1. Deprecation warnings for library, plot.type
     #    only trigger if the user explicitly set them (i.e. not missing)
@@ -224,6 +230,27 @@ buildPlot <- function(
     validateData(data.lines, "data.lines")
     validateData(data.points, "data.points")
 
+    validateYAxisCol <- function(data, data_name) {
+        if (!is.null(data) && "yAxis" %in% names(data)) {
+            vals <- data$yAxis
+            if (is.factor(vals)) {
+                vals <- as.character(vals)
+            }
+            if (is.character(vals)) {
+                suppressWarnings(vals_num <- as.numeric(vals))
+                if (any(!is.na(vals) & is.na(vals_num))) {
+                    stop(sprintf("Error in buildPlot(): %s$yAxis must be numeric (0 or 1).", data_name))
+                }
+                vals <- vals_num
+            }
+            if (any(!is.na(vals) & !(vals %in% c(0, 1)))) {
+                stop(sprintf("Error in buildPlot(): %s$yAxis must be 0 or 1 (or NA).", data_name))
+            }
+        }
+    }
+    validateYAxisCol(data.lines, "data.lines")
+    validateYAxisCol(data.points, "data.points")
+
     ## 9. Validate interpolation.method
     # stats::approx only supports "linear" and "constant"
     valid.methods <- c("linear", "constant")
@@ -235,9 +262,21 @@ buildPlot <- function(
         interpolation.method <- "linear"
     }
 
-    ## 9b. Validate yAxis2
+    ## 9b. Validate yAxis2 / yAxis2.*
     if (!is.null(yAxis2) && !is.list(yAxis2)) {
         stop("buildPlot(): yAxis2 must be a list or NULL")
+    }
+    if (!is.null(yAxis2.legend) && (!is.character(yAxis2.legend) || length(yAxis2.legend) != 1)) {
+        stop("buildPlot(): yAxis2.legend must be a single string or NULL")
+    }
+    if (!is.null(yAxis2.transform) && !inherits(yAxis2.transform, "formula")) {
+        stop("buildPlot(): yAxis2.transform must be a formula like ~ 1 / Y (or NULL)")
+    }
+    if (!is.null(yAxis2.decimals)) {
+        if (!is.numeric(yAxis2.decimals) || length(yAxis2.decimals) != 1 || is.na(yAxis2.decimals) || yAxis2.decimals < 0) {
+            stop("buildPlot(): yAxis2.decimals must be a single non-negative number")
+        }
+        yAxis2.decimals <- as.integer(yAxis2.decimals)
     }
 
     ## 10. Build color mapping (collect all IDs for consistent color usage)
@@ -291,12 +330,20 @@ buildPlot <- function(
         }
     }
     
-    # Y-axis transformation  
+    # Y-axis transformation (only affects yAxis == 0 series)
     if (yAxis.log && !isFALSE(yAxis.log.offset)) {
-        all_y <- c(
-            if (!is.null(data.lines)) data.lines$Y,
-            if (!is.null(data.points)) data.points$Y
-        )
+        get_axis0_y <- function(data) {
+            if (is.null(data)) {
+                return(numeric(0))
+            }
+            if ("yAxis" %in% names(data)) {
+                idx0 <- is.na(data$yAxis) | data$yAxis == 0
+                return(data$Y[idx0])
+            }
+            data$Y
+        }
+
+        all_y <- c(get_axis0_y(data.lines), get_axis0_y(data.points))
         if (any(all_y <= 0, na.rm = TRUE)) {
             if (is.null(yAxis.log.offset)) {
                 # Auto-calculate offset
@@ -307,19 +354,27 @@ buildPlot <- function(
             } else if (is.numeric(yAxis.log.offset)) {
                 y_offset <- yAxis.log.offset
             }
-            
+
             if (y_offset > 0) {
                 if (!is.null(data.lines)) {
                     if (!inherits(data.lines, "data.table")) {
                         data.lines <- data.table::as.data.table(data.lines)
                     }
-                    data.lines[, Y := Y + y_offset]
+                    if ("yAxis" %in% names(data.lines)) {
+                        data.lines[is.na(yAxis) | yAxis == 0, Y := Y + y_offset]
+                    } else {
+                        data.lines[, Y := Y + y_offset]
+                    }
                 }
                 if (!is.null(data.points)) {
                     if (!inherits(data.points, "data.table")) {
                         data.points <- data.table::as.data.table(data.points)
                     }
-                    data.points[, Y := Y + y_offset]
+                    if ("yAxis" %in% names(data.points)) {
+                        data.points[is.na(yAxis) | yAxis == 0, Y := Y + y_offset]
+                    } else {
+                        data.points[, Y := Y + y_offset]
+                    }
                 }
             }
         }
@@ -343,7 +398,24 @@ buildPlot <- function(
         ))
     }
     
-    if (is.null(yAxis2)) {
+    has_axis2_series <- FALSE
+    if (!is.null(data.lines) && "yAxis" %in% names(data.lines)) {
+        has_axis2_series <- any(data.lines$yAxis == 1, na.rm = TRUE)
+    }
+    if (!has_axis2_series && !is.null(data.points) && "yAxis" %in% names(data.points)) {
+        has_axis2_series <- any(data.points$yAxis == 1, na.rm = TRUE)
+    }
+
+    needs_secondary_axis <- has_axis2_series ||
+        !is.null(yAxis2) ||
+        !is.null(yAxis2.legend) ||
+        !is.null(yAxis2.transform)
+
+    if (has_axis2_series && !is.null(yAxis2.transform)) {
+        stop("buildPlot(): yAxis2.transform is only supported in linked mode (no series assigned to yAxis=1)")
+    }
+
+    if (!needs_secondary_axis) {
         plot.object <- highchart() |>
             hc_xAxis(
                 labels = xAxis_labels,
@@ -389,17 +461,187 @@ buildPlot <- function(
             min = if (!is.na(yAxis.min)) yAxis.min else NULL
         )
 
+        # Convert simple math formulas (in terms of Y) into JavaScript.
+        # Example: yAxis2.transform = ~ 1 / Y
+        transform_env <- if (!is.null(yAxis2.transform)) environment(yAxis2.transform) else NULL
+        expr_to_js <- function(expr) {
+            if (is.null(expr)) {
+                stop("buildPlot(): yAxis2.transform formula RHS is missing")
+            }
+
+            if (is.numeric(expr)) {
+                return(format(expr, scientific = TRUE, digits = 17))
+            }
+
+            if (is.symbol(expr)) {
+                nm <- as.character(expr)
+                if (nm %in% c("Y", ".")) {
+                    return("y")
+                }
+                if (nm == "pi") {
+                    return("Math.PI")
+                }
+
+                # Allow scalar numeric constants defined in the formula environment.
+                # Example: yAxis2.transform = ~ ITo / (-log(1 - Y)) with ITo = 50
+                if (!is.null(transform_env) && exists(nm, envir = transform_env, inherits = TRUE)) {
+                    val <- get(nm, envir = transform_env, inherits = TRUE)
+                    if (is.numeric(val) && length(val) == 1 && is.finite(val)) {
+                        return(format(val, scientific = TRUE, digits = 17))
+                    }
+                }
+
+                stop(sprintf("buildPlot(): Unsupported symbol in yAxis2.transform: %s", nm))
+            }
+
+            if (is.call(expr)) {
+                op <- as.character(expr[[1]])
+
+                # Parentheses/grouping: (x)
+                if (op == "(") {
+                    if (length(expr) != 2) {
+                        stop("buildPlot(): Unsupported arity for parentheses in yAxis2.transform")
+                    }
+                    return(expr_to_js(expr[[2]]))
+                }
+
+                # Binary operators
+                if (op %in% c("+", "-", "*", "/")) {
+                    # unary -
+                    if (op == "-" && length(expr) == 2) {
+                        return(paste0("(-", expr_to_js(expr[[2]]), ")"))
+                    }
+                    if (length(expr) != 3) {
+                        stop(sprintf("buildPlot(): Unsupported arity for operator %s in yAxis2.transform", op))
+                    }
+                    lhs <- expr_to_js(expr[[2]])
+                    rhs <- expr_to_js(expr[[3]])
+                    return(paste0("(", lhs, " ", op, " ", rhs, ")"))
+                }
+
+                if (op == "^") {
+                    if (length(expr) != 3) {
+                        stop("buildPlot(): Unsupported arity for ^ in yAxis2.transform")
+                    }
+                    base <- expr_to_js(expr[[2]])
+                    expo <- expr_to_js(expr[[3]])
+                    return(paste0("Math.pow(", base, ", ", expo, ")"))
+                }
+
+                # Math functions
+                if (op %in% c("abs", "sqrt", "exp", "sin", "cos", "tan")) {
+                    if (length(expr) != 2) {
+                        stop(sprintf("buildPlot(): Unsupported arity for %s in yAxis2.transform", op))
+                    }
+                    arg <- expr_to_js(expr[[2]])
+                    return(paste0("Math.", op, "(", arg, ")"))
+                }
+
+                if (op %in% c("floor", "ceiling", "round")) {
+                    if (length(expr) < 2) {
+                        stop(sprintf("buildPlot(): Unsupported arity for %s in yAxis2.transform", op))
+                    }
+                    arg <- expr_to_js(expr[[2]])
+
+                    if (op == "floor") {
+                        return(paste0("Math.floor(", arg, ")"))
+                    }
+                    if (op == "ceiling") {
+                        return(paste0("Math.ceil(", arg, ")"))
+                    }
+
+                    # round(x, digits)
+                    if (length(expr) == 2) {
+                        return(paste0("Math.round(", arg, ")"))
+                    }
+
+                    digits <- expr[[3]]
+                    digits_js <- expr_to_js(digits)
+                    return(paste0("(Math.round(", arg, " * Math.pow(10, ", digits_js, ")) / Math.pow(10, ", digits_js, "))"))
+                }
+
+                if (op == "log") {
+                    # log(x, base)
+                    if (length(expr) < 2 || length(expr) > 3) {
+                        stop("buildPlot(): log() in yAxis2.transform must be log(x) or log(x, base)")
+                    }
+                    x_js <- expr_to_js(expr[[2]])
+                    if (length(expr) == 2) {
+                        return(paste0("Math.log(", x_js, ")"))
+                    }
+                    base_js <- expr_to_js(expr[[3]])
+                    return(paste0("(Math.log(", x_js, ") / Math.log(", base_js, "))"))
+                }
+
+                if (op == "log10") {
+                    if (length(expr) != 2) {
+                        stop("buildPlot(): log10() in yAxis2.transform must be log10(x)")
+                    }
+                    x_js <- expr_to_js(expr[[2]])
+                    return(paste0("(Math.log(", x_js, ") / Math.LN10)"))
+                }
+
+                if (op == "log2") {
+                    if (length(expr) != 2) {
+                        stop("buildPlot(): log2() in yAxis2.transform must be log2(x)")
+                    }
+                    x_js <- expr_to_js(expr[[2]])
+                    return(paste0("(Math.log(", x_js, ") / Math.LN2)"))
+                }
+
+                stop(sprintf("buildPlot(): Unsupported function/operator in yAxis2.transform: %s", op))
+            }
+
+            stop("buildPlot(): Unsupported expression type in yAxis2.transform")
+        }
+
+        yAxis2_labels <- if (has_axis2_series) {
+            list(enabled = yAxis.label)
+        } else {
+            # linked mode defaults to the same labels (including any y_offset formatter)
+            yAxis_labels
+        }
+
+        if (!is.null(yAxis2.transform)) {
+            rhs <- yAxis2.transform[[2]]
+            transform_js <- expr_to_js(rhs)
+            y_offset_js <- if (y_offset > 0) sprintf(" - %.17g", y_offset) else ""
+            yAxis2_labels$enabled <- TRUE
+            yAxis2_labels$formatter <- htmlwidgets::JS(sprintf(
+                "function() { var y = this.value%s; var y2 = %s; if (y2 === null || y2 === undefined || !isFinite(y2)) return ''; return Highcharts.numberFormat(y2, %d); }",
+                y_offset_js,
+                transform_js,
+                yAxis2.decimals
+            ))
+        }
+
         yAxis2_defaults <- list(
             opposite = TRUE,
-            linkedTo = 0,
             gridLineWidth = 0,
             title = list(
-                text = NULL,
+                text = if (!is.null(yAxis2.legend)) yAxis2.legend else NULL,
                 style = list(fontSize = yAxis.legend.fontsize)
             ),
-            labels = yAxis_labels
+            labels = yAxis2_labels,
+            reversed = yAxis.reverse
         )
-        yAxis_secondary <- utils::modifyList(yAxis2_defaults, yAxis2)
+
+        if (!has_axis2_series) {
+            # Linked axis: must match primary type, otherwise Highcharts can fail to render.
+            yAxis2_defaults$linkedTo <- 0
+            yAxis2_defaults$type <- if (yAxis.log) "logarithmic" else "linear"
+            yAxis2_defaults$max <- if (!is.na(yAxis.max)) yAxis.max else NULL
+            yAxis2_defaults$min <- if (!is.na(yAxis.min)) yAxis.min else NULL
+        } else {
+            # Independent axis: default to linear unless caller overrides via yAxis2.
+            yAxis2_defaults$type <- "linear"
+        }
+
+        yAxis_secondary <- if (!is.null(yAxis2)) {
+            utils::modifyList(yAxis2_defaults, yAxis2)
+        } else {
+            yAxis2_defaults
+        }
 
         plot.object <- highchart() |>
             hc_xAxis(
@@ -474,7 +716,9 @@ buildPlot <- function(
         tooltip_formatter <- htmlwidgets::JS(sprintf(
             "function() {
                 var x_val = this.x - %f;
-                var y_val = this.y - %f;
+                var y_axis = (this.series && this.series.userOptions && this.series.userOptions.yAxis != null) ? this.series.userOptions.yAxis : 0;
+                var y_off = (y_axis === 0) ? %f : 0;
+                var y_val = this.y - y_off;
                 var x_str = Math.abs(x_val) < 1e-10 ? '0' : x_val.toString();
                 var y_str = Math.abs(y_val) < 1e-10 ? '0' : y_val.toString();
                 return '<b>' + this.series.name + '</b><br/>' + 
@@ -563,6 +807,21 @@ buildPlot <- function(
 
         for (gid in unique_lines) {
             sub_data <- data.lines[ID == gid]
+
+            y_axis_idx <- 0
+            if ("yAxis" %in% names(sub_data)) {
+                y_axis_vals <- unique(sub_data$yAxis[!is.na(sub_data$yAxis)])
+                if (length(y_axis_vals) > 1) {
+                    warning(sprintf(
+                        "Multiple yAxis values found for ID='%s'. Using the first.",
+                        gid
+                    ))
+                }
+                if (length(y_axis_vals) >= 1) {
+                    y_axis_idx <- as.integer(y_axis_vals[1])
+                }
+            }
+
             # Determine line style from data or fallback
             if ("style" %in% names(sub_data)) {
                 style_val <- tolower(as.character(sub_data$style[1]))
@@ -615,6 +874,7 @@ buildPlot <- function(
                     type = type_val, # <- per-series geometry
                     hcaes(x = X, y = Y),
                     name = as.character(gid),
+                    yAxis = y_axis_idx,
                     color = ID.COLOR.MAP[as.character(gid)],
                     dashStyle = dash_style,
                     lineWidth = size_val,  # <- per-group size
@@ -666,6 +926,7 @@ buildPlot <- function(
                         } else {
                             paste("Area between", gid1, "and", gid2)
                         },
+                        yAxis = 0,
                         color = ID.COLOR.MAP[as.character(gid1)],
                         fillOpacity = fill.opacity,
                         marker = list(enabled = FALSE),  # Disable markers on arearange
@@ -681,6 +942,21 @@ buildPlot <- function(
 
         for (gid in unique_points) {
             sub_data <- data.points[ID == gid]
+
+            y_axis_idx <- 0
+            if ("yAxis" %in% names(sub_data)) {
+                y_axis_vals <- unique(sub_data$yAxis[!is.na(sub_data$yAxis)])
+                if (length(y_axis_vals) > 1) {
+                    warning(sprintf(
+                        "Multiple yAxis values found for point ID='%s'. Using the first.",
+                        gid
+                    ))
+                }
+                if (length(y_axis_vals) >= 1) {
+                    y_axis_idx <- as.integer(y_axis_vals[1])
+                }
+            }
+
             # Determine point style from data or fallback
             if ("style" %in% names(sub_data)) {
                 style_val <- tolower(as.character(sub_data$style[1]))
@@ -704,6 +980,7 @@ buildPlot <- function(
                     type = "scatter",
                     hcaes(x = X, y = Y),
                     name = as.character(gid),
+                    yAxis = y_axis_idx,
                     color = ID.COLOR.MAP[as.character(gid)],
                     marker = list(
                         symbol = symbol_style,

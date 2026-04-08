@@ -1,3 +1,8 @@
+---
+layout: default
+title: Adding Web Fonts to Typewriter Functions
+---
+
 # Adding Web Fonts to Typewriter Functions
 
 ## Overview

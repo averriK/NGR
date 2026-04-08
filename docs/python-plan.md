@@ -1,3 +1,8 @@
+---
+layout: default
+title: NGR (Python) development plan
+---
+
 # NGR (Python) development plan
 
 This document describes how the **NGR Python** library fits into this

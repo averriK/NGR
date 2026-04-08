@@ -1,3 +1,8 @@
+---
+layout: default
+title: Auditoría de READMEs
+---
+
 # Auditoría de READMEs - Problemas vs Reglas del Template
 
 **Fecha:** 2025-11-06  

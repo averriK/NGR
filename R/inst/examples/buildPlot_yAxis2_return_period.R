@@ -24,14 +24,9 @@ PLOT <- buildPlot(
   yAxis.legend = "AEP",
   xAxis.log = TRUE,
   yAxis.log = TRUE,
-  yAxis2 = list(
-    title = list(text = "TR [yr]"),
-    labels = list(
-      formatter = htmlwidgets::JS(
-        "function(){ var aep = this.value; if (aep <= 0) return ''; var tr = 1/aep; return tr.toFixed(0); }"
-      )
-    )
-  )
+  yAxis2.legend = "TR [yr]",
+  yAxis2.transform = ~ 1 / Y,
+  yAxis2.decimals = 0
 )
 
 # Optional structural check (depends on highcharter internals)
