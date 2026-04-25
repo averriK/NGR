@@ -13,4 +13,8 @@
 ^\.tmp_webshot$
 ^\.positai$
 ^\.claude$
-^\legacy$
+^legacy$
+^_config\.yml$
+^_layouts$
+^index\.md$
+^TODO_buildTable\.md$
