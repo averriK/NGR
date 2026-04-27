@@ -20,8 +20,7 @@ Imports:
     htmlwidgets,
     webshot2,
     stats,
-    graphics,
-    plotly
+    graphics
 Suggests:
     devtools,
     roxygen2,
