@@ -75,7 +75,7 @@
 #' @return A highchart object if either `data.lines` or `data.points` is provided.
 #'         Returns NULL if both are NULL, with a soft warning.
 #' @importFrom grDevices hcl.pals hcl.colors
-#' @importFrom stats setNames approx
+#' @importFrom stats setNames approx spline
 #' @import highcharter
 #' @importFrom htmlwidgets saveWidget
 #' @export buildPlot
@@ -898,18 +898,29 @@ buildPlot <- function(
                     data.lines[ID == gid1]$X,
                     data.lines[ID == gid2]$X
                 )))
-                curve1 <- approx(
-                    data.lines[ID == gid1]$X,
-                    data.lines[ID == gid1]$Y,
-                    xout = xvals,
-                    method = interpolation.method
-                )
-                curve2 <- approx(
-                    data.lines[ID == gid2]$X,
-                    data.lines[ID == gid2]$Y,
-                    xout = xvals,
-                    method = interpolation.method
-                )
+                if (line.type == "spline") {
+                    curve1 <- spline(
+                        data.lines[ID == gid1]$X,
+                        data.lines[ID == gid1]$Y,
+                        xout = xvals, method = "natural"
+                    )
+                    curve2 <- spline(
+                        data.lines[ID == gid2]$X,
+                        data.lines[ID == gid2]$Y,
+                        xout = xvals, method = "natural"
+                    )
+                } else {
+                    curve1 <- approx(
+                        data.lines[ID == gid1]$X,
+                        data.lines[ID == gid1]$Y,
+                        xout = xvals, method = interpolation.method
+                    )
+                    curve2 <- approx(
+                        data.lines[ID == gid2]$X,
+                        data.lines[ID == gid2]$Y,
+                        xout = xvals, method = interpolation.method
+                    )
+                }
                 fill_data <- data.frame(
                     X    = xvals,
                     LOW  = pmin(curve1$y, curve2$y),
@@ -919,7 +930,7 @@ buildPlot <- function(
                 plot.object <- plot.object |>
                     hc_add_series(
                         data = fill_data,
-                        type = "arearange",
+                        type = if (line.type == "spline") "areasplinerange" else "arearange",
                         hcaes(x = X, low = LOW, high = HIGH),
                         name = if (!is.null(fill.legend) && nzchar(fill.legend)) {
                             fill.legend
