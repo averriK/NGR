@@ -711,24 +711,7 @@ buildPlot <- function(
         ) |>
         hc_chart(style = list(fontFamily = "Helvetica"))
     
-    ## 15b. Configure tooltip to show original values if offset was applied
-    if (x_offset > 0 || y_offset > 0) {
-        tooltip_formatter <- htmlwidgets::JS(sprintf(
-            "function() {
-                var x_val = this.x - %f;
-                var y_axis = (this.series && this.series.userOptions && this.series.userOptions.yAxis != null) ? this.series.userOptions.yAxis : 0;
-                var y_off = (y_axis === 0) ? %f : 0;
-                var y_val = this.y - y_off;
-                var x_str = Math.abs(x_val) < 1e-10 ? '0' : x_val.toString();
-                var y_str = Math.abs(y_val) < 1e-10 ? '0' : y_val.toString();
-                return '<b>' + this.series.name + '</b><br/>' + 
-                       'X: ' + x_str + '<br/>' +
-                       'Y: ' + y_str;
-            }",
-            x_offset, y_offset
-        ))
-        plot.object <- plot.object |> hc_tooltip(formatter = tooltip_formatter)
-    }
+    ## 15b. (removed — tooltip built once at §16)
 
     ## ============ LINES =============
     if (!is.null(data.lines)) {
@@ -1002,18 +985,44 @@ buildPlot <- function(
     }
 
     ## 16. Tooltip
-    plot.object <- plot.object |>
-        hc_tooltip(
-            sort = FALSE,
-            split = FALSE,
-            crosshairs = TRUE,
-            headerFormat = "",
-            pointFormat = sprintf(
-                "<b>{point.series.name}</b><br>%s: {point.x}<br>%s: {point.y}",
-                xAxis.legend,
-                yAxis.legend
+    if (x_offset > 0 || y_offset > 0) {
+        tooltip_formatter <- htmlwidgets::JS(sprintf(
+            "function() {
+                var name  = this.series.name;
+                var x_val = this.x - %f;
+                var y_axis = (this.series && this.series.userOptions &&
+                              this.series.userOptions.yAxis != null)
+                             ? this.series.userOptions.yAxis : 0;
+                var y_off = (y_axis === 0) ? %f : 0;
+                var y_val = this.y - y_off;
+                var x_str = Math.abs(x_val) < 1e-10 ? '0' : x_val.toString();
+                var y_str = Math.abs(y_val) < 1e-10 ? '0' : y_val.toString();
+                return '%s: <b>' + name + '</b><br/>%s: ' + x_str + '<br/>%s: ' + y_str;
+            }",
+            x_offset, y_offset,
+            group.legend, xAxis.legend, yAxis.legend
+        ))
+        plot.object <- plot.object |>
+            hc_tooltip(
+                sort       = FALSE,
+                split      = FALSE,
+                crosshairs = TRUE,
+                formatter  = tooltip_formatter
             )
-        ) |>
+    } else {
+        plot.object <- plot.object |>
+            hc_tooltip(
+                sort        = FALSE,
+                split       = FALSE,
+                crosshairs  = TRUE,
+                headerFormat = "",
+                pointFormat  = sprintf(
+                    "%s: <b>{point.series.name}</b><br>%s: {point.x}<br>%s: {point.y}",
+                    group.legend, xAxis.legend, yAxis.legend
+                )
+            )
+    }
+    plot.object <- plot.object |>
         hc_plotOptions(
             series = list(
                 dataLabels = list(enabled = point.dataLabels)
