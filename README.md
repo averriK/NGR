@@ -6,7 +6,20 @@
 
 R package for generating professional multi-format reports with advanced plotting and table formatting capabilities.
 
-## What is it?
+## Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Exported API](#exported-api)
+- [Dependencies](#dependencies)
+- [Documentation (how to read)](#documentation-how-to-read)
+- [License](#license)
+- [Citation](#citation)
+- [Author](#author)
+
+## Overview
 
 NGR streamlines data visualization and presentation by providing high-level functions for creating publication-quality plots and tables. Integrates Quarto for seamless multi-format rendering (HTML/PDF/DOCX) with configurable templates.
 
@@ -113,7 +126,42 @@ showPDF("document.pdf")             # PDF viewer
 showMarkdownRendered("README.md")   # Rendered markdown
 ```
 
-## Documentation
+## Exported API
+
+The package exports 20 functions (see `NAMESPACE`):
+
+### Plotting
+
+- `buildPlot()` — high-level plotting with consistent styling.
+- `buildPlot.Bar()`, `buildPlot.Histogram()`, `buildPlot.Model()` — specialised variants.
+
+### Tables and reporting
+
+- `buildTable()` — publication-quality tables via gt/flextable/kableExtra.
+- `buildYAML()` — compose Quarto YAML blocks for multi-format rendering.
+- `export()` — render/export utility.
+
+### Highcharter themes (gridlines)
+
+- `hc_theme_538_gridlines()`, `hc_theme_economist_gridlines()`, `hc_theme_flat_gridlines()`, `hc_theme_hcrt_gridlines()`.
+
+### Display utilities
+
+- `showCode()`, `showHTML()`, `showPDF()`, `showMarkdownRendered()`, `showGithubREADME()`, `showASCII()`.
+
+### Presentation effects
+
+- `showTypewriter()`, `rotateTypewriter()`, `buildIndexTypewriter()`.
+
+## Dependencies
+
+- R (>= 4.1.0)
+- yaml, brio, data.table
+- flextable, gt, officer, kableExtra (table backends)
+- highcharter, htmlwidgets, webshot2, plotly (interactive plots)
+- grDevices, stats, graphics
+
+## Documentation (how to read)
 
 See function documentation via R help:
 
@@ -123,28 +171,11 @@ See function documentation via R help:
 ?buildTable
 ```
 
-GitHub Pages notes (see `docs/`):
+Topic pages under `docs/`:
 
-- `docs/index.md`
-- `docs/secondary-y-axis.md`
-- `docs/themes-gridlines.md`
-
-Full API: `buildPlot()`, `buildTable()`, `buildYAML()`, `showCode()`, `showHTML()`, `showPDF()`, `showMarkdownRendered()`, `showGithubREADME()`, `showASCII()`, `showTypewriter()`, `rotateTypewriter()`, `buildIndexTypewriter()`, specialized plot functions (Bar, Histogram, Hist2D, Hist3D, Model)
-
-### Main functions
-- buildPlot(...): High-level plotting with consistent styling; specialized variants for Bar/Histogram/Hist2D/Hist3D/Model.
-- buildTable(...): Publication-quality tables via gt/flextable/kableExtra backends with captions and styles.
-- buildYAML(...): Compose Quarto YAML blocks for multi-format rendering.
-- Display utilities: showCode(), showHTML(), showPDF(), showMarkdownRendered(), showGithubREADME(), showASCII().
-- Presentation effects: showTypewriter(), rotateTypewriter(), buildIndexTypewriter().
-
-## Dependencies
-
-- R (>= 4.1.0)
-- yaml, brio, data.table
-- flextable, gt, officer, kableExtra (table backends)
-- highcharter, htmlwidgets, webshot2, plotly (interactive plots)
-- grDevices, stats, graphics
+- [docs/index.md](docs/index.md)
+- [docs/secondary-y-axis.md](docs/secondary-y-axis.md) — primary/secondary Y axis configuration.
+- [docs/themes-gridlines.md](docs/themes-gridlines.md) — `hc_theme_*_gridlines()` reference.
 
 ## License
 
