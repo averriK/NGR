@@ -75,7 +75,7 @@
 #' @return A highchart object if either `data.lines` or `data.points` is provided.
 #'         Returns NULL if both are NULL, with a soft warning.
 #' @importFrom grDevices hcl.pals hcl.colors
-#' @importFrom stats setNames approx
+#' @importFrom stats setNames approx spline
 #' @import highcharter
 #' @importFrom htmlwidgets saveWidget
 #' @export buildPlot
@@ -711,24 +711,7 @@ buildPlot <- function(
         ) |>
         hc_chart(style = list(fontFamily = "Helvetica"))
     
-    ## 15b. Configure tooltip to show original values if offset was applied
-    if (x_offset > 0 || y_offset > 0) {
-        tooltip_formatter <- htmlwidgets::JS(sprintf(
-            "function() {
-                var x_val = this.x - %f;
-                var y_axis = (this.series && this.series.userOptions && this.series.userOptions.yAxis != null) ? this.series.userOptions.yAxis : 0;
-                var y_off = (y_axis === 0) ? %f : 0;
-                var y_val = this.y - y_off;
-                var x_str = Math.abs(x_val) < 1e-10 ? '0' : x_val.toString();
-                var y_str = Math.abs(y_val) < 1e-10 ? '0' : y_val.toString();
-                return '<b>' + this.series.name + '</b><br/>' + 
-                       'X: ' + x_str + '<br/>' +
-                       'Y: ' + y_str;
-            }",
-            x_offset, y_offset
-        ))
-        plot.object <- plot.object |> hc_tooltip(formatter = tooltip_formatter)
-    }
+    ## 15b. (removed — tooltip built once at §16)
 
     ## ============ LINES =============
     if (!is.null(data.lines)) {
@@ -898,18 +881,29 @@ buildPlot <- function(
                     data.lines[ID == gid1]$X,
                     data.lines[ID == gid2]$X
                 )))
-                curve1 <- approx(
-                    data.lines[ID == gid1]$X,
-                    data.lines[ID == gid1]$Y,
-                    xout = xvals,
-                    method = interpolation.method
-                )
-                curve2 <- approx(
-                    data.lines[ID == gid2]$X,
-                    data.lines[ID == gid2]$Y,
-                    xout = xvals,
-                    method = interpolation.method
-                )
+                if (line.type == "spline") {
+                    curve1 <- spline(
+                        data.lines[ID == gid1]$X,
+                        data.lines[ID == gid1]$Y,
+                        xout = xvals, method = "natural"
+                    )
+                    curve2 <- spline(
+                        data.lines[ID == gid2]$X,
+                        data.lines[ID == gid2]$Y,
+                        xout = xvals, method = "natural"
+                    )
+                } else {
+                    curve1 <- approx(
+                        data.lines[ID == gid1]$X,
+                        data.lines[ID == gid1]$Y,
+                        xout = xvals, method = interpolation.method
+                    )
+                    curve2 <- approx(
+                        data.lines[ID == gid2]$X,
+                        data.lines[ID == gid2]$Y,
+                        xout = xvals, method = interpolation.method
+                    )
+                }
                 fill_data <- data.frame(
                     X    = xvals,
                     LOW  = pmin(curve1$y, curve2$y),
@@ -919,7 +913,7 @@ buildPlot <- function(
                 plot.object <- plot.object |>
                     hc_add_series(
                         data = fill_data,
-                        type = "arearange",
+                        type = if (line.type == "spline") "areasplinerange" else "arearange",
                         hcaes(x = X, low = LOW, high = HIGH),
                         name = if (!is.null(fill.legend) && nzchar(fill.legend)) {
                             fill.legend
@@ -991,18 +985,44 @@ buildPlot <- function(
     }
 
     ## 16. Tooltip
-    plot.object <- plot.object |>
-        hc_tooltip(
-            sort = FALSE,
-            split = FALSE,
-            crosshairs = TRUE,
-            headerFormat = "",
-            pointFormat = sprintf(
-                "<b>{point.series.name}</b><br>%s: {point.x}<br>%s: {point.y}",
-                xAxis.legend,
-                yAxis.legend
+    if (x_offset > 0 || y_offset > 0) {
+        tooltip_formatter <- htmlwidgets::JS(sprintf(
+            "function() {
+                var name  = this.series.name;
+                var x_val = this.x - %f;
+                var y_axis = (this.series && this.series.userOptions &&
+                              this.series.userOptions.yAxis != null)
+                             ? this.series.userOptions.yAxis : 0;
+                var y_off = (y_axis === 0) ? %f : 0;
+                var y_val = this.y - y_off;
+                var x_str = Math.abs(x_val) < 1e-10 ? '0' : x_val.toString();
+                var y_str = Math.abs(y_val) < 1e-10 ? '0' : y_val.toString();
+                return '%s: <b>' + name + '</b><br/>%s: ' + x_str + '<br/>%s: ' + y_str;
+            }",
+            x_offset, y_offset,
+            group.legend, xAxis.legend, yAxis.legend
+        ))
+        plot.object <- plot.object |>
+            hc_tooltip(
+                sort       = FALSE,
+                split      = FALSE,
+                crosshairs = TRUE,
+                formatter  = tooltip_formatter
             )
-        ) |>
+    } else {
+        plot.object <- plot.object |>
+            hc_tooltip(
+                sort        = FALSE,
+                split       = FALSE,
+                crosshairs  = TRUE,
+                headerFormat = "",
+                pointFormat  = sprintf(
+                    "%s: <b>{point.series.name}</b><br>%s: {point.x}<br>%s: {point.y}",
+                    group.legend, xAxis.legend, yAxis.legend
+                )
+            )
+    }
+    plot.object <- plot.object |>
         hc_plotOptions(
             series = list(
                 dataLabels = list(enabled = point.dataLabels)
