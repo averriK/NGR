@@ -722,10 +722,16 @@ buildPlot <- function(
     }
 
     ## 12. Theme handling
+    # Default to the gridlines variant: `hc_theme_flat()` from highcharter
+    # silently breaks `tickPositioner` on logarithmic axes (Highcharts skips
+    # the custom positions and renders no major ticks when `minorTickInterval`
+    # is absent). The `_gridlines` themes set `minorTickInterval = "auto"`
+    # for both axes, which restores the standard tick lifecycle and lets
+    # tickPositioner take effect.
     if (!is.null(plot.theme)) {
         plot.object <- plot.object |> hc_add_theme(plot.theme)
     } else {
-        plot.object <- plot.object |> hc_add_theme(hc_theme_flat())
+        plot.object <- plot.object |> hc_add_theme(hc_theme_flat_gridlines())
     }
 
     ## 13. Titles

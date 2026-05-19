@@ -1,3 +1,18 @@
+# NGR 0.3.5
+
+## Bug fixes
+
+* `buildPlot()`: change default `plot.theme` from `hc_theme_flat()` to
+  `hc_theme_flat_gridlines()`. The previous default silently broke the
+  log-axis `tickPositioner` callback (see 0.3.4) because it omitted
+  `minorTickInterval = "auto"` — without that, Highcharts skips the
+  custom tick positions entirely and renders no major ticks on a
+  logarithmic axis with offset shift. The `_gridlines` variant is a
+  strict superset (everything from `hc_theme_flat()` plus minor
+  gridlines + minorTickInterval) and lets the tickPositioner take
+  effect. Callers that explicitly pass `plot.theme = ...` are
+  unaffected.
+
 # NGR 0.3.4
 
 ## Bug fixes
