@@ -1,3 +1,16 @@
+# NGR 0.3.7
+
+## Visual
+
+* `hc_theme_*_gridlines()`: bump minor gridline visibility from
+  `#EEEEEE` / `#E0E0E0` @ width 0.25 to `#D8D8D8` / `#C8C8C8` @
+  width 0.5. The previous very-faint settings were essentially
+  invisible against white backgrounds, defeating the purpose of
+  the `_gridlines` variants (which exist specifically to provide
+  auxiliary subdivisions between major ticks on logarithmic
+  axes). New settings remain clearly subordinate to major
+  gridlines but are now readable.
+
 # NGR 0.3.6
 
 ## Bug fixes

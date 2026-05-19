@@ -27,15 +27,16 @@ hc_theme_hcrt_gridlines <- function() {
   theme$yAxis$gridLineWidth <- 0.75
   theme$yAxis$gridLineColor <- "#CCCCCC"  # Medium gray for major lines
   
-  # Add minor gridlines - much lighter and thinner
-  theme$xAxis$minorGridLineWidth <- 0.25
-  theme$xAxis$minorGridLineColor <- "#EEEEEE"  # Very light gray for minor lines
+  # Minor gridlines: visible but subordinate to major. Previous (#EEEEEE
+  # @ 0.25) was indistinguishable from background on white-ish themes.
+  theme$xAxis$minorGridLineWidth <- 0.5
+  theme$xAxis$minorGridLineColor <- "#D8D8D8"
   theme$xAxis$minorTickInterval <- "auto"
-  
-  theme$yAxis$minorGridLineWidth <- 0.25
-  theme$yAxis$minorGridLineColor <- "#EEEEEE"  # Very light gray for minor lines
+
+  theme$yAxis$minorGridLineWidth <- 0.5
+  theme$yAxis$minorGridLineColor <- "#D8D8D8"
   theme$yAxis$minorTickInterval <- "auto"
-  
+
   return(theme)
 }
 
@@ -68,15 +69,15 @@ hc_theme_flat_gridlines <- function() {
   theme$yAxis$gridLineWidth <- 0.75
   theme$yAxis$gridLineColor <- "#A0A0A0"  # Darker gray for major lines
   
-  # Add minor gridlines - dotted and much lighter
-  theme$xAxis$minorGridLineWidth <- 0.25
-  theme$xAxis$minorGridLineDashStyle <- "Dot"  # Dotted style for minor lines
-  theme$xAxis$minorGridLineColor <- "#E0E0E0"  # Much lighter than major gridlines
+  # Minor gridlines: dotted, visible but subordinate to major.
+  theme$xAxis$minorGridLineWidth <- 0.5
+  theme$xAxis$minorGridLineDashStyle <- "Dot"
+  theme$xAxis$minorGridLineColor <- "#C8C8C8"
   theme$xAxis$minorTickInterval <- "auto"
-  
-  theme$yAxis$minorGridLineWidth <- 0.25
-  theme$yAxis$minorGridLineDashStyle <- "Dot"  # Dotted style for minor lines
-  theme$yAxis$minorGridLineColor <- "#E0E0E0"  # Much lighter than major gridlines
+
+  theme$yAxis$minorGridLineWidth <- 0.5
+  theme$yAxis$minorGridLineDashStyle <- "Dot"
+  theme$yAxis$minorGridLineColor <- "#C8C8C8"
   theme$yAxis$minorTickInterval <- "auto"
   
   return(theme)
@@ -114,15 +115,16 @@ hc_theme_538_gridlines <- function() {
   theme$yAxis$gridLineWidth <- 0.5
   theme$yAxis$gridLineColor <- "#CCCCCC"  # Medium gray for major lines
   
-  # Add optimized minor gridlines - subtle but visible on white
-  theme$xAxis$minorGridLineWidth <- 0.25
-  theme$xAxis$minorGridLineColor <- "#EEEEEE"  # Light gray for minor lines
+  # Minor gridlines: visible on white but clearly subordinate to major.
+  # Previous (#EEEEEE @ 0.25) was indistinguishable from background.
+  theme$xAxis$minorGridLineWidth <- 0.5
+  theme$xAxis$minorGridLineColor <- "#D8D8D8"  # Subtle but readable
   theme$xAxis$minorTickInterval <- "auto"
-  
-  theme$yAxis$minorGridLineWidth <- 0.25
-  theme$yAxis$minorGridLineColor <- "#EEEEEE"  # Light gray for minor lines
+
+  theme$yAxis$minorGridLineWidth <- 0.5
+  theme$yAxis$minorGridLineColor <- "#D8D8D8"
   theme$yAxis$minorTickInterval <- "auto"
-  
+
   return(theme)
 }
 
