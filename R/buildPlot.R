@@ -389,7 +389,7 @@ buildPlot <- function(
             x_offset
         ))
     }
-    
+
     yAxis_labels <- list(enabled = yAxis.label)
     if (y_offset > 0) {
         yAxis_labels$formatter <- htmlwidgets::JS(sprintf(
@@ -397,6 +397,40 @@ buildPlot <- function(
             y_offset
         ))
     }
+
+    # Tick positioners for log axes with offset: ensure major ticks land at
+    # `10^n + offset`, so the JS label formatter (above) renders clean powers
+    # of ten in original space (0.01, 0.1, 1, 10, ...) plus the special "0"
+    # tick at the offset position itself. Auto-derives the exponent range
+    # from the actual axis dataMin/dataMax at render time -- no R-side
+    # hardcoded positions, adapts to any data range. Without this, Highcharts
+    # autoplaces ticks at powers of 10 in the *shifted* axis and the label
+    # formatter ends up showing "0.009 / 0.099 / 0.999" instead of clean
+    # decades.
+    .logTickPositionerJS <- function(offset) {
+        # offset is round-tripped via format(digits = 17): IEEE 754 spec
+        # guarantees a double recovers exactly from 17 significant decimals.
+        # Number.MIN_VALUE is the JS-native smallest positive double, used
+        # only as a sentinel so Math.log never sees a non-positive argument
+        # when the data spans down to the offset itself.
+        htmlwidgets::JS(sprintf(
+            paste0(
+                "function() { ",
+                "var off = %s; ",
+                "var dMin = Math.max(this.dataMin - off, Number.MIN_VALUE); ",
+                "var dMax = this.dataMax - off; ",
+                "if (!isFinite(dMax) || dMax <= 0) return null; ",
+                "var eLo = Math.floor(Math.log(dMin) / Math.LN10); ",
+                "var eHi = Math.ceil(Math.log(dMax) / Math.LN10); ",
+                "var pos = [off]; ",
+                "for (var e = eLo; e <= eHi; e++) pos.push(Math.pow(10, e) + off); ",
+                "return pos; }"
+            ),
+            format(offset, digits = 17)
+        ))
+    }
+    x_tickPositioner <- if (x_offset > 0) .logTickPositionerJS(x_offset) else NULL
+    y_tickPositioner <- if (y_offset > 0) .logTickPositionerJS(y_offset) else NULL
     
     has_axis2_series <- FALSE
     if (!is.null(data.lines) && "yAxis" %in% names(data.lines)) {
@@ -419,6 +453,7 @@ buildPlot <- function(
         plot.object <- highchart() |>
             hc_xAxis(
                 labels = xAxis_labels,
+                tickPositioner = x_tickPositioner,
                 title = list(
                     text = xAxis.legend,
                     style = list(fontSize = xAxis.legend.fontsize)
@@ -430,6 +465,7 @@ buildPlot <- function(
             ) |>
             hc_yAxis(
                 labels = yAxis_labels,
+                tickPositioner = y_tickPositioner,
                 title = list(
                     text = yAxis.legend,
                     style = list(fontSize = yAxis.legend.fontsize)
@@ -451,6 +487,7 @@ buildPlot <- function(
     } else {
         yAxis_primary <- list(
             labels = yAxis_labels,
+            tickPositioner = y_tickPositioner,
             title = list(
                 text = yAxis.legend,
                 style = list(fontSize = yAxis.legend.fontsize)
@@ -646,6 +683,7 @@ buildPlot <- function(
         plot.object <- highchart() |>
             hc_xAxis(
                 labels = xAxis_labels,
+                tickPositioner = x_tickPositioner,
                 title = list(
                     text = xAxis.legend,
                     style = list(fontSize = xAxis.legend.fontsize)
