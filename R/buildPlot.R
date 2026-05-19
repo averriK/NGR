@@ -382,21 +382,32 @@ buildPlot <- function(
 
     ## 11. Initialize plot object
     # Build axis label formatters if offset was applied
-    xAxis_labels <- list(enabled = xAxis.label)
-    if (x_offset > 0) {
-        xAxis_labels$formatter <- htmlwidgets::JS(sprintf(
-            "function() { var val = this.value - %f; return Math.abs(val) < 1e-10 ? '0' : val.toString(); }",
-            x_offset
+    # Label formatter for offset-shifted log axes. The naive
+    # `(this.value - offset).toString()` produces ugly tail digits
+    # (e.g. "0.010000000000000002") because of IEEE 754 subtraction
+    # noise. Since `tickPositioner` (below) places ticks at
+    # `10^n + offset`, the un-shifted value is always within FP noise
+    # of a power of ten; snap to it whenever close enough.
+    .logLabelFormatterJS <- function(offset) {
+        htmlwidgets::JS(sprintf(
+            paste0(
+                "function() { ",
+                "var val = this.value - %s; ",
+                "if (Math.abs(val) < 1e-10) return '0'; ",
+                "var n = Math.round(Math.log(Math.abs(val)) / Math.LN10); ",
+                "var snap = Math.pow(10, n) * (val < 0 ? -1 : 1); ",
+                "if (Math.abs(val - snap) / Math.abs(snap) < 1e-6) return snap.toString(); ",
+                "return val.toString(); }"
+            ),
+            format(offset, digits = 17)
         ))
     }
 
+    xAxis_labels <- list(enabled = xAxis.label)
+    if (x_offset > 0) xAxis_labels$formatter <- .logLabelFormatterJS(x_offset)
+
     yAxis_labels <- list(enabled = yAxis.label)
-    if (y_offset > 0) {
-        yAxis_labels$formatter <- htmlwidgets::JS(sprintf(
-            "function() { var val = this.value - %f; return Math.abs(val) < 1e-10 ? '0' : val.toString(); }",
-            y_offset
-        ))
-    }
+    if (y_offset > 0) yAxis_labels$formatter <- .logLabelFormatterJS(y_offset)
 
     # Tick positioners for log axes with offset: ensure major ticks land at
     # `10^n + offset`, so the JS label formatter (above) renders clean powers
