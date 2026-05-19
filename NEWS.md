@@ -1,3 +1,21 @@
+# NGR 0.3.6
+
+## Bug fixes
+
+* `buildPlot()`: revert the `tickPositioner` injection added in 0.3.4.
+  Highcharts treats `tickPositioner` positions as linear coordinates
+  on a logarithmic axis, which collapsed our custom positions to the
+  right edge of the plot and suppressed minor gridlines. Tick
+  *placement* is now left entirely to Highcharts' native log
+  autoplacing; the offset compensation is done by the label formatter
+  alone. Two snap rules in the formatter:
+  - `|val| < 1.5 * offset` -> label `"0"` (the un-shifted position
+    of the original `X=0` cluster).
+  - `val` within 10% (relative) of a power of ten -> snap to that
+    power (catches the typical `0.0092 -> 0.01` case where the
+    offset shift introduces an ~8% error in the un-shifted value).
+  No more ugly tail digits, minor gridlines restored.
+
 # NGR 0.3.5
 
 ## Bug fixes

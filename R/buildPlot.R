@@ -382,21 +382,29 @@ buildPlot <- function(
 
     ## 11. Initialize plot object
     # Build axis label formatters if offset was applied
-    # Label formatter for offset-shifted log axes. The naive
-    # `(this.value - offset).toString()` produces ugly tail digits
-    # (e.g. "0.010000000000000002") because of IEEE 754 subtraction
-    # noise. Since `tickPositioner` (below) places ticks at
-    # `10^n + offset`, the un-shifted value is always within FP noise
-    # of a power of ten; snap to it whenever close enough.
+    # Label formatter for offset-shifted log axes. Highcharts autoplaces
+    # major ticks at clean powers of 10 in the *shifted* axis (e.g.
+    # 0.001, 0.01, 0.1, 1). After subtracting the offset to get back to
+    # original space, the result is close to (but not exactly) a power
+    # of 10. Two snap rules cover both cases:
+    #   1. If |val| < 1.5 * offset -- val is the un-shifted position of
+    #      the original X=0 cluster; label as "0".
+    #   2. If val is within 10% (relative) of a power of 10 -- snap to
+    #      that power; this catches the typical 0.0092 vs 0.01 case
+    #      where the offset shift introduces an 8% error.
+    # Else: raw toString() as fallback. Tick *positions* are left to
+    # Highcharts' native log autoplacing -- the formatter is the entire
+    # fix.
     .logLabelFormatterJS <- function(offset) {
         htmlwidgets::JS(sprintf(
             paste0(
                 "function() { ",
-                "var val = this.value - %s; ",
-                "if (Math.abs(val) < 1e-10) return '0'; ",
+                "var off = %s; ",
+                "var val = this.value - off; ",
+                "if (Math.abs(val) < 1.5 * off) return '0'; ",
                 "var n = Math.round(Math.log(Math.abs(val)) / Math.LN10); ",
                 "var snap = Math.pow(10, n) * (val < 0 ? -1 : 1); ",
-                "if (Math.abs(val - snap) / Math.abs(snap) < 1e-6) return snap.toString(); ",
+                "if (Math.abs(val - snap) / Math.abs(snap) < 0.1) return snap.toString(); ",
                 "return val.toString(); }"
             ),
             format(offset, digits = 17)
@@ -409,44 +417,16 @@ buildPlot <- function(
     yAxis_labels <- list(enabled = yAxis.label)
     if (y_offset > 0) yAxis_labels$formatter <- .logLabelFormatterJS(y_offset)
 
-    # Tick positioners for log axes with offset: ensure major ticks land at
-    # `10^n + offset`, so the JS label formatter (above) renders clean powers
-    # of ten in original space (0.01, 0.1, 1, 10, ...) plus the special "0"
-    # tick at the offset position itself. Auto-derives the exponent range
-    # from the actual axis dataMin/dataMax at render time -- no R-side
-    # hardcoded positions, adapts to any data range. Without this, Highcharts
-    # autoplaces ticks at powers of 10 in the *shifted* axis and the label
-    # formatter ends up showing "0.009 / 0.099 / 0.999" instead of clean
-    # decades.
-    .logTickPositionerJS <- function(offset) {
-        # offset is round-tripped via format(digits = 17): IEEE 754 spec
-        # guarantees a double recovers exactly from 17 significant decimals.
-        # When the data hit zero (dMin <= 0 after un-shift), the lowest
-        # decade we want is the one >= the smallest positive original X,
-        # which is off*10 by construction (offset = min_positive_X * 0.1).
-        # Without that branch, dMin clipped to MIN_VALUE would explode eLo
-        # to -323 and the loop would emit ~325 duplicate ticks (underflow),
-        # making Highcharts render none.
-        htmlwidgets::JS(sprintf(
-            paste0(
-                "function() { ",
-                "var off = %s; ",
-                "var dMax = this.dataMax - off; ",
-                "if (!isFinite(dMax) || dMax <= 0) return null; ",
-                "var eHi = Math.ceil(Math.log(dMax) / Math.LN10); ",
-                "var dMin = this.dataMin - off; ",
-                "var eLo = (dMin <= 0) ",
-                "  ? Math.ceil(Math.log(off) / Math.LN10) + 1 ",
-                "  : Math.floor(Math.log(dMin) / Math.LN10); ",
-                "var pos = [off]; ",
-                "for (var e = eLo; e <= eHi; e++) pos.push(Math.pow(10, e) + off); ",
-                "return pos; }"
-            ),
-            format(offset, digits = 17)
-        ))
-    }
-    x_tickPositioner <- if (x_offset > 0) .logTickPositionerJS(x_offset) else NULL
-    y_tickPositioner <- if (y_offset > 0) .logTickPositionerJS(y_offset) else NULL
+    # On a logarithmic axis with offset shift, `tickInterval = 1` forces
+    # Highcharts to place major ticks at every integer log10 step, i.e.
+    # only at powers of 10 (in the shifted axis). Combined with the
+    # formatter snap (above), all major labels render as clean decades
+    # (and "0" at the offset position itself). Minor ticks via
+    # `minorTickInterval = "auto"` from the theme still fill the 2x/3x/9x
+    # gaps as auxiliary gridlines without labels. Skip when offset is 0
+    # to let Highcharts auto-place natively.
+    x_tickInterval <- if (xAxis.log && x_offset > 0) 1 else NULL
+    y_tickInterval <- if (yAxis.log && y_offset > 0) 1 else NULL
     
     has_axis2_series <- FALSE
     if (!is.null(data.lines) && "yAxis" %in% names(data.lines)) {
@@ -469,7 +449,7 @@ buildPlot <- function(
         plot.object <- highchart() |>
             hc_xAxis(
                 labels = xAxis_labels,
-                tickPositioner = x_tickPositioner,
+                tickInterval = x_tickInterval,
                 title = list(
                     text = xAxis.legend,
                     style = list(fontSize = xAxis.legend.fontsize)
@@ -481,7 +461,7 @@ buildPlot <- function(
             ) |>
             hc_yAxis(
                 labels = yAxis_labels,
-                tickPositioner = y_tickPositioner,
+                tickInterval = y_tickInterval,
                 title = list(
                     text = yAxis.legend,
                     style = list(fontSize = yAxis.legend.fontsize)
@@ -503,7 +483,7 @@ buildPlot <- function(
     } else {
         yAxis_primary <- list(
             labels = yAxis_labels,
-            tickPositioner = y_tickPositioner,
+            tickInterval = y_tickInterval,
             title = list(
                 text = yAxis.legend,
                 style = list(fontSize = yAxis.legend.fontsize)
@@ -699,7 +679,7 @@ buildPlot <- function(
         plot.object <- highchart() |>
             hc_xAxis(
                 labels = xAxis_labels,
-                tickPositioner = x_tickPositioner,
+                tickInterval = x_tickInterval,
                 title = list(
                     text = xAxis.legend,
                     style = list(fontSize = xAxis.legend.fontsize)
@@ -722,12 +702,11 @@ buildPlot <- function(
     }
 
     ## 12. Theme handling
-    # Default to the gridlines variant: `hc_theme_flat()` from highcharter
-    # silently breaks `tickPositioner` on logarithmic axes (Highcharts skips
-    # the custom positions and renders no major ticks when `minorTickInterval`
-    # is absent). The `_gridlines` themes set `minorTickInterval = "auto"`
-    # for both axes, which restores the standard tick lifecycle and lets
-    # tickPositioner take effect.
+    # Default to the gridlines variant. `hc_theme_flat()` from highcharter
+    # omits `minorTickInterval`, which on logarithmic axes leaves the gaps
+    # between decades empty (no auxiliary gridlines at 2x, 3x, ..., 9x).
+    # The `_gridlines` themes set `minorTickInterval = "auto"`, which
+    # restores those minor gridlines without changing any other styling.
     if (!is.null(plot.theme)) {
         plot.object <- plot.object |> hc_add_theme(plot.theme)
     } else {
