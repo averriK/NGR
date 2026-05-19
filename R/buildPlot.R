@@ -421,18 +421,23 @@ buildPlot <- function(
     .logTickPositionerJS <- function(offset) {
         # offset is round-tripped via format(digits = 17): IEEE 754 spec
         # guarantees a double recovers exactly from 17 significant decimals.
-        # Number.MIN_VALUE is the JS-native smallest positive double, used
-        # only as a sentinel so Math.log never sees a non-positive argument
-        # when the data spans down to the offset itself.
+        # When the data hit zero (dMin <= 0 after un-shift), the lowest
+        # decade we want is the one >= the smallest positive original X,
+        # which is off*10 by construction (offset = min_positive_X * 0.1).
+        # Without that branch, dMin clipped to MIN_VALUE would explode eLo
+        # to -323 and the loop would emit ~325 duplicate ticks (underflow),
+        # making Highcharts render none.
         htmlwidgets::JS(sprintf(
             paste0(
                 "function() { ",
                 "var off = %s; ",
-                "var dMin = Math.max(this.dataMin - off, Number.MIN_VALUE); ",
                 "var dMax = this.dataMax - off; ",
                 "if (!isFinite(dMax) || dMax <= 0) return null; ",
-                "var eLo = Math.floor(Math.log(dMin) / Math.LN10); ",
                 "var eHi = Math.ceil(Math.log(dMax) / Math.LN10); ",
+                "var dMin = this.dataMin - off; ",
+                "var eLo = (dMin <= 0) ",
+                "  ? Math.ceil(Math.log(off) / Math.LN10) + 1 ",
+                "  : Math.floor(Math.log(dMin) / Math.LN10); ",
                 "var pos = [off]; ",
                 "for (var e = eLo; e <= eHi; e++) pos.push(Math.pow(10, e) + off); ",
                 "return pos; }"
