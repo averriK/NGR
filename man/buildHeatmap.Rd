@@ -49,7 +49,10 @@ NULL (default) uses a 10-stop Inferno palette.}
 \item{dataLabels.show}{Logical; show value labels inside cells. Default \code{FALSE}.}
 
 \item{tooltip.format}{Character; Highcharts \code{pointFormat} string. NULL (default)
-generates a format using \code{xAxis.legend}, \code{yAxis.legend}, and \code{series.name}.}
+generates a format using \code{xAxis.legend}, \code{yAxis.legend}, \code{series.name},
+\code{{point.xLabel}}, and \code{{point.yLabel}}. For custom tooltips, use
+\code{{point.xLabel}} and \code{{point.yLabel}} for the original \code{.data$X} and
+\code{.data$Y} values; \code{{point.x}} and \code{{point.y}} are internal 0-based indices.}
 
 \item{legend.align}{Character; horizontal legend alignment. Default \code{"right"}.}
 
@@ -68,7 +71,8 @@ Build a Highcharts heatmap from a data.table with columns X, Y, Z.
 
 X and Y are treated as categorical axes: unique values are sorted and used as
 category labels. Z is the numeric value mapped to the color axis. The function
-converts the raw X/Y values to 0-based integer indices internally.
+converts the raw X/Y values to 0-based integer indices internally, and stores
+the original labels in each point as \code{xLabel} and \code{yLabel}.
 
 Color axis defaults to the Inferno palette (10 stops). Supply \code{color.stops}
 to override. \code{colorAxis.max} defaults to \code{ceiling(max(Z))} when NULL.

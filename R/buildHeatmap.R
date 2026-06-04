@@ -3,7 +3,8 @@
 #'
 #' X and Y are treated as categorical axes: unique values are sorted and used as
 #' category labels. Z is the numeric value mapped to the color axis. The function
-#' converts the raw X/Y values to 0-based integer indices internally.
+#' converts the raw X/Y values to 0-based integer indices internally, and stores
+#' the original labels in each point as `xLabel` and `yLabel`.
 #'
 #' Color axis defaults to the Inferno palette (10 stops). Supply `color.stops`
 #' to override. `colorAxis.max` defaults to `ceiling(max(Z))` when NULL.
@@ -22,7 +23,10 @@
 #' @param border.color Character; cell border color. Default `"#333333"`.
 #' @param dataLabels.show Logical; show value labels inside cells. Default `FALSE`.
 #' @param tooltip.format Character; Highcharts `pointFormat` string. NULL (default)
-#'   generates a format using `xAxis.legend`, `yAxis.legend`, and `series.name`.
+#'   generates a format using `xAxis.legend`, `yAxis.legend`, `series.name`,
+#'   `{point.xLabel}`, and `{point.yLabel}`. For custom tooltips, use
+#'   `{point.xLabel}` and `{point.yLabel}` for the original `.data$X` and
+#'   `.data$Y` values; `{point.x}` and `{point.y}` are internal 0-based indices.
 #' @param legend.align Character; horizontal legend alignment. Default `"right"`.
 #' @param legend.layout Character; legend layout direction. Default `"vertical"`.
 #' @param legend.valign Character; vertical legend alignment. Default `"middle"`.
@@ -64,9 +68,11 @@ buildHeatmap <- function(
 
   DATA <- lapply(seq_len(nrow(.data)), function(i) {
     list(
-      x     = match(as.character(.data$X[i]), XCats) - 1L,
-      y     = match(as.character(.data$Y[i]), YCats) - 1L,
-      value = round(.data$Z[i], 2)
+      x      = match(as.character(.data$X[i]), XCats) - 1L,
+      y      = match(as.character(.data$Y[i]), YCats) - 1L,
+      value  = round(.data$Z[i], 2),
+      xLabel = as.character(.data$X[i]),
+      yLabel = as.character(.data$Y[i])
     )
   })
 
@@ -85,7 +91,7 @@ buildHeatmap <- function(
 
   TipFormat <- if (is.null(tooltip.format)) {
     sprintf(
-      "%s: <b>{point.x}</b> | %s: <b>{point.y}</b><br>%s: <b>{point.value}</b>",
+      "%s: <b>{point.xLabel}</b> | %s: <b>{point.yLabel}</b><br>%s: <b>{point.value}</b>",
       xAxis.legend, yAxis.legend, series.name
     )
   } else {
