@@ -1,6 +1,22 @@
 # NGR 0.3.7
 
+## API
+
+* `buildPlot()`: remove the `xAxis.log.offset` / `yAxis.log.offset`
+  transformation layer and replace it with `xAxis.log.zero` for
+  log-log plots. When `xAxis.log.zero = TRUE`, points with `X == 0`
+  are assigned an internal positive display coordinate derived from
+  the first two positive X values (`x1^2 / x2`), while the original X
+  value is preserved for tooltips and caller data are not mutated.
+  Negative X values on logarithmic axes remain unsupported.
+
 ## Visual
+
+* `buildPlot()`: hide technical auto-envelope IDs (`fill.min` /
+  `fill.max`, default `.min` / `.max`) from the legend and tooltip
+  when `fill.minmax = TRUE`, and exclude those technical boundary
+  series from data export. The default shaded-area legend is now the
+  generic `"Shaded range"` instead of exposing the boundary IDs.
 
 * `hc_theme_*_gridlines()`: bump minor gridline visibility from
   `#EEEEEE` / `#E0E0E0` @ width 0.25 to `#D8D8D8` / `#C8C8C8` @

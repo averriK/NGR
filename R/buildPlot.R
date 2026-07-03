@@ -30,8 +30,11 @@
 #' @param point.size A numeric for the point size
 #' @param xAxis.log A logical for the x-axis log scale
 #' @param yAxis.log A logical for the y-axis log scale
-#' @param xAxis.log.offset Offset value for X when xAxis.log=TRUE and data contains X<=0. NULL (default) calculates automatically as min of positive X values times 0.1. FALSE disables transformation. Numeric value uses that as offset.
-#' @param yAxis.log.offset Offset value for Y when yAxis.log=TRUE and data contains Y<=0. NULL (default) calculates automatically as min of positive Y values times 0.1. FALSE disables transformation. Numeric value uses that as offset.
+#' @param xAxis.log.zero A logical for plotting `X == 0` points on log-log plots
+#'   through an internal positive display coordinate. Source data remain
+#'   unchanged and negative X values are not supported.
+#' @param xAxis.log.zero.label Label used in tooltips for `X == 0` points when
+#'   `xAxis.log.zero` is active.
 #' @param xAxis.reverse A logical for the x-axis reverse
 #' @param yAxis.reverse A logical for the y-axis reverse
 #' @param xAxis.max A numeric for the x-axis max
@@ -100,6 +103,8 @@ buildPlot <- function(
     point.size = 3,
     xAxis.log = FALSE,
     yAxis.log = FALSE,
+    xAxis.log.zero = TRUE,
+    xAxis.log.zero.label = "0",
     xAxis.reverse = FALSE,
     yAxis.reverse = FALSE,
     xAxis.max = NA,
@@ -133,15 +138,13 @@ buildPlot <- function(
     fill.min.size = NULL,
     fill.max.color = "#00008B",
     fill.min.color = "#8B0000",
-    xAxis.log.offset = NULL,
-    yAxis.log.offset = NULL,
     interpolation.method = "linear",
     yAxis2 = NULL,
     yAxis2.legend = NULL,
     yAxis2.transform = NULL,
     yAxis2.decimals = 0) {
     ## 0. Declare data.table columns to avoid R CMD check NOTEs
-    style <- size <- yAxis <- NULL  # data.table columns
+    style <- size <- yAxis <- Xplot <- Xlabel <- NULL  # data.table columns
     
     ## 1. Deprecation warnings for library, plot.type
     #    only trigger if the user explicitly set them (i.e. not missing)
@@ -170,6 +173,12 @@ buildPlot <- function(
             sprintf("point.size should be a positive numeric. Using default (3) instead of '%s'.", point.size)
         )
         point.size <- 3
+    }
+    if (!is.logical(xAxis.log.zero) || length(xAxis.log.zero) != 1L || is.na(xAxis.log.zero)) {
+        stop("xAxis.log.zero must be TRUE or FALSE.")
+    }
+    if (!is.character(xAxis.log.zero.label) || length(xAxis.log.zero.label) != 1L || is.na(xAxis.log.zero.label)) {
+        stop("xAxis.log.zero.label must be a non-missing character scalar.")
     }
 
     ## 4. Validate color palette
@@ -229,6 +238,13 @@ buildPlot <- function(
     }
     validateData(data.lines, "data.lines")
     validateData(data.points, "data.points")
+
+    if (!is.null(data.lines)) {
+        data.lines <- data.table::copy(data.table::as.data.table(data.lines))
+    }
+    if (!is.null(data.points)) {
+        data.points <- data.table::copy(data.table::as.data.table(data.points))
+    }
 
     validateYAxisCol <- function(data, data_name) {
         if (!is.null(data) && "yAxis" %in% names(data)) {
@@ -292,141 +308,60 @@ buildPlot <- function(
         as.character(ALL.IDS)
     )
 
-    ## 10b. Handle logarithmic axis transformation for X<=0 or Y<=0
-    x_offset <- 0
-    y_offset <- 0
-    
-    # X-axis transformation
-    if (xAxis.log && !isFALSE(xAxis.log.offset)) {
-        all_x <- c(
-            if (!is.null(data.lines)) data.lines$X,
-            if (!is.null(data.points)) data.points$X
-        )
-        if (any(all_x <= 0, na.rm = TRUE)) {
-            if (is.null(xAxis.log.offset)) {
-                # Auto-calculate offset
-                x_positive <- all_x[all_x > 0]
-                if (length(x_positive) > 0) {
-                    x_offset <- min(x_positive, na.rm = TRUE) * 0.1
-                }
-            } else if (is.numeric(xAxis.log.offset)) {
-                x_offset <- xAxis.log.offset
-            }
-            
-            if (x_offset > 0) {
-                if (!is.null(data.lines)) {
-                    if (!inherits(data.lines, "data.table")) {
-                        data.lines <- data.table::as.data.table(data.lines)
-                    }
-                    data.lines[, X := X + x_offset]
-                }
-                if (!is.null(data.points)) {
-                    if (!inherits(data.points, "data.table")) {
-                        data.points <- data.table::as.data.table(data.points)
-                    }
-                    data.points[, X := X + x_offset]
-                }
-            }
+    ## 10b. Handle X == 0 on log-log axes without changing caller data.
+    XLogZero <- FALSE
+    XLogZeroCoord <- NA_real_
+    XTooltip <- "{point.x}"
+
+    .logZeroCoord <- function(X) {
+        Xpos <- sort(unique(X[is.finite(X) & X > 0]))
+        if (length(Xpos) < 2L) {
+            stop("buildPlot(): zero-on-log axes require at least two positive X values")
         }
+
+        Xpos[1L]^2 / Xpos[2L]
     }
-    
-    # Y-axis transformation (only affects yAxis == 0 series)
-    if (yAxis.log && !isFALSE(yAxis.log.offset)) {
-        get_axis0_y <- function(data) {
-            if (is.null(data)) {
-                return(numeric(0))
-            }
-            if ("yAxis" %in% names(data)) {
-                idx0 <- is.na(data$yAxis) | data$yAxis == 0
-                return(data$Y[idx0])
-            }
-            data$Y
+
+    .formatAxisValue <- function(X) {
+        format(X, scientific = FALSE, trim = TRUE, digits = 12L)
+    }
+
+    AxisX <- c(
+        if (!is.null(data.lines)) data.lines$X,
+        if (!is.null(data.points)) data.points$X
+    )
+
+    if (isTRUE(xAxis.log) && any(AxisX < 0, na.rm = TRUE)) {
+        stop("buildPlot(): logarithmic X axes do not support negative X values")
+    }
+
+    if (isTRUE(xAxis.log) && isTRUE(yAxis.log) && isTRUE(xAxis.log.zero) &&
+        any(AxisX == 0, na.rm = TRUE)) {
+        XLogZero <- TRUE
+        XLogZeroCoord <- .logZeroCoord(AxisX)
+        XTooltip <- "{point.Xlabel}"
+
+        if (!is.null(data.lines)) {
+            data.lines[, Xplot := X]
+            data.lines[X == 0, Xplot := XLogZeroCoord]
+            data.lines[, Xlabel := .formatAxisValue(X)]
+            data.lines[X == 0, Xlabel := xAxis.log.zero.label]
+        }
+        if (!is.null(data.points)) {
+            data.points[, Xplot := X]
+            data.points[X == 0, Xplot := XLogZeroCoord]
+            data.points[, Xlabel := .formatAxisValue(X)]
+            data.points[X == 0, Xlabel := xAxis.log.zero.label]
         }
 
-        all_y <- c(get_axis0_y(data.lines), get_axis0_y(data.points))
-        if (any(all_y <= 0, na.rm = TRUE)) {
-            if (is.null(yAxis.log.offset)) {
-                # Auto-calculate offset
-                y_positive <- all_y[all_y > 0]
-                if (length(y_positive) > 0) {
-                    y_offset <- min(y_positive, na.rm = TRUE) * 0.1
-                }
-            } else if (is.numeric(yAxis.log.offset)) {
-                y_offset <- yAxis.log.offset
-            }
-
-            if (y_offset > 0) {
-                if (!is.null(data.lines)) {
-                    if (!inherits(data.lines, "data.table")) {
-                        data.lines <- data.table::as.data.table(data.lines)
-                    }
-                    if ("yAxis" %in% names(data.lines)) {
-                        data.lines[is.na(yAxis) | yAxis == 0, Y := Y + y_offset]
-                    } else {
-                        data.lines[, Y := Y + y_offset]
-                    }
-                }
-                if (!is.null(data.points)) {
-                    if (!inherits(data.points, "data.table")) {
-                        data.points <- data.table::as.data.table(data.points)
-                    }
-                    if ("yAxis" %in% names(data.points)) {
-                        data.points[is.na(yAxis) | yAxis == 0, Y := Y + y_offset]
-                    } else {
-                        data.points[, Y := Y + y_offset]
-                    }
-                }
-            }
+        if (!is.na(xAxis.min) && xAxis.min <= 0) {
+            xAxis.min <- XLogZeroCoord
         }
     }
 
     ## 11. Initialize plot object
-    # Build axis label formatters if offset was applied
-    # Label formatter for offset-shifted log axes. Highcharts autoplaces
-    # major ticks at clean powers of 10 in the *shifted* axis (e.g.
-    # 0.001, 0.01, 0.1, 1). After subtracting the offset to get back to
-    # original space, the result is close to (but not exactly) a power
-    # of 10. Two snap rules cover both cases:
-    #   1. If |val| < 1.5 * offset -- val is the un-shifted position of
-    #      the original X=0 cluster; label as "0".
-    #   2. If val is within 10% (relative) of a power of 10 -- snap to
-    #      that power; this catches the typical 0.0092 vs 0.01 case
-    #      where the offset shift introduces an 8% error.
-    # Else: raw toString() as fallback. Tick *positions* are left to
-    # Highcharts' native log autoplacing -- the formatter is the entire
-    # fix.
-    .logLabelFormatterJS <- function(offset) {
-        htmlwidgets::JS(sprintf(
-            paste0(
-                "function() { ",
-                "var off = %s; ",
-                "var val = this.value - off; ",
-                "if (Math.abs(val) < 1.5 * off) return '0'; ",
-                "var n = Math.round(Math.log(Math.abs(val)) / Math.LN10); ",
-                "var snap = Math.pow(10, n) * (val < 0 ? -1 : 1); ",
-                "if (Math.abs(val - snap) / Math.abs(snap) < 0.1) return snap.toString(); ",
-                "return val.toString(); }"
-            ),
-            format(offset, digits = 17)
-        ))
-    }
-
     xAxis_labels <- list(enabled = xAxis.label)
-    if (x_offset > 0) xAxis_labels$formatter <- .logLabelFormatterJS(x_offset)
-
     yAxis_labels <- list(enabled = yAxis.label)
-    if (y_offset > 0) yAxis_labels$formatter <- .logLabelFormatterJS(y_offset)
-
-    # On a logarithmic axis with offset shift, `tickInterval = 1` forces
-    # Highcharts to place major ticks at every integer log10 step, i.e.
-    # only at powers of 10 (in the shifted axis). Combined with the
-    # formatter snap (above), all major labels render as clean decades
-    # (and "0" at the offset position itself). Minor ticks via
-    # `minorTickInterval = "auto"` from the theme still fill the 2x/3x/9x
-    # gaps as auxiliary gridlines without labels. Skip when offset is 0
-    # to let Highcharts auto-place natively.
-    x_tickInterval <- if (xAxis.log && x_offset > 0) 1 else NULL
-    y_tickInterval <- if (yAxis.log && y_offset > 0) 1 else NULL
     
     has_axis2_series <- FALSE
     if (!is.null(data.lines) && "yAxis" %in% names(data.lines)) {
@@ -449,7 +384,6 @@ buildPlot <- function(
         plot.object <- highchart() |>
             hc_xAxis(
                 labels = xAxis_labels,
-                tickInterval = x_tickInterval,
                 title = list(
                     text = xAxis.legend,
                     style = list(fontSize = xAxis.legend.fontsize)
@@ -461,7 +395,6 @@ buildPlot <- function(
             ) |>
             hc_yAxis(
                 labels = yAxis_labels,
-                tickInterval = y_tickInterval,
                 title = list(
                     text = yAxis.legend,
                     style = list(fontSize = yAxis.legend.fontsize)
@@ -483,7 +416,6 @@ buildPlot <- function(
     } else {
         yAxis_primary <- list(
             labels = yAxis_labels,
-            tickInterval = y_tickInterval,
             title = list(
                 text = yAxis.legend,
                 style = list(fontSize = yAxis.legend.fontsize)
@@ -631,18 +563,15 @@ buildPlot <- function(
         yAxis2_labels <- if (has_axis2_series) {
             list(enabled = yAxis.label)
         } else {
-            # linked mode defaults to the same labels (including any y_offset formatter)
             yAxis_labels
         }
 
         if (!is.null(yAxis2.transform)) {
             rhs <- yAxis2.transform[[2]]
             transform_js <- expr_to_js(rhs)
-            y_offset_js <- if (y_offset > 0) sprintf(" - %.17g", y_offset) else ""
             yAxis2_labels$enabled <- TRUE
             yAxis2_labels$formatter <- htmlwidgets::JS(sprintf(
-                "function() { var y = this.value%s; var y2 = %s; if (y2 === null || y2 === undefined || !isFinite(y2)) return ''; return Highcharts.numberFormat(y2, %d); }",
-                y_offset_js,
+                "function() { var y = this.value; var y2 = %s; if (y2 === null || y2 === undefined || !isFinite(y2)) return ''; return Highcharts.numberFormat(y2, %d); }",
                 transform_js,
                 yAxis2.decimals
             ))
@@ -679,7 +608,6 @@ buildPlot <- function(
         plot.object <- highchart() |>
             hc_xAxis(
                 labels = xAxis_labels,
-                tickInterval = x_tickInterval,
                 title = list(
                     text = xAxis.legend,
                     style = list(fontSize = xAxis.legend.fontsize)
@@ -826,9 +754,22 @@ buildPlot <- function(
         }
 
         unique_lines <- unique(data.lines$ID)
+        LineMapping <- if (XLogZero) {
+            hcaes(x = Xplot, y = Y)
+        } else {
+            hcaes(x = X, y = Y)
+        }
 
         for (gid in unique_lines) {
             sub_data <- data.lines[ID == gid]
+            is_fill_boundary <- as.character(gid) %in% c(fill.max, fill.min) &&
+                "fill" %in% names(sub_data) &&
+                any(sub_data$fill, na.rm = TRUE)
+            series_data <- sub_data
+            if (is_fill_boundary) {
+                series_data <- data.table::copy(sub_data)
+                series_data[, ID := ""]
+            }
 
             y_axis_idx <- 0
             if ("yAxis" %in% names(sub_data)) {
@@ -892,14 +833,17 @@ buildPlot <- function(
             ## --- add series -------------------------------------------------
             plot.object <- plot.object |>
                 hc_add_series(
-                    data = sub_data,
+                    data = series_data,
                     type = type_val, # <- per-series geometry
-                    hcaes(x = X, y = Y),
-                    name = as.character(gid),
+                    mapping = LineMapping,
+                    name = if (is_fill_boundary) "" else as.character(gid),
                     yAxis = y_axis_idx,
                     color = ID.COLOR.MAP[as.character(gid)],
                     dashStyle = dash_style,
                     lineWidth = size_val,  # <- per-group size
+                    showInLegend = !is_fill_boundary,
+                    enableMouseTracking = !is_fill_boundary,
+                    includeInDataExport = !is_fill_boundary,
                     marker = list(enabled = FALSE)
                 )
         }
@@ -948,16 +892,24 @@ buildPlot <- function(
                     LOW  = pmin(curve1$y, curve2$y),
                     HIGH = pmax(curve1$y, curve2$y)
                 )
+                FillMapping <- hcaes(x = X, low = LOW, high = HIGH)
+                if (XLogZero) {
+                    fill_data$Xplot <- fill_data$X
+                    fill_data$Xplot[fill_data$X == 0] <- XLogZeroCoord
+                    fill_data$Xlabel <- .formatAxisValue(fill_data$X)
+                    fill_data$Xlabel[fill_data$X == 0] <- xAxis.log.zero.label
+                    FillMapping <- hcaes(x = Xplot, low = LOW, high = HIGH)
+                }
 
                 plot.object <- plot.object |>
                     hc_add_series(
                         data = fill_data,
                         type = if (line.type == "spline") "areasplinerange" else "arearange",
-                        hcaes(x = X, low = LOW, high = HIGH),
+                        mapping = FillMapping,
                         name = if (!is.null(fill.legend) && nzchar(fill.legend)) {
                             fill.legend
                         } else {
-                            paste("Area between", gid1, "and", gid2)
+                            "Shaded range"
                         },
                         yAxis = 0,
                         color = ID.COLOR.MAP[as.character(gid1)],
@@ -972,6 +924,11 @@ buildPlot <- function(
     ## ============ POINTS =============
     if (!is.null(data.points)) {
         unique_points <- unique(data.points$ID)
+        PointMapping <- if (XLogZero) {
+            hcaes(x = Xplot, y = Y)
+        } else {
+            hcaes(x = X, y = Y)
+        }
 
         for (gid in unique_points) {
             sub_data <- data.points[ID == gid]
@@ -1011,7 +968,7 @@ buildPlot <- function(
                 hc_add_series(
                     data = sub_data,
                     type = "scatter",
-                    hcaes(x = X, y = Y),
+                    mapping = PointMapping,
                     name = as.character(gid),
                     yAxis = y_axis_idx,
                     color = ID.COLOR.MAP[as.character(gid)],
@@ -1024,43 +981,17 @@ buildPlot <- function(
     }
 
     ## 16. Tooltip
-    if (x_offset > 0 || y_offset > 0) {
-        tooltip_formatter <- htmlwidgets::JS(sprintf(
-            "function() {
-                var name  = this.series.name;
-                var x_val = this.x - %f;
-                var y_axis = (this.series && this.series.userOptions &&
-                              this.series.userOptions.yAxis != null)
-                             ? this.series.userOptions.yAxis : 0;
-                var y_off = (y_axis === 0) ? %f : 0;
-                var y_val = this.y - y_off;
-                var x_str = Math.abs(x_val) < 1e-10 ? '0' : x_val.toString();
-                var y_str = Math.abs(y_val) < 1e-10 ? '0' : y_val.toString();
-                return '%s: <b>' + name + '</b><br/>%s: ' + x_str + '<br/>%s: ' + y_str;
-            }",
-            x_offset, y_offset,
-            group.legend, xAxis.legend, yAxis.legend
-        ))
-        plot.object <- plot.object |>
-            hc_tooltip(
-                sort       = FALSE,
-                split      = FALSE,
-                crosshairs = TRUE,
-                formatter  = tooltip_formatter
+    plot.object <- plot.object |>
+        hc_tooltip(
+            sort        = FALSE,
+            split       = FALSE,
+            crosshairs  = TRUE,
+            headerFormat = "",
+            pointFormat  = sprintf(
+                "%s: <b>{point.series.name}</b><br>%s: %s<br>%s: {point.y}",
+                group.legend, xAxis.legend, XTooltip, yAxis.legend
             )
-    } else {
-        plot.object <- plot.object |>
-            hc_tooltip(
-                sort        = FALSE,
-                split       = FALSE,
-                crosshairs  = TRUE,
-                headerFormat = "",
-                pointFormat  = sprintf(
-                    "%s: <b>{point.series.name}</b><br>%s: {point.x}<br>%s: {point.y}",
-                    group.legend, xAxis.legend, yAxis.legend
-                )
-            )
-    }
+        )
     plot.object <- plot.object |>
         hc_plotOptions(
             series = list(
@@ -1079,7 +1010,8 @@ buildPlot <- function(
                         list(
                             point = list(
                                 xAxis = 0, yAxis = 0,
-                                x = data_abs$X[i], y = data_abs$Y[i]
+                                x = if (XLogZero && "Xplot" %in% names(data_abs)) data_abs$Xplot[i] else data_abs$X[i],
+                                y = data_abs$Y[i]
                             ),
                             text = paste0("Max Abs: ", round(data_abs$Y[i], 2))
                         )
