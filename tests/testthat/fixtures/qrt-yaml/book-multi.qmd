@@ -1,0 +1,13 @@
+---
+title: Multi Chapter
+chapters:
+  - _chapters/intro.qmd
+  - _chapters/methods.qmd
+appendices:
+  - _appendices/data.qmd
+bibliography:
+  - bib/main.bib
+  - bib/extra.bib
+---
+
+# Body

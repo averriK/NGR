@@ -1,0 +1,4 @@
+format:
+  docx:
+    toc: true
+    number-sections: false

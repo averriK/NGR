@@ -1,0 +1,88 @@
+url: https://averriK.github.io/NGR/
+dest_dir: docs
+
+template:
+  bootstrap: 5
+
+home:
+  title: "NGR - Next Generation Reporting"
+  description: >
+    Reporting helpers for plots, tables, Quarto YAML composition, dynamic QMD
+    blocks, and display utilities used by project-scale report pipelines.
+
+navbar:
+  structure:
+    left:  [intro, articles, reference, news]
+    right: [github]
+  components:
+    intro:
+      text: Get started
+      href: articles/dynamic-qmd-blocks.html
+    articles:
+      text: Articles
+      menu:
+        - text: Dynamic QMD blocks
+          href: articles/dynamic-qmd-blocks.html
+        - text: buildPlot line and point layers
+          href: articles/build-plot.html
+        - text: Quarto YAML helpers
+          href: articles/quarto-yaml.html
+        - text: Secondary Y axis in buildPlot()
+          href: articles/secondary-y-axis.html
+        - text: Themes with gridlines
+          href: articles/themes-gridlines.html
+        - text: Typewriter web fonts
+          href: articles/adding-web-fonts-typewriter.html
+    github:
+      icon: fab fa-github fa-lg
+      href: https://github.com/averriK/NGR
+      aria-label: GitHub
+
+reference:
+  - title: Plotting
+    contents:
+      - buildPlot
+      - buildPlot.Bar
+      - buildPlot.Histogram
+      - buildPlot.Model
+      - buildHeatmap
+
+  - title: Tables and report composition
+    contents:
+      - buildTable
+      - buildYAML
+      - knitBlock
+
+  - title: Quarto YAML helpers
+    desc: >
+      R helpers for qrt-style runtime YAML composition without depending on
+      the qrt CLI.
+    contents:
+      - quartoReadFrontmatter
+      - quartoHasBookManifest
+      - quartoAsSequence
+      - quartoSetProjectRender
+      - quartoMergeBookManifest
+      - quartoDocxBookProfile
+      - quartoAsYaml
+      - quartoWriteYaml
+
+  - title: Highcharter themes
+    contents:
+      - hc_theme_hcrt_gridlines
+      - hc_theme_flat_gridlines
+      - hc_theme_538_gridlines
+      - hc_theme_economist_gridlines
+
+  - title: Display utilities
+    contents:
+      - showCode
+      - showHTML
+      - showPDF
+      - showMarkdownRendered
+      - showGithubREADME
+      - showASCII
+      - showTypewriter
+      - rotateTypewriter
+      - buildIndexTypewriter
+      - export

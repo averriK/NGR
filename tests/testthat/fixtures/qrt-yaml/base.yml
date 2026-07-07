@@ -1,0 +1,8 @@
+project:
+  type: default
+  preview: false
+execute:
+  echo: true
+format:
+  html:
+    toc: true

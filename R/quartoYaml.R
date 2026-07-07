@@ -1,0 +1,178 @@
+# nolint start
+#' Read QMD YAML frontmatter
+#'
+#' Reads the YAML frontmatter block from a QMD/Markdown file. Files without a
+#' complete frontmatter block return an empty list.
+#'
+#' @param path Character scalar. Path to a QMD/Markdown file.
+#'
+#' @return A list parsed from YAML frontmatter, or an empty list.
+#' @export
+quartoReadFrontmatter <- function(path) {
+  Path <- as.character(path)
+  if (length(Path) != 1L || !nzchar(Path)) {
+    stop("quartoReadFrontmatter: path must be one non-empty value.", call. = FALSE)
+  }
+  if (!file.exists(Path)) {
+    stop("quartoReadFrontmatter: file not found: ", Path, call. = FALSE)
+  }
+
+  Lines <- readLines(Path, warn = FALSE)
+  if (!length(Lines) || !identical(Lines[[1L]], "---")) return(list())
+
+  End <- which(Lines[-1L] == "---")[1L] + 1L
+  if (is.na(End) || End <= 2L) return(list())
+
+  Text <- paste(Lines[2L:(End - 1L)], collapse = "\n")
+  if (!nzchar(trimws(Text))) return(list())
+
+  Out <- yaml::yaml.load(Text)
+  if (is.null(Out)) list() else Out
+}
+
+#' Coerce a value to a YAML sequence list
+#'
+#' Converts NULL to an empty list and all other values to a list. This is useful
+#' when writing Quarto YAML fields that must remain sequences even when they
+#' contain a single entry.
+#'
+#' @param x Value to coerce.
+#'
+#' @return A list.
+#' @export
+quartoAsSequence <- function(x) {
+  if (is.null(x)) list() else as.list(x)
+}
+
+#' Test whether parsed frontmatter is a book manifest
+#'
+#' A qrt-style book manifest is frontmatter with at least one `chapters` or
+#' `appendices` entry.
+#'
+#' @param frontmatter A list, usually from [quartoReadFrontmatter()].
+#'
+#' @return TRUE when the frontmatter declares chapters or appendices.
+#' @export
+quartoHasBookManifest <- function(frontmatter) {
+  Frontmatter <- .quartoRequireList(frontmatter, "frontmatter")
+  length(quartoAsSequence(Frontmatter$chapters)) > 0L ||
+    length(quartoAsSequence(Frontmatter$appendices)) > 0L
+}
+
+#' Set Quarto project render targets
+#'
+#' Sets `project.render` on a parsed Quarto YAML list while preserving the rest
+#' of the config.
+#'
+#' @param base Parsed Quarto YAML list.
+#' @param render Character vector or list of render targets.
+#'
+#' @return Modified Quarto YAML list.
+#' @export
+quartoSetProjectRender <- function(base, render) {
+  Base <- .quartoRequireList(base, "base")
+  if (is.null(Base$project) || !is.list(Base$project)) Base$project <- list()
+  Base$project$render <- quartoAsSequence(render)
+  Base
+}
+
+#' Merge QMD book-manifest frontmatter into Quarto YAML
+#'
+#' Merges qrt-style manifest fields (`title`, `chapters`, `appendices`, and
+#' `bibliography`) into a parsed `_quarto.yml` list and sets `project.render` to
+#' the declared chapters plus appendices.
+#'
+#' @param base Parsed base Quarto YAML list.
+#' @param manifest Parsed QMD frontmatter list.
+#'
+#' @return Modified Quarto YAML list.
+#' @export
+quartoMergeBookManifest <- function(base, manifest) {
+  Base <- .quartoRequireList(base, "base")
+  Manifest <- .quartoRequireList(manifest, "manifest")
+
+  Book <- list()
+  if (!is.null(Manifest$title)) Book$title <- Manifest$title
+  if (!is.null(Manifest$chapters)) Book$chapters <- quartoAsSequence(Manifest$chapters)
+  if (!is.null(Manifest$appendices)) Book$appendices <- quartoAsSequence(Manifest$appendices)
+  if (length(Book) > 0L) Base$book <- Book
+
+  Render <- c(quartoAsSequence(Manifest$chapters), quartoAsSequence(Manifest$appendices))
+  if (length(Render) > 0L) Base <- quartoSetProjectRender(Base, Render)
+
+  if (!is.null(Manifest$bibliography)) Base$bibliography <- Manifest$bibliography
+  Base
+}
+
+#' Convert a DOCX profile into a book profile
+#'
+#' Sets `project.type = "book"` in a parsed DOCX profile and validates that the
+#' profile declares `format.docx`.
+#'
+#' @param profile Parsed DOCX profile YAML list.
+#'
+#' @return Modified DOCX profile list.
+#' @export
+quartoDocxBookProfile <- function(profile) {
+  Profile <- .quartoRequireList(profile, "profile")
+  if (is.null(Profile$project) || !is.list(Profile$project)) Profile$project <- list()
+  Profile$project$type <- "book"
+
+  if (is.null(Profile$format) || is.null(Profile$format$docx)) {
+    stop("quartoDocxBookProfile: profile does not define format.docx.", call. = FALSE)
+  }
+
+  Profile
+}
+
+#' Convert a Quarto config list to YAML
+#'
+#' Serializes YAML with Quarto-compatible YAML 1.2 booleans (`true`/`false`) and
+#' sequence indentation suitable for `project.render`, `chapters`, and
+#' `appendices`.
+#'
+#' @param x R object to serialize.
+#'
+#' @return Character scalar containing YAML.
+#' @export
+quartoAsYaml <- function(x) {
+  yaml::as.yaml(
+    x,
+    indent.mapping.sequence = TRUE,
+    handlers = list(logical = .quartoVerbatimLogical)
+  )
+}
+
+#' Write or return Quarto YAML
+#'
+#' @param x R object to serialize.
+#' @param path Optional output path. When NULL, returns the YAML text.
+#'
+#' @return YAML text when `path` is NULL; otherwise invisibly returns `path`.
+#' @export
+quartoWriteYaml <- function(x, path = NULL) {
+  Yaml <- quartoAsYaml(x)
+  if (is.null(path)) return(Yaml)
+
+  Path <- as.character(path)
+  if (length(Path) != 1L || !nzchar(Path)) {
+    stop("quartoWriteYaml: path must be one non-empty value.", call. = FALSE)
+  }
+  cat(Yaml, file = Path)
+  invisible(Path)
+}
+
+.quartoRequireList <- function(x, name) {
+  if (is.null(x)) return(list())
+  if (!is.list(x)) {
+    stop(sprintf("%s must be a list.", name), call. = FALSE)
+  }
+  x
+}
+
+.quartoVerbatimLogical <- function(x) {
+  Out <- ifelse(x, "true", "false")
+  class(Out) <- "verbatim"
+  Out
+}
+# nolint end

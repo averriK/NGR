@@ -30,6 +30,7 @@ NGR streamlines data visualization and presentation by providing high-level func
 - **Multi-format output**: HTML, PDF, DOCX via Quarto integration
 - **Interactive visualizations**: highcharter and plotly support
 - **Configurable templates**: YAML-based report customization
+- **Quarto YAML helpers**: reusable frontmatter and runtime `_quarto.yml` utilities for qrt-style render pipelines
 - **Display utilities**: Built-in rendering functions for code, HTML, PDF, Markdown
 
 ## Installation
@@ -117,6 +118,26 @@ tbl <- buildTable(
 )
 ```
 
+### Quarto YAML helpers
+
+These helpers are ordinary R APIs for qrt-style runtime Quarto YAML. They do not
+call the `qrt` CLI.
+
+```r
+library(NGR)
+
+frontmatter <- quartoReadFrontmatter("report.qmd")
+base <- yaml::read_yaml("yml/_quarto.yml")
+
+book_config <- quartoMergeBookManifest(base, frontmatter)
+quartoWriteYaml(book_config, "_quarto.yml")
+
+single_file_config <- quartoSetProjectRender(base, "report.qmd")
+quartoAsYaml(single_file_config)
+```
+
+See `vignettes/quarto-yaml.Rmd` for the package-facing article source.
+
 ### Display utilities
 
 ```r
@@ -128,7 +149,7 @@ showMarkdownRendered("README.md")   # Rendered markdown
 
 ## Exported API
 
-The package exports 20 functions (see `NAMESPACE`):
+The package exports 29 functions (see `NAMESPACE`):
 
 ### Plotting
 
@@ -139,6 +160,7 @@ The package exports 20 functions (see `NAMESPACE`):
 
 - `buildTable()` — publication-quality tables via gt/flextable/kableExtra.
 - `buildYAML()` — compose Quarto YAML blocks for multi-format rendering.
+- `quartoReadFrontmatter()`, `quartoMergeBookManifest()`, `quartoSetProjectRender()`, `quartoDocxBookProfile()`, `quartoAsYaml()`, and related helpers — reusable qrt-style Quarto YAML utilities.
 - `export()` — render/export utility.
 
 ### Highcharter themes (gridlines)
@@ -171,11 +193,14 @@ See function documentation via R help:
 ?buildTable
 ```
 
-Topic pages under `docs/`:
+Pkgdown is configured by `_pkgdown.yml` and builds the site into `docs/`, following the `gmsp`/`newmark` package-site layout.
 
-- [docs/index.md](docs/index.md)
-- [docs/secondary-y-axis.md](docs/secondary-y-axis.md) — primary/secondary Y axis configuration.
-- [docs/themes-gridlines.md](docs/themes-gridlines.md) — `hc_theme_*_gridlines()` reference.
+Pkgdown article sources:
+
+- `vignettes/quarto-yaml.Rmd` — package-facing vignette for the Quarto YAML helper API.
+- `vignettes/secondary-y-axis.Rmd` — primary/secondary Y axis configuration.
+- `vignettes/themes-gridlines.Rmd` — `hc_theme_*_gridlines()` reference.
+- `vignettes/adding-web-fonts-typewriter.Rmd` — maintainer guide for typewriter web fonts.
 
 ## License
 

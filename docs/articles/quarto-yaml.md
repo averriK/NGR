@@ -1,0 +1,107 @@
+# Quarto YAML Helpers
+
+## Purpose
+
+NGR provides small Quarto/YAML helpers for R code that needs qrt-style
+runtime configuration without shelling out to the `qrt` CLI.
+
+The `qrt` runtime scripts remain CLI adapters. These functions are the
+reusable R API.
+
+## Build A Runtime Book Config
+
+``` r
+
+library(NGR)
+#> Registered S3 method overwritten by 'quantmod':
+#>   method            from
+#>   as.zoo.data.frame zoo
+
+work <- file.path(tempdir(), "ngr-quarto-yaml-vignette")
+unlink(work, recursive = TRUE, force = TRUE)
+dir.create(file.path(work, "yml"), recursive = TRUE)
+dir.create(file.path(work, "_chapters"), recursive = TRUE)
+dir.create(file.path(work, "bib"), recursive = TRUE)
+
+manifest_path <- file.path(work, "report.qmd")
+base_path <- file.path(work, "yml", "_quarto.yml")
+
+writeLines(c(
+  "---",
+  "title: Example Report",
+  "chapters:",
+  "  - _chapters/intro.qmd",
+  "bibliography: bib/references.bib",
+  "---",
+  "",
+  "# Body"
+), manifest_path)
+
+writeLines(c(
+  "project:",
+  "  type: default",
+  "  preview: false",
+  "execute:",
+  "  echo: true",
+  "format:",
+  "  html:",
+  "    toc: true"
+), base_path)
+
+frontmatter <- quartoReadFrontmatter(manifest_path)
+base <- yaml::read_yaml(base_path)
+book_config <- quartoMergeBookManifest(base, frontmatter)
+
+cat(quartoAsYaml(book_config))
+#> project:
+#>   type: default
+#>   preview: false
+#>   render:
+#>     - _chapters/intro.qmd
+#> execute:
+#>   echo: true
+#> format:
+#>   html:
+#>     toc: true
+#> book:
+#>   title: Example Report
+#>   chapters:
+#>     - _chapters/intro.qmd
+#> bibliography: bib/references.bib
+```
+
+The single chapter remains a YAML sequence, and logical values are
+emitted as `true`/`false` for Quarto compatibility.
+
+## Single File Render Scope
+
+``` r
+
+single_file_config <- quartoSetProjectRender(base, "report.qmd")
+cat(quartoAsYaml(single_file_config))
+#> project:
+#>   type: default
+#>   preview: false
+#>   render:
+#>     - report.qmd
+#> execute:
+#>   echo: true
+#> format:
+#>   html:
+#>     toc: true
+```
+
+## DOCX Book Profile
+
+``` r
+
+docx_profile <- list(format = list(docx = list(toc = TRUE, `number-sections` = FALSE)))
+docx_book_profile <- quartoDocxBookProfile(docx_profile)
+cat(quartoAsYaml(docx_book_profile))
+#> format:
+#>   docx:
+#>     toc: true
+#>     number-sections: false
+#> project:
+#>   type: book
+```

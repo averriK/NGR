@@ -1,0 +1,8 @@
+---
+title: Single Chapter
+chapters:
+  - _chapters/intro.qmd
+bibliography: bib/references.bib
+---
+
+# Body
