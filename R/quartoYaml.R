@@ -80,7 +80,9 @@ quartoSetProjectRender <- function(base, render) {
 #'
 #' Merges qrt-style manifest fields (`title`, `chapters`, `appendices`, and
 #' `bibliography`) into a parsed `_quarto.yml` list and sets `project.render` to
-#' the declared chapters plus appendices.
+#' the declared chapters plus appendices. `part:` entries are preserved in
+#' `book.chapters`/`book.appendices` and flattened to their chapter files for
+#' `project.render`, which only accepts paths.
 #'
 #' @param base Parsed base Quarto YAML list.
 #' @param manifest Parsed QMD frontmatter list.
@@ -93,15 +95,34 @@ quartoMergeBookManifest <- function(base, manifest) {
 
   Book <- list()
   if (!is.null(Manifest$title)) Book$title <- Manifest$title
-  if (!is.null(Manifest$chapters)) Book$chapters <- quartoAsSequence(Manifest$chapters)
-  if (!is.null(Manifest$appendices)) Book$appendices <- quartoAsSequence(Manifest$appendices)
+  if (!is.null(Manifest$chapters)) Book$chapters <- .quartoBookEntries(Manifest$chapters)
+  if (!is.null(Manifest$appendices)) Book$appendices <- .quartoBookEntries(Manifest$appendices)
   if (length(Book) > 0L) Base$book <- Book
 
-  Render <- c(quartoAsSequence(Manifest$chapters), quartoAsSequence(Manifest$appendices))
+  Render <- c(.quartoChapterFiles(Manifest$chapters), .quartoChapterFiles(Manifest$appendices))
   if (length(Render) > 0L) Base <- quartoSetProjectRender(Base, Render)
 
   if (!is.null(Manifest$bibliography)) Base$bibliography <- Manifest$bibliography
   Base
+}
+
+.quartoBookEntries <- function(chapters) {
+  lapply(quartoAsSequence(chapters), function(Entry) {
+    if (!is.list(Entry)) return(Entry)
+    # A length-1 part serializes as a scalar unless kept a list; the
+    # Quarto schema requires a sequence.
+    Entry$chapters <- quartoAsSequence(Entry$chapters)
+    Entry
+  })
+}
+
+.quartoChapterFiles <- function(chapters) {
+  OUT <- character()
+  for (Entry in quartoAsSequence(chapters)) {
+    if (is.list(Entry)) OUT <- c(OUT, unlist(.quartoChapterFiles(Entry$chapters)))
+    else OUT <- c(OUT, as.character(Entry))
+  }
+  as.list(OUT)
 }
 
 #' Convert a DOCX profile into a book profile

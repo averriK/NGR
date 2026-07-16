@@ -55,6 +55,34 @@ test_that("quartoMergeBookManifest merges chapters, appendices, and bibliography
   expect_equal(Merged$bibliography, c("bib/main.bib", "bib/extra.bib"))
 })
 
+test_that("quartoMergeBookManifest keeps parts in book.chapters and flattens render", {
+  Fixture <- testthat::test_path("fixtures", "qrt-yaml")
+  Base <- yaml::read_yaml(file.path(Fixture, "base.yml"))
+  Manifest <- quartoReadFrontmatter(file.path(Fixture, "book-parts.qmd"))
+  Merged <- quartoMergeBookManifest(Base, Manifest)
+
+  expect_identical(Merged$book$chapters[[1]], "index.qmd")
+  expect_identical(Merged$book$chapters[[2]]$part, "Part I")
+  expect_equal(unlist(Merged$book$chapters[[2]]$chapters, use.names = FALSE), c(
+    "_chapters/intro.qmd",
+    "_chapters/methods.qmd"
+  ))
+  expect_true(is.list(Merged$book$chapters[[3]]$chapters))
+  expect_length(Merged$book$chapters[[3]]$chapters, 1)
+  expect_equal(unlist(Merged$project$render, use.names = FALSE), c(
+    "index.qmd",
+    "_chapters/intro.qmd",
+    "_chapters/methods.qmd",
+    "_chapters/results.qmd",
+    "_appendices/data.qmd"
+  ))
+
+  expect_true(all(vapply(Merged$project$render, is.character, logical(1))))
+
+  Yaml <- quartoAsYaml(Merged)
+  expect_match(Yaml, "chapters:\n        - _chapters/results.qmd")
+})
+
 test_that("quartoSetProjectRender sets render targets without touching other fields", {
   Fixture <- testthat::test_path("fixtures", "qrt-yaml")
   Base <- yaml::read_yaml(file.path(Fixture, "base.yml"))

@@ -1,0 +1,15 @@
+---
+title: "Parted Book"
+chapters:
+  - index.qmd
+  - part: "Part I"
+    chapters:
+      - _chapters/intro.qmd
+      - _chapters/methods.qmd
+  - part: "Part II"
+    chapters: _chapters/results.qmd
+appendices:
+  - _appendices/data.qmd
+---
+
+Body.
