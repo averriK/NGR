@@ -36,6 +36,10 @@ knitBlock <- function(path, stem, vars = list(),
   Env <- knitr::knit_global()
   Restore <- .qmdOverlayVars(vars, Env)
   on.exit(Restore(), add = TRUE)
+  # Nested knit() setwd()s to opts_knit output.dir and never restores;
+  # under execute-dir: project that strands the wd in the chapter dir.
+  Owd <- getwd()
+  on.exit(setwd(Owd), add = TRUE)
   OUT <- knitr::knit_child(text = Lines, envir = Env, quiet = TRUE)
   cat(OUT, sep = "\n")
   invisible(OUT)

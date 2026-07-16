@@ -119,6 +119,32 @@ test_that("knitBlock vars are visible to sourced scripts", {
   expect_match(OUT, "SITE_A", fixed = TRUE)
 })
 
+test_that("knitBlock restores the working directory", {
+  Root <- tempfile("ngr-knit-block-")
+  dir.create(file.path(Root, "_fig"), recursive = TRUE)
+  dir.create(file.path(Root, "exec"))
+  writeLines(c(
+    "```{r}",
+    "#| label: fig-wd",
+    "cat(\"wd-block-ok\")",
+    "```"
+  ), file.path(Root, "_fig", "wd.qmd"))
+
+  Text <- c(
+    "```{r, results=\"asis\", error=FALSE}",
+    "Owd <- setwd(file.path(Root, \"exec\"))",
+    "on.exit(setwd(Owd), add = TRUE)",
+    "Wd <- normalizePath(getwd())",
+    "knitBlock(\"/_fig/wd.qmd\", \"wd\", root = Root)",
+    "stopifnot(identical(normalizePath(getwd()), Wd))",
+    "```"
+  )
+
+  OUT <- knitr::knit(text = Text, quiet = TRUE)
+
+  expect_match(OUT, "wd-block-ok", fixed = TRUE)
+})
+
 test_that("knitBlock rejects repeated dynamic labels", {
   Root <- tempfile("ngr-knit-block-")
   dir.create(file.path(Root, "_tbl"), recursive = TRUE)
