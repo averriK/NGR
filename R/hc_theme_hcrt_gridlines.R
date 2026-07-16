@@ -29,12 +29,12 @@ hc_theme_hcrt_gridlines <- function() {
   
   # Minor gridlines: visible but subordinate to major. Previous (#EEEEEE
   # @ 0.25) was indistinguishable from background on white-ish themes.
-  theme$xAxis$minorGridLineWidth <- 0.5
-  theme$xAxis$minorGridLineColor <- "#D8D8D8"
+  theme$xAxis$minorGridLineWidth <- 0.25
+  theme$xAxis$minorGridLineColor <- "#EEEEEE"
   theme$xAxis$minorTickInterval <- "auto"
 
-  theme$yAxis$minorGridLineWidth <- 0.5
-  theme$yAxis$minorGridLineColor <- "#D8D8D8"
+  theme$yAxis$minorGridLineWidth <- 0.25
+  theme$yAxis$minorGridLineColor <- "#EEEEEE"
   theme$yAxis$minorTickInterval <- "auto"
 
   return(theme)
@@ -70,14 +70,14 @@ hc_theme_flat_gridlines <- function() {
   theme$yAxis$gridLineColor <- "#A0A0A0"  # Darker gray for major lines
   
   # Minor gridlines: dotted, visible but subordinate to major.
-  theme$xAxis$minorGridLineWidth <- 0.5
+  theme$xAxis$minorGridLineWidth <- 0.25
   theme$xAxis$minorGridLineDashStyle <- "Dot"
-  theme$xAxis$minorGridLineColor <- "#C8C8C8"
+  theme$xAxis$minorGridLineColor <- "#E0E0E0"
   theme$xAxis$minorTickInterval <- "auto"
 
-  theme$yAxis$minorGridLineWidth <- 0.5
+  theme$yAxis$minorGridLineWidth <- 0.25
   theme$yAxis$minorGridLineDashStyle <- "Dot"
-  theme$yAxis$minorGridLineColor <- "#C8C8C8"
+  theme$yAxis$minorGridLineColor <- "#E0E0E0"
   theme$yAxis$minorTickInterval <- "auto"
   
   return(theme)
@@ -117,12 +117,12 @@ hc_theme_538_gridlines <- function() {
   
   # Minor gridlines: visible on white but clearly subordinate to major.
   # Previous (#EEEEEE @ 0.25) was indistinguishable from background.
-  theme$xAxis$minorGridLineWidth <- 0.5
-  theme$xAxis$minorGridLineColor <- "#D8D8D8"  # Subtle but readable
+  theme$xAxis$minorGridLineWidth <- 0.25
+  theme$xAxis$minorGridLineColor <- "#EEEEEE"  # Subtle but readable
   theme$xAxis$minorTickInterval <- "auto"
 
-  theme$yAxis$minorGridLineWidth <- 0.5
-  theme$yAxis$minorGridLineColor <- "#D8D8D8"
+  theme$yAxis$minorGridLineWidth <- 0.25
+  theme$yAxis$minorGridLineColor <- "#EEEEEE"
   theme$yAxis$minorTickInterval <- "auto"
 
   return(theme)
