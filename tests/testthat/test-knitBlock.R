@@ -93,6 +93,32 @@ test_that("knitBlock knits repeated blocks with distinct stems", {
   expect_error(knitr::knit(text = Text, quiet = TRUE), NA)
 })
 
+test_that("knitBlock vars are visible to sourced scripts", {
+  Root <- tempfile("ngr-knit-block-")
+  dir.create(file.path(Root, "_fig"), recursive = TRUE)
+  dir.create(file.path(Root, "scripts"), recursive = TRUE)
+  writeLines(c(
+    "if (!exists(\"siteID_TARGET\")) stop(\"missing siteID_TARGET\", call. = FALSE)",
+    "cat(siteID_TARGET)"
+  ), file.path(Root, "scripts", "check.R"))
+  writeLines(c(
+    "```{r}",
+    "#| label: fig-check",
+    "source(file.path(root, \"scripts\", \"check.R\"))",
+    "```"
+  ), file.path(Root, "_fig", "check.qmd"))
+  Text <- c(
+    "```{r, results=\"asis\", error=FALSE}",
+    "root <- Root",
+    "knitBlock(\"/_fig/check.qmd\", \"site-a\", vars = list(siteID_TARGET = \"SITE_A\"), root = Root)",
+    "```"
+  )
+
+  OUT <- knitr::knit(text = Text, quiet = TRUE)
+
+  expect_match(OUT, "SITE_A", fixed = TRUE)
+})
+
 test_that("knitBlock rejects repeated dynamic labels", {
   Root <- tempfile("ngr-knit-block-")
   dir.create(file.path(Root, "_tbl"), recursive = TRUE)

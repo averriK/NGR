@@ -33,10 +33,30 @@ knitBlock <- function(path, stem, vars = list(),
   if (labels %in% c("parent", "rewrite")) Lines <- .qmdRewriteLabels(Lines, stem)
   if (labels == "strip") Lines <- .qmdStripLabels(Lines)
   .qmdCheckLabels(Lines, basename(File), register = TRUE)
-  Env <- list2env(vars, parent = knitr::knit_global())
+  Env <- knitr::knit_global()
+  Restore <- .qmdOverlayVars(vars, Env)
+  on.exit(Restore(), add = TRUE)
   OUT <- knitr::knit_child(text = Lines, envir = Env, quiet = TRUE)
   cat(OUT, sep = "\n")
   invisible(OUT)
+}
+
+.qmdOverlayVars <- function(vars, envir) {
+  Names <- names(vars)
+  Old <- vector("list", length(Names))
+  names(Old) <- Names
+  Had <- setNames(logical(length(Names)), Names)
+  for (Name in Names) {
+    Had[[Name]] <- exists(Name, envir = envir, inherits = FALSE)
+    if (Had[[Name]]) Old[[Name]] <- get(Name, envir = envir, inherits = FALSE)
+    assign(Name, vars[[Name]], envir = envir)
+  }
+  function() {
+    for (Name in rev(Names)) {
+      if (Had[[Name]]) assign(Name, Old[[Name]], envir = envir)
+      else rm(list = Name, envir = envir)
+    }
+  }
 }
 
 .qmdBlockPath <- function(path, root) {
