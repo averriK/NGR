@@ -63,7 +63,8 @@ buildPlot(
   yAxis2 = NULL,
   yAxis2.legend = NULL,
   yAxis2.transform = NULL,
-  yAxis2.decimals = 0
+  yAxis2.decimals = 0,
+  data.ranges = NULL
 )
 }
 \arguments{
@@ -191,17 +192,32 @@ constructs upper/lower envelope series by X (using fill.max / fill.min as IDs) a
 \item{yAxis2.transform}{Optional one-sided formula to transform primary Y tick values for secondary axis labels in linked mode. Use \code{Y} as the primary axis tick value (e.g. \code{~ 1 / Y}).}
 
 \item{yAxis2.decimals}{Integer number of decimals for secondary axis labels when using \code{yAxis2.transform} (passed to \code{Highcharts.numberFormat}).}
+
+\item{data.ranges}{A data.frame or data.table with one row per unique
+combination of \code{"ID"} and \code{"X"}. Required columns are \code{"ID"}, \code{"X"},
+\code{"lower"}, and \code{"upper"}; bounds must be finite and satisfy
+\code{lower <= upper}. Optional \code{"size"}, \code{"color"}, and \code{"yAxis"} values must
+be constant within each ID. Optional \code{"custom.lower"} and
+\code{"custom.upper"} named-list columns attach metadata to the corresponding
+boundary points. Coincident bounds produce one solid line; distinct
+bounds produce linked solid boundary lines and a shaded range with one
+legend item.}
 }
 \value{
-A highchart object if either \code{data.lines} or \code{data.points} is provided.
-Returns NULL if both are NULL, with a soft warning.
+A highchart object if at least one of \code{data.lines}, \code{data.points},
+or \code{data.ranges} is provided. Returns NULL if all three are NULL, with a
+soft warning.
 }
 \description{
-Build a highchart plot using separate data sources for lines and points.
+Build a highchart plot using separate data sources for lines,
+points, and explicit lower/upper ranges.
 
-Supports the plotting of line and scatter series. Includes optional arearange shading between
-two line groups if indicated in \code{data.lines$fill}, and interpolation is handled via the \code{approx} function
-(which can be customized using the \code{interpolation.method} argument). Fallback behaviors:
+Supports line, scatter, and range series. A range is rendered as one line
+when its bounds coincide, or as two linked boundary lines and a shaded band
+otherwise. Also includes optional arearange shading between two line groups
+if indicated in \code{data.lines$fill}, and interpolation is handled via the
+\code{approx} function (which can be customized using the
+\code{interpolation.method} argument). Fallback behaviors:
 if an invalid \code{line.type} is provided, \code{"line"} is used; if an invalid or missing line style is found,
 \code{"solid"} is used; if an invalid \code{color.palette} is provided, a default Highcharts palette is chosen.
 }

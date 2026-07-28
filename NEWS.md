@@ -1,3 +1,20 @@
+# NGR 0.3.9
+
+## API
+
+* `buildPlot()` gains an explicit `data.ranges` input for keyed lower/upper
+  curves. Coincident bounds render as one solid line; distinct bounds render
+  as linked solid boundary lines with one legend item and a shaded band.
+  Boundary tooltips identify `lower` and `upper`, and optional named-list
+  columns preserve point metadata.
+
+# NGR 0.3.8
+
+## Visual
+
+* Restore the lighter minor-gridline styling so auxiliary gridlines remain
+  subordinate to thin data series.
+
 # NGR 0.3.7
 
 ## API

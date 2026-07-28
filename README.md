@@ -53,6 +53,7 @@ devtools::install_github("averriK/NGR")
 
 - **Lines**: `data.lines` with columns `ID`, `X`, `Y` (optional: `style`, `size`, `fill`, `yAxis`)
 - **Points**: `data.points` with columns `ID`, `X`, `Y` (optional: `style`, `yAxis`)
+- **Ranges**: `data.ranges` with columns `ID`, `X`, `lower`, `upper` (optional: `size`, `color`, `yAxis`, `custom.lower`, `custom.upper`)
 
 #### Basic line plot
 

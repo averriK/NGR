@@ -1,10 +1,14 @@
 # nolint start
 #' @title Build a highchart plot
-#' @description Build a highchart plot using separate data sources for lines and points.
+#' @description Build a highchart plot using separate data sources for lines,
+#' points, and explicit lower/upper ranges.
 #'
-#' Supports the plotting of line and scatter series. Includes optional arearange shading between
-#' two line groups if indicated in `data.lines$fill`, and interpolation is handled via the `approx` function
-#' (which can be customized using the `interpolation.method` argument). Fallback behaviors:
+#' Supports line, scatter, and range series. A range is rendered as one line
+#' when its bounds coincide, or as two linked boundary lines and a shaded band
+#' otherwise. Also includes optional arearange shading between two line groups
+#' if indicated in `data.lines$fill`, and interpolation is handled via the
+#' `approx` function (which can be customized using the
+#' `interpolation.method` argument). Fallback behaviors:
 #' if an invalid `line.type` is provided, `"line"` is used; if an invalid or missing line style is found,
 #' `"solid"` is used; if an invalid `color.palette` is provided, a default Highcharts palette is chosen.
 #'
@@ -14,6 +18,15 @@
 #'                   If NULL, no lines will be plotted.
 #' @param data.points A data.table containing columns "ID", "X", "Y", optional "style", optional "yAxis" (0 or 1).
 #'                    If NULL, no scatter points will be plotted.
+#' @param data.ranges A data.frame or data.table with one row per unique
+#'   combination of `"ID"` and `"X"`. Required columns are `"ID"`, `"X"`,
+#'   `"lower"`, and `"upper"`; bounds must be finite and satisfy
+#'   `lower <= upper`. Optional `"size"`, `"color"`, and `"yAxis"` values must
+#'   be constant within each ID. Optional `"custom.lower"` and
+#'   `"custom.upper"` named-list columns attach metadata to the corresponding
+#'   boundary points. Coincident bounds produce one solid line; distinct
+#'   bounds produce linked solid boundary lines and a shaded range with one
+#'   legend item.
 #' @param line.type A string indicating the line series type. Options might include `"line"` or `"spline"`.
 #'                  If invalid, `"line"` is used.
 #' @param plot.title A string for the plot title
@@ -75,8 +88,9 @@
 #' @param fill.max.color Color for upper envelope (default: "#00008B", dark blue).
 #' @param fill.min.color Color for lower envelope (default: "#8B0000", dark red).
 #'
-#' @return A highchart object if either `data.lines` or `data.points` is provided.
-#'         Returns NULL if both are NULL, with a soft warning.
+#' @return A highchart object if at least one of `data.lines`, `data.points`,
+#'   or `data.ranges` is provided. Returns NULL if all three are NULL, with a
+#'   soft warning.
 #' @importFrom grDevices hcl.pals hcl.colors
 #' @importFrom stats setNames approx spline
 #' @import highcharter
@@ -142,7 +156,8 @@ buildPlot <- function(
     yAxis2 = NULL,
     yAxis2.legend = NULL,
     yAxis2.transform = NULL,
-    yAxis2.decimals = 0) {
+    yAxis2.decimals = 0,
+    data.ranges = NULL) {
     ## 0. Declare data.table columns to avoid R CMD check NOTEs
     style <- size <- yAxis <- Xplot <- Xlabel <- NULL  # data.table columns
     
@@ -156,8 +171,8 @@ buildPlot <- function(
     }
 
     ## 2. Soft check if both data.lines and data.points are NULL
-    if (is.null(data.lines) && is.null(data.points)) {
-        warning("No data provided for lines or points. Returning NULL.")
+    if (is.null(data.lines) && is.null(data.points) && is.null(data.ranges)) {
+        warning("No data provided for lines, points, or ranges. Returning NULL.")
         return(NULL)
     }
 
@@ -245,6 +260,9 @@ buildPlot <- function(
     if (!is.null(data.points)) {
         data.points <- data.table::copy(data.table::as.data.table(data.points))
     }
+    if (!is.null(data.ranges)) {
+        data.ranges <- .prepareRangeData(data.ranges)
+    }
 
     validateYAxisCol <- function(data, data_name) {
         if (!is.null(data) && "yAxis" %in% names(data)) {
@@ -298,7 +316,8 @@ buildPlot <- function(
     ## 10. Build color mapping (collect all IDs for consistent color usage)
     ALL.IDS <- unique(c(
         if (!is.null(data.lines)) data.lines$ID,
-        if (!is.null(data.points)) data.points$ID
+        if (!is.null(data.points)) data.points$ID,
+        if (!is.null(data.ranges)) data.ranges$ID
     ))
     ID.COLOR.MAP <- stats::setNames(
         grDevices::hcl.colors(
@@ -328,7 +347,8 @@ buildPlot <- function(
 
     AxisX <- c(
         if (!is.null(data.lines)) data.lines$X,
-        if (!is.null(data.points)) data.points$X
+        if (!is.null(data.points)) data.points$X,
+        if (!is.null(data.ranges)) data.ranges$X
     )
 
     if (isTRUE(xAxis.log) && any(AxisX < 0, na.rm = TRUE)) {
@@ -353,11 +373,26 @@ buildPlot <- function(
             data.points[, Xlabel := .formatAxisValue(X)]
             data.points[X == 0, Xlabel := xAxis.log.zero.label]
         }
+        if (!is.null(data.ranges)) {
+            data.ranges[, Xplot := X]
+            data.ranges[X == 0, Xplot := XLogZeroCoord]
+            data.ranges[, Xlabel := .formatAxisValue(X)]
+            data.ranges[X == 0, Xlabel := xAxis.log.zero.label]
+        }
 
         if (!is.na(xAxis.min) && xAxis.min <= 0) {
             xAxis.min <- XLogZeroCoord
         }
     }
+
+    TooltipFormat <- sprintf(
+        "%s: <b>{point.series.name}</b><br>%s: %s<br>%s: {point.y}",
+        group.legend, xAxis.legend, XTooltip, yAxis.legend
+    )
+    RangeTooltipFormat <- sprintf(
+        "%s: <b>{point.series.name}</b><br>Bound: <b>{point.custom.rangeRole}</b><br>%s: %s<br>%s: {point.y}",
+        group.legend, xAxis.legend, XTooltip, yAxis.legend
+    )
 
     ## 11. Initialize plot object
     xAxis_labels <- list(enabled = xAxis.label)
@@ -369,6 +404,9 @@ buildPlot <- function(
     }
     if (!has_axis2_series && !is.null(data.points) && "yAxis" %in% names(data.points)) {
         has_axis2_series <- any(data.points$yAxis == 1, na.rm = TRUE)
+    }
+    if (!has_axis2_series && !is.null(data.ranges) && "yAxis" %in% names(data.ranges)) {
+        has_axis2_series <- any(data.ranges$yAxis == 1, na.rm = TRUE)
     }
 
     needs_secondary_axis <- has_axis2_series ||
@@ -921,6 +959,26 @@ buildPlot <- function(
         }
     }
 
+    ## ============ RANGES =============
+    if (!is.null(data.ranges)) {
+        RangeSeries <- .buildRangeSeries(
+            data = data.ranges,
+            lineType = line.type,
+            lineSize = line.size,
+            fillOpacity = fill.opacity,
+            colorMap = ID.COLOR.MAP,
+            xColumn = if (XLogZero) "Xplot" else "X",
+            pointFormat = TooltipFormat,
+            rangePointFormat = RangeTooltipFormat
+        )
+        for (Series in RangeSeries) {
+            plot.object <- do.call(
+                highcharter::hc_add_series,
+                c(list(hc = plot.object), Series)
+            )
+        }
+    }
+
     ## ============ POINTS =============
     if (!is.null(data.points)) {
         unique_points <- unique(data.points$ID)
@@ -987,10 +1045,7 @@ buildPlot <- function(
             split       = FALSE,
             crosshairs  = TRUE,
             headerFormat = "",
-            pointFormat  = sprintf(
-                "%s: <b>{point.series.name}</b><br>%s: %s<br>%s: {point.y}",
-                group.legend, xAxis.legend, XTooltip, yAxis.legend
-            )
+            pointFormat  = TooltipFormat
         )
     plot.object <- plot.object |>
         hc_plotOptions(
