@@ -1,0 +1,371 @@
+# NGR
+
+**Next Generation Reporting**
+
+[![R
+Version](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue)](https://www.r-project.org/)
+[![Version](https://img.shields.io/badge/version-0.3.3-green)](https://github.com/averriK/NGR)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://averriK.github.io/NGR/LICENSE)
+
+R package for generating professional multi-format reports with advanced
+plotting and table formatting capabilities.
+
+## Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Exported API](#exported-api)
+- [Dependencies](#dependencies)
+- [Documentation (how to read)](#documentation-how-to-read)
+- [License](#license)
+- [Citation](#citation)
+- [Author](#author)
+
+## Overview
+
+NGR streamlines data visualization and presentation by providing
+high-level functions for creating publication-quality plots and tables.
+Integrates Quarto for seamless multi-format rendering (HTML/PDF/DOCX)
+with configurable templates.
+
+## Features
+
+- **High-quality plots**: Advanced plotting functions with consistent
+  styling
+- **Professional tables**: Multiple backends (flextable, gt, kableExtra)
+- **Multi-format output**: HTML, PDF, DOCX via Quarto integration
+- **Interactive visualizations**: highcharter and plotly support
+- **Configurable templates**: YAML-based report customization
+- **Quarto YAML helpers**: reusable frontmatter and runtime
+  `_quarto.yml` utilities for qrt-style render pipelines
+- **Display utilities**: Built-in rendering functions for code, HTML,
+  PDF, Markdown
+
+## Installation
+
+### R package
+
+``` r
+
+# From GitHub
+devtools::install_github("averriK/NGR")
+
+# From CRAN (when published)
+# install.packages("NGR")
+```
+
+## Usage
+
+### Plots (`buildPlot()`)
+
+[`buildPlot()`](https://averriK.github.io/NGR/reference/buildPlot.md)
+consumes `data.table`s with:
+
+- **Lines**: `data.lines` with columns `ID`, `X`, `Y` (optional:
+  `style`, `size`, `fill`, `yAxis`)
+- **Points**: `data.points` with columns `ID`, `X`, `Y` (optional:
+  `style`, `yAxis`)
+- **Ranges**: `data.ranges` with columns `ID`, `X`, `lower`, `upper`
+  (optional: `size`, `color`, `yAxis`, `custom.lower`, `custom.upper`)
+
+#### Basic line plot
+
+``` r
+
+library(NGR)
+library(data.table)
+
+lines <- data.table(
+  ID = "Series",
+  X  = 1:10,
+  Y  = (1:10)^2
+)
+
+plt <- buildPlot(
+  data.lines   = lines,
+  plot.title   = "Example plot",
+  xAxis.legend = "X",
+  yAxis.legend = "Y"
+)
+```
+
+#### Secondary Y axis — linked (same curve, relabel ticks)
+
+Use this when you want **one curve** but the right axis shows a
+transformed label, e.g. `TR = 1 / AEP`.
+
+``` r
+
+plt <- buildPlot(
+  data.lines = lines,
+  yAxis.legend  = "AEP [1/yr]",
+  yAxis2.legend = "TR [yr]",
+  yAxis2.transform = ~ 1 / Y,
+  yAxis2.decimals = 0
+)
+```
+
+#### Secondary Y axis — independent (two variables / two scales)
+
+Assign each series to axis 0 or 1 via a `yAxis` column.
+
+``` r
+
+dt <- data.table::rbindlist(list(
+  data.table::data.table(ID = "Pressure", X = 1:50, Y = 10 + sin((1:50)/6), yAxis = 0),
+  data.table::data.table(ID = "Temp",     X = 1:50, Y = 20 + cos((1:50)/8), yAxis = 1)
+))
+
+plt <- buildPlot(
+  data.lines   = dt,
+  yAxis.legend  = "Pressure",
+  yAxis2.legend = "Temp"
+)
+```
+
+### Tables (`buildTable()`)
+
+``` r
+
+library(NGR)
+
+tbl <- buildTable(
+  iris,
+  library = "gt",
+  format  = "html",
+  caption = "Iris summary"
+)
+```
+
+### Quarto YAML helpers
+
+These helpers are ordinary R APIs for qrt-style runtime Quarto YAML.
+They do not call the `qrt` CLI.
+
+``` r
+
+library(NGR)
+
+frontmatter <- quartoReadFrontmatter("report.qmd")
+base <- yaml::read_yaml("yml/_quarto.yml")
+
+book_config <- quartoMergeBookManifest(base, frontmatter)
+quartoWriteYaml(book_config, "_quarto.yml")
+
+single_file_config <- quartoSetProjectRender(base, "report.qmd")
+quartoAsYaml(single_file_config)
+```
+
+See `vignettes/quarto-yaml.Rmd` for the package-facing article source.
+
+### Display utilities
+
+``` r
+
+showCode("script.R")                # Syntax-highlighted code
+showHTML("report.html")             # Rendered HTML
+showPDF("document.pdf")             # PDF viewer
+showMarkdownRendered("README.md")   # Rendered markdown
+```
+
+## Exported API
+
+The package exports 29 functions (see `NAMESPACE`):
+
+### Plotting
+
+- [`buildPlot()`](https://averriK.github.io/NGR/reference/buildPlot.md)
+  — high-level plotting with consistent styling.
+- [`buildPlot.Bar()`](https://averriK.github.io/NGR/reference/buildPlot.Bar.md),
+  [`buildPlot.Histogram()`](https://averriK.github.io/NGR/reference/buildPlot.Histogram.md),
+  [`buildPlot.Model()`](https://averriK.github.io/NGR/reference/buildPlot.Model.md)
+  — specialised variants.
+
+### Tables and reporting
+
+- [`buildTable()`](https://averriK.github.io/NGR/reference/buildTable.md)
+  — publication-quality tables via gt/flextable/kableExtra.
+- [`buildYAML()`](https://averriK.github.io/NGR/reference/buildYAML.md)
+  — compose Quarto YAML blocks for multi-format rendering.
+- [`quartoReadFrontmatter()`](https://averriK.github.io/NGR/reference/quartoYaml.md),
+  [`quartoMergeBookManifest()`](https://averriK.github.io/NGR/reference/quartoYaml.md),
+  [`quartoSetProjectRender()`](https://averriK.github.io/NGR/reference/quartoYaml.md),
+  [`quartoDocxBookProfile()`](https://averriK.github.io/NGR/reference/quartoYaml.md),
+  [`quartoAsYaml()`](https://averriK.github.io/NGR/reference/quartoYaml.md),
+  and related helpers — reusable qrt-style Quarto YAML utilities.
+- [`export()`](https://averriK.github.io/NGR/reference/export.md) —
+  render/export utility.
+
+### Highcharter themes (gridlines)
+
+- [`hc_theme_538_gridlines()`](https://averriK.github.io/NGR/reference/hc_theme_538_gridlines.md),
+  [`hc_theme_economist_gridlines()`](https://averriK.github.io/NGR/reference/hc_theme_economist_gridlines.md),
+  [`hc_theme_flat_gridlines()`](https://averriK.github.io/NGR/reference/hc_theme_flat_gridlines.md),
+  [`hc_theme_hcrt_gridlines()`](https://averriK.github.io/NGR/reference/hc_theme_hcrt_gridlines.md).
+
+### Display utilities
+
+- [`showCode()`](https://averriK.github.io/NGR/reference/showCode.md),
+  [`showHTML()`](https://averriK.github.io/NGR/reference/showHTML.md),
+  [`showPDF()`](https://averriK.github.io/NGR/reference/showPDF.md),
+  [`showMarkdownRendered()`](https://averriK.github.io/NGR/reference/showMarkdownRendered.md),
+  [`showGithubREADME()`](https://averriK.github.io/NGR/reference/showGithubREADME.md),
+  [`showASCII()`](https://averriK.github.io/NGR/reference/showASCII.md).
+
+### Presentation effects
+
+- [`showTypewriter()`](https://averriK.github.io/NGR/reference/showTypewriter.md),
+  [`rotateTypewriter()`](https://averriK.github.io/NGR/reference/rotateTypewriter.md),
+  [`buildIndexTypewriter()`](https://averriK.github.io/NGR/reference/buildIndexTypewriter.md).
+
+## Dependencies
+
+- R (\>= 4.1.0)
+- yaml, brio, data.table
+- flextable, gt, officer, kableExtra (table backends)
+- highcharter, htmlwidgets, webshot2, plotly (interactive plots)
+- grDevices, stats, graphics
+
+## Documentation (how to read)
+
+See function documentation via R help:
+
+``` r
+
+?NGR
+?buildPlot
+?buildTable
+```
+
+Pkgdown is configured by `_pkgdown.yml` and builds the site into
+`docs/`, following the `gmsp`/`newmark` package-site layout.
+
+Pkgdown article sources:
+
+- `vignettes/quarto-yaml.Rmd` — package-facing vignette for the Quarto
+  YAML helper API.
+- `vignettes/secondary-y-axis.Rmd` — primary/secondary Y axis
+  configuration.
+- `vignettes/themes-gridlines.Rmd` — `hc_theme_*_gridlines()` reference.
+- `vignettes/adding-web-fonts-typewriter.Rmd` — maintainer guide for
+  typewriter web fonts.
+
+## License
+
+MIT License - see [LICENSE](https://averriK.github.io/NGR/LICENSE)
+
+## Citation
+
+``` bibtex
+@software{ngr,
+  author = {Verri Kozlowski, Alejandro},
+  title = {NGR: Next Generation Reporting},
+  year = {2020},
+  version = {0.3.3},
+  url = {https://github.com/averriK/NGR}
+}
+```
+
+------------------------------------------------------------------------
+
+## Author
+
+**Alejandro Verri Kozlowski**  
+**Email:** <averri@fi.uba.ar>  
+**ORCID:**
+[0000-0002-8535-1170](https://orcid.org/0000-0002-8535-1170)  
+**Affiliation:** Universidad de Buenos Aires, Facultad de Ingeniería
+
+# Package index
+
+## Plotting
+
+- [`buildPlot()`](https://averriK.github.io/NGR/reference/buildPlot.md)
+  : Build a highchart plot
+- [`buildPlot.Bar()`](https://averriK.github.io/NGR/reference/buildPlot.Bar.md)
+  : Build a bar/column plot (Highcharts)
+- [`buildPlot.Histogram()`](https://averriK.github.io/NGR/reference/buildPlot.Histogram.md)
+  : Build a histogram (and/or density) plot
+- [`buildPlot.Model()`](https://averriK.github.io/NGR/reference/buildPlot.Model.md)
+  : Build a model plot
+- [`buildHeatmap()`](https://averriK.github.io/NGR/reference/buildHeatmap.md)
+  : Build a heatmap plot (Highcharts)
+
+## Tables and report composition
+
+- [`buildTable()`](https://averriK.github.io/NGR/reference/buildTable.md)
+  : Render a table with specified formatting options
+- [`buildYAML()`](https://averriK.github.io/NGR/reference/buildYAML.md)
+  : Build Quarto YAML and prepare project structure
+- [`knitBlock()`](https://averriK.github.io/NGR/reference/knitBlock.md)
+  : Knit a QMD block with dynamic labels
+
+## Quarto YAML helpers
+
+R helpers for qrt-style runtime YAML composition without depending on
+the qrt CLI.
+
+- [`quartoReadFrontmatter()`](https://averriK.github.io/NGR/reference/quartoYaml.md)
+  [`quartoAsSequence()`](https://averriK.github.io/NGR/reference/quartoYaml.md)
+  [`quartoHasBookManifest()`](https://averriK.github.io/NGR/reference/quartoYaml.md)
+  [`quartoSetProjectRender()`](https://averriK.github.io/NGR/reference/quartoYaml.md)
+  [`quartoMergeBookManifest()`](https://averriK.github.io/NGR/reference/quartoYaml.md)
+  [`quartoDocxBookProfile()`](https://averriK.github.io/NGR/reference/quartoYaml.md)
+  [`quartoAsYaml()`](https://averriK.github.io/NGR/reference/quartoYaml.md)
+  [`quartoWriteYaml()`](https://averriK.github.io/NGR/reference/quartoYaml.md)
+  : Quarto YAML helper functions
+
+## Highcharter themes
+
+- [`hc_theme_hcrt_gridlines()`](https://averriK.github.io/NGR/reference/hc_theme_hcrt_gridlines.md)
+  : Highcharter theme based on hc_theme_hcrt with enhanced gridlines
+- [`hc_theme_flat_gridlines()`](https://averriK.github.io/NGR/reference/hc_theme_flat_gridlines.md)
+  : Highcharter theme based on hc_theme_flat with enhanced gridlines
+- [`hc_theme_538_gridlines()`](https://averriK.github.io/NGR/reference/hc_theme_538_gridlines.md)
+  : Highcharter theme based on FiveThirtyEight (538) with enhanced
+  gridlines
+- [`hc_theme_economist_gridlines()`](https://averriK.github.io/NGR/reference/hc_theme_economist_gridlines.md)
+  : Highcharter theme based on The Economist with enhanced gridlines
+
+## Display utilities
+
+- [`showCode()`](https://averriK.github.io/NGR/reference/showCode.md) :
+  Display source code with syntax highlighting
+- [`showHTML()`](https://averriK.github.io/NGR/reference/showHTML.md) :
+  Display HTML content in iframe
+- [`showPDF()`](https://averriK.github.io/NGR/reference/showPDF.md) :
+  Display PDF in iframe using PDF.js viewer
+- [`showMarkdownRendered()`](https://averriK.github.io/NGR/reference/showMarkdownRendered.md)
+  : Display markdown file as rendered HTML via iframe
+- [`showGithubREADME()`](https://averriK.github.io/NGR/reference/showGithubREADME.md)
+  : Display GitHub README as iframe
+- [`showASCII()`](https://averriK.github.io/NGR/reference/showASCII.md)
+  : Display text file as plain ASCII (non-formatted)
+- [`showTypewriter()`](https://averriK.github.io/NGR/reference/showTypewriter.md)
+  : Generate typewriter effect HTML from text file or direct text
+- [`rotateTypewriter()`](https://averriK.github.io/NGR/reference/rotateTypewriter.md)
+  : Generate rotating typewriter effect from multiple text files or text
+  strings
+- [`buildIndexTypewriter()`](https://averriK.github.io/NGR/reference/buildIndexTypewriter.md)
+  : Build and display typewriter index from chapter list
+- [`export()`](https://averriK.github.io/NGR/reference/export.md) :
+  Export Highcharts widget to PNG
+
+# Articles
+
+### All vignettes
+
+- [Adding Web Fonts to Typewriter
+  Functions](https://averriK.github.io/NGR/articles/adding-web-fonts-typewriter.md):
+- [buildPlot line and point
+  layers](https://averriK.github.io/NGR/articles/build-plot.md):
+- [Dynamic QMD
+  blocks](https://averriK.github.io/NGR/articles/dynamic-qmd-blocks.md):
+- [Quarto YAML
+  Helpers](https://averriK.github.io/NGR/articles/quarto-yaml.md):
+- [Secondary Y axis in
+  buildPlot()](https://averriK.github.io/NGR/articles/secondary-y-axis.md):
+- [Temas con líneas de grilla para escalas
+  logarítmicas](https://averriK.github.io/NGR/articles/themes-gridlines.md):
