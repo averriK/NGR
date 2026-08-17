@@ -46,6 +46,7 @@ reference:
       - buildPlot.Histogram
       - buildPlot.Model
       - buildHeatmap
+      - buildSectionResultantsPlot
 
   - title: Tables and report composition
     contents:

@@ -150,12 +150,14 @@ showMarkdownRendered("README.md")   # Rendered markdown
 
 ## Exported API
 
-The package exports 29 functions (see `NAMESPACE`):
+The package exports 31 functions (see `NAMESPACE`):
 
 ### Plotting
 
 - `buildPlot()` — high-level plotting with consistent styling.
 - `buildPlot.Bar()`, `buildPlot.Histogram()`, `buildPlot.Model()` — specialised variants.
+- `buildHeatmap()` — categorical Highcharts heatmaps.
+- `buildSectionResultantsPlot()` — responsive circular-section diagrams for any prepared subset of `N`, `M`, and `Q` layers.
 
 ### Tables and reporting
 

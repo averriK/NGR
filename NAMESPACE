@@ -6,6 +6,7 @@ export(buildPlot)
 export(buildPlot.Bar)
 export(buildPlot.Histogram)
 export(buildPlot.Model)
+export(buildSectionResultantsPlot)
 export(buildTable)
 export(buildYAML)
 export(export)
@@ -14,14 +15,14 @@ export(hc_theme_economist_gridlines)
 export(hc_theme_flat_gridlines)
 export(hc_theme_hcrt_gridlines)
 export(knitBlock)
-export(quartoWriteYaml)
-export(quartoSetProjectRender)
-export(quartoReadFrontmatter)
-export(quartoMergeBookManifest)
-export(quartoHasBookManifest)
-export(quartoDocxBookProfile)
-export(quartoAsYaml)
 export(quartoAsSequence)
+export(quartoAsYaml)
+export(quartoDocxBookProfile)
+export(quartoHasBookManifest)
+export(quartoMergeBookManifest)
+export(quartoReadFrontmatter)
+export(quartoSetProjectRender)
+export(quartoWriteYaml)
 export(rotateTypewriter)
 export(showASCII)
 export(showCode)
@@ -33,41 +34,53 @@ export(showTypewriter)
 import(data.table)
 import(highcharter)
 import(yaml)
-importFrom(data.table,as.data.table)
-importFrom(data.table,data.table)
-importFrom(data.table,is.data.table)
-importFrom(flextable,align)
-importFrom(flextable,bold)
-importFrom(flextable,border)
-importFrom(flextable,flextable)
-importFrom(flextable,font)
-importFrom(flextable,fontsize)
-importFrom(flextable,padding)
-importFrom(flextable,set_caption)
-importFrom(grDevices,hcl.colors)
-importFrom(grDevices,hcl.pals)
+importFrom(data.table,
+  as.data.table,
+  data.table,
+  is.data.table
+)
+importFrom(flextable,
+  align,
+  bold,
+  border,
+  flextable,
+  font,
+  fontsize,
+  padding,
+  set_caption
+)
+importFrom(grDevices,
+  hcl.colors,
+  hcl.pals
+)
 importFrom(graphics,hist)
-importFrom(gt,cell_borders)
-importFrom(gt,cell_text)
-importFrom(gt,cells_body)
-importFrom(gt,cells_column_labels)
-importFrom(gt,gt)
-importFrom(gt,px)
-importFrom(gt,tab_caption)
-importFrom(gt,tab_options)
-importFrom(gt,tab_style)
+importFrom(gt,
+  cell_borders,
+  cell_text,
+  cells_body,
+  cells_column_labels,
+  gt,
+  px,
+  tab_caption,
+  tab_options,
+  tab_style
+)
 importFrom(htmlwidgets,saveWidget)
-importFrom(kableExtra,column_spec)
-importFrom(kableExtra,kable)
-importFrom(kableExtra,kable_styling)
-importFrom(kableExtra,row_spec)
+importFrom(kableExtra,
+  column_spec,
+  kable,
+  kable_styling,
+  row_spec
+)
 importFrom(officer,fp_border)
-importFrom(stats,IQR)
-importFrom(stats,approx)
-importFrom(stats,density)
-importFrom(stats,na.omit)
-importFrom(stats,quantile)
-importFrom(stats,setNames)
-importFrom(stats,spline)
+importFrom(stats,
+  IQR,
+  approx,
+  density,
+  na.omit,
+  quantile,
+  setNames,
+  spline
+)
 importFrom(utils,URLencode)
 importFrom(webshot2,webshot)
