@@ -86,6 +86,12 @@ buildPlot.Time <- function(
   plotHeight = 430,
   theme = NULL
 ) {
+  # Same contract as buildPlot(): nothing to draw is not an error.
+  # The wrapping block then emits nothing instead of aborting a render.
+  if (is.null(data) || !nrow(as.data.frame(data))) {
+    warning("buildPlot.Time(): no data to plot; returning NULL.", call. = FALSE)
+    return(invisible(NULL))
+  }
   DT <- .timeValidate(data)
   if (!is.character(xLegend) || length(xLegend) != 1L) {
     stop("xLegend must be a single string.", call. = FALSE)

@@ -64,7 +64,8 @@ test_that("a scatter series draws no line", {
 })
 
 test_that("invalid input is rejected with a named reason", {
-  expect_error(buildPlot.Time(data.frame()), "non-empty")
+  expect_warning(OUT <- buildPlot.Time(data.frame()), "no data to plot")
+  expect_null(OUT)
   expect_error(
     buildPlot.Time(data.frame(ID = "a", X = 1, Y = 1)),
     "Date or POSIXct"

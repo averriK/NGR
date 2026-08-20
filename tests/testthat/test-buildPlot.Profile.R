@@ -58,7 +58,8 @@ test_that("per-series style and size reach the widget", {
 })
 
 test_that("invalid input is rejected with a named reason", {
-  expect_error(buildPlot.Profile(data.frame()), "non-empty")
+  expect_warning(OUT <- buildPlot.Profile(data.frame()), "no data to plot")
+  expect_null(OUT)
   expect_error(
     buildPlot.Profile(data.frame(ID = "a", X = 1)),
     "columns ID, X and Y"
@@ -71,4 +72,12 @@ test_that("invalid input is rejected with a named reason", {
     buildPlot.Profile(data.frame(ID = "a", X = 1, Y = 1), xLimit = -1),
     "positive number"
   )
+})
+
+test_that("a series without a size column keeps the default line width", {
+  DT <- data.frame(ID = "a", X = c(-1, 0, 1), Y = c(1, 2, 3))
+  P <- buildPlot.Profile(data = DT, lineSize = 2.4)
+  W <- P$x$hc_opts$series[[1L]]$lineWidth
+  expect_false(is.na(W))
+  expect_equal(W, 2.4)
 })

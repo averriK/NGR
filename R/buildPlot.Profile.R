@@ -78,6 +78,12 @@ buildPlot.Profile <- function(
   plotHeight = 760,
   theme = NULL
 ) {
+  # Same contract as buildPlot(): nothing to draw is not an error.
+  # The wrapping block then emits nothing instead of aborting a render.
+  if (is.null(data) || !nrow(as.data.frame(data))) {
+    warning("buildPlot.Profile(): no data to plot; returning NULL.", call. = FALSE)
+    return(invisible(NULL))
+  }
   DT <- .profileValidate(data)
   if (!is.character(xLegend) || length(xLegend) != 1L) {
     stop("xLegend must be a single string.", call. = FALSE)
@@ -117,8 +123,9 @@ buildPlot.Profile <- function(
       max = xLimit,
       startOnTick = FALSE,
       endOnTick = FALSE,
-      plotLines = list(list(value = 0, width = 1.5, color = "#4B5563",
-        zIndex = 2))
+      # The zero reference is furniture, not data: thin, light and behind
+      # the series, so it never competes with the profile it frames.
+      plotLines = list(list(value = 0, width = 0.75, color = "#9CA3AF"))
     ) |>
     highcharter::hc_yAxis(
       title = list(text = yLegend),
@@ -139,7 +146,11 @@ buildPlot.Profile <- function(
       name = IDS[[i]],
       color = COLOR[[i]],
       dashStyle = .profileDash(AUX$style[[1L]]),
-      lineWidth = if ("size" %in% names(AUX)) AUX$size[[1L]] else lineSize,
+      # The optional columns are materialised as NA when the caller
+      # omits them, so presence of the column proves nothing: test the
+      # value. A NA here serialises as null and Highcharts then draws
+      # the series with no visible stroke.
+      lineWidth = if (is.na(AUX$size[[1L]])) lineSize else AUX$size[[1L]],
       showInLegend = isTRUE(showLegend),
       marker = list(
         enabled = isTRUE(markers),
