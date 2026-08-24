@@ -1,3 +1,12 @@
+# NGR 0.3.10
+
+## API
+
+* Add `buildSectionResultantsPlot()` for responsive, interactive `N`/`M`/`Q`
+  diagrams around a circular section. The function renders any non-empty
+  caller-prepared subset as one or more square panels, preserves independent
+  radial ordinates, and keeps the widget width responsive.
+
 # NGR 0.3.9
 
 ## API

@@ -7,6 +7,7 @@
 #' @param path Character scalar. Path to a QMD/Markdown file.
 #'
 #' @return A list parsed from YAML frontmatter, or an empty list.
+#' @rdname quartoYaml
 #' @export
 quartoReadFrontmatter <- function(path) {
   Path <- as.character(path)
@@ -39,6 +40,7 @@ quartoReadFrontmatter <- function(path) {
 #' @param x Value to coerce.
 #'
 #' @return A list.
+#' @rdname quartoYaml
 #' @export
 quartoAsSequence <- function(x) {
   if (is.null(x)) list() else as.list(x)
@@ -52,6 +54,7 @@ quartoAsSequence <- function(x) {
 #' @param frontmatter A list, usually from [quartoReadFrontmatter()].
 #'
 #' @return TRUE when the frontmatter declares chapters or appendices.
+#' @rdname quartoYaml
 #' @export
 quartoHasBookManifest <- function(frontmatter) {
   Frontmatter <- .quartoRequireList(frontmatter, "frontmatter")
@@ -68,6 +71,7 @@ quartoHasBookManifest <- function(frontmatter) {
 #' @param render Character vector or list of render targets.
 #'
 #' @return Modified Quarto YAML list.
+#' @rdname quartoYaml
 #' @export
 quartoSetProjectRender <- function(base, render) {
   Base <- .quartoRequireList(base, "base")
@@ -88,6 +92,7 @@ quartoSetProjectRender <- function(base, render) {
 #' @param manifest Parsed QMD frontmatter list.
 #'
 #' @return Modified Quarto YAML list.
+#' @rdname quartoYaml
 #' @export
 quartoMergeBookManifest <- function(base, manifest) {
   Base <- .quartoRequireList(base, "base")
@@ -133,6 +138,7 @@ quartoMergeBookManifest <- function(base, manifest) {
 #' @param profile Parsed DOCX profile YAML list.
 #'
 #' @return Modified DOCX profile list.
+#' @rdname quartoYaml
 #' @export
 quartoDocxBookProfile <- function(profile) {
   Profile <- .quartoRequireList(profile, "profile")
@@ -155,6 +161,7 @@ quartoDocxBookProfile <- function(profile) {
 #' @param x R object to serialize.
 #'
 #' @return Character scalar containing YAML.
+#' @rdname quartoYaml
 #' @export
 quartoAsYaml <- function(x) {
   yaml::as.yaml(
@@ -170,6 +177,7 @@ quartoAsYaml <- function(x) {
 #' @param path Optional output path. When NULL, returns the YAML text.
 #'
 #' @return YAML text when `path` is NULL; otherwise invisibly returns `path`.
+#' @rdname quartoYaml
 #' @export
 quartoWriteYaml <- function(x, path = NULL) {
   Yaml <- quartoAsYaml(x)
