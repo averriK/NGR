@@ -87,6 +87,15 @@
 #' @param fill.min.size Line width for lower envelope (default: NULL, uses global line.size).
 #' @param fill.max.color Color for upper envelope (default: "#00008B", dark blue).
 #' @param fill.min.color Color for lower envelope (default: "#8B0000", dark red).
+#' @param xAxis.bands Optional shaded regions along the X axis. Either
+#'   `list(cuts = <numeric>, colors = <character>)`, where `n` strictly
+#'   increasing cuts split the axis into `n + 1` regions coloured in order,
+#'   or a list of Highcharts `plotBands` entries (`list(from = , to = ,
+#'   color = )`) passed through unchanged. The outer regions of the `cuts`
+#'   form are open-ended and Highcharts clips every band to the axis, so cuts
+#'   outside the plotted range are harmless. On a logarithmic axis every cut
+#'   must be positive. `NULL` draws no bands.
+#' @param yAxis.bands Same as `xAxis.bands`, for the primary Y axis.
 #'
 #' @return A highchart object if at least one of `data.lines`, `data.points`,
 #'   or `data.ranges` is provided. Returns NULL if all three are NULL, with a
@@ -157,7 +166,9 @@ buildPlot <- function(
     yAxis2.legend = NULL,
     yAxis2.transform = NULL,
     yAxis2.decimals = 0,
-    data.ranges = NULL) {
+    data.ranges = NULL,
+    xAxis.bands = NULL,
+    yAxis.bands = NULL) {
     ## 0. Declare data.table columns to avoid R CMD check NOTEs
     style <- size <- yAxis <- Xplot <- Xlabel <- NULL  # data.table columns
     
@@ -313,6 +324,10 @@ buildPlot <- function(
         yAxis2.decimals <- as.integer(yAxis2.decimals)
     }
 
+    ## 9c. Axis bands (validated here, wired into the axis options in 11)
+    XBands <- .buildAxisBands(xAxis.bands, isLog = isTRUE(xAxis.log), name = "xAxis.bands")
+    YBands <- .buildAxisBands(yAxis.bands, isLog = isTRUE(yAxis.log), name = "yAxis.bands")
+
     ## 10. Build color mapping (collect all IDs for consistent color usage)
     ALL.IDS <- unique(c(
         if (!is.null(data.lines)) data.lines$ID,
@@ -418,41 +433,25 @@ buildPlot <- function(
         stop("buildPlot(): yAxis2.transform is only supported in linked mode (no series assigned to yAxis=1)")
     }
 
-    if (!needs_secondary_axis) {
-        plot.object <- highchart() |>
-            hc_xAxis(
-                labels = xAxis_labels,
-                title = list(
-                    text = xAxis.legend,
-                    style = list(fontSize = xAxis.legend.fontsize)
-                ),
-                type = if (xAxis.log) "logarithmic" else "linear",
-                reversed = xAxis.reverse,
-                max = if (!is.na(xAxis.max)) xAxis.max else NULL,
-                min = if (!is.na(xAxis.min)) xAxis.min else NULL
-            ) |>
-            hc_yAxis(
-                labels = yAxis_labels,
-                title = list(
-                    text = yAxis.legend,
-                    style = list(fontSize = yAxis.legend.fontsize)
-                ),
-                type = if (yAxis.log) "logarithmic" else "linear",
-                reversed = yAxis.reverse,
-                max = if (!is.na(yAxis.max)) yAxis.max else NULL,
-                min = if (!is.na(yAxis.min)) yAxis.min else NULL
-            ) |>
-            hc_exporting(
-                enabled = TRUE,
-                filename = if (!is.null(plot.filename)) plot.filename else "highchart-plot",
-                buttons = list(
-                    contextButton = list(
-                        menuItems = c("downloadPNG", "downloadJPEG", "downloadPDF", "downloadSVG", "downloadCSV", "downloadXLS")
-                    )
-                )
-            )
-    } else {
-        yAxis_primary <- list(
+    ## Axis options shared by both branches. Bands enter here so the primary
+    ## Y axis carries them with or without a secondary axis; a NULL entry is
+    ## never added, which keeps the no-band configuration unchanged.
+    xAxis_opts <- c(
+        list(
+            labels = xAxis_labels,
+            title = list(
+                text = xAxis.legend,
+                style = list(fontSize = xAxis.legend.fontsize)
+            ),
+            type = if (xAxis.log) "logarithmic" else "linear",
+            reversed = xAxis.reverse,
+            max = if (!is.na(xAxis.max)) xAxis.max else NULL,
+            min = if (!is.na(xAxis.min)) xAxis.min else NULL
+        ),
+        if (!is.null(XBands)) list(plotBands = XBands)
+    )
+    yAxis_primary <- c(
+        list(
             labels = yAxis_labels,
             title = list(
                 text = yAxis.legend,
@@ -462,8 +461,14 @@ buildPlot <- function(
             reversed = yAxis.reverse,
             max = if (!is.na(yAxis.max)) yAxis.max else NULL,
             min = if (!is.na(yAxis.min)) yAxis.min else NULL
-        )
+        ),
+        if (!is.null(YBands)) list(plotBands = YBands)
+    )
+    plot.object <- do.call(hc_xAxis, c(list(highchart()), xAxis_opts))
 
+    if (!needs_secondary_axis) {
+        plot.object <- do.call(hc_yAxis, c(list(plot.object), yAxis_primary))
+    } else {
         # Convert simple math formulas (in terms of Y) into JavaScript.
         # Example: yAxis2.transform = ~ 1 / Y
         transform_env <- if (!is.null(yAxis2.transform)) environment(yAxis2.transform) else NULL
@@ -643,29 +648,19 @@ buildPlot <- function(
             yAxis2_defaults
         }
 
-        plot.object <- highchart() |>
-            hc_xAxis(
-                labels = xAxis_labels,
-                title = list(
-                    text = xAxis.legend,
-                    style = list(fontSize = xAxis.legend.fontsize)
-                ),
-                type = if (xAxis.log) "logarithmic" else "linear",
-                reversed = xAxis.reverse,
-                max = if (!is.na(xAxis.max)) xAxis.max else NULL,
-                min = if (!is.na(xAxis.min)) xAxis.min else NULL
-            ) |>
-            hc_yAxis_multiples(yAxis_primary, yAxis_secondary) |>
-            hc_exporting(
-                enabled = TRUE,
-                filename = if (!is.null(plot.filename)) plot.filename else "highchart-plot",
-                buttons = list(
-                    contextButton = list(
-                        menuItems = c("downloadPNG", "downloadJPEG", "downloadPDF", "downloadSVG", "downloadCSV", "downloadXLS")
-                    )
+        plot.object <- plot.object |>
+            hc_yAxis_multiples(yAxis_primary, yAxis_secondary)
+    }
+    plot.object <- plot.object |>
+        hc_exporting(
+            enabled = TRUE,
+            filename = if (!is.null(plot.filename)) plot.filename else "highchart-plot",
+            buttons = list(
+                contextButton = list(
+                    menuItems = c("downloadPNG", "downloadJPEG", "downloadPDF", "downloadSVG", "downloadCSV", "downloadXLS")
                 )
             )
-    }
+        )
 
     ## 12. Theme handling
     # Default to the gridlines variant. `hc_theme_flat()` from highcharter

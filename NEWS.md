@@ -1,3 +1,15 @@
+# NGR 0.3.11
+
+## API
+
+* `buildPlot()` gains `xAxis.bands` and `yAxis.bands` for shaded axis
+  regions (Highcharts `plotBands`) drawn behind the series. The semantic
+  form `list(cuts = , colors = )` splits an axis into `length(cuts) + 1`
+  open-ended regions, so a cut outside the plotted range is clipped by
+  Highcharts instead of producing an inverted band; a prebuilt list of
+  `list(from = , to = , color = )` entries passes through unchanged. Both
+  default to `NULL`, which leaves every existing configuration untouched.
+
 # NGR 0.3.10
 
 ## API

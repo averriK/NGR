@@ -64,7 +64,9 @@ buildPlot(
   yAxis2.legend = NULL,
   yAxis2.transform = NULL,
   yAxis2.decimals = 0,
-  data.ranges = NULL
+  data.ranges = NULL,
+  xAxis.bands = NULL,
+  yAxis.bands = NULL
 )
 }
 \arguments{
@@ -202,6 +204,16 @@ be constant within each ID. Optional \code{"custom.lower"} and
 boundary points. Coincident bounds produce one solid line; distinct
 bounds produce linked solid boundary lines and a shaded range with one
 legend item.}
+
+\item{xAxis.bands}{Optional shaded regions along the X axis. Either
+\verb{list(cuts = <numeric>, colors = <character>)}, where \code{n} strictly
+increasing cuts split the axis into \code{n + 1} regions coloured in order,
+or a list of Highcharts \code{plotBands} entries (\code{list(from = , to = , color = )}) passed through unchanged. The outer regions of the \code{cuts}
+form are open-ended and Highcharts clips every band to the axis, so cuts
+outside the plotted range are harmless. On a logarithmic axis every cut
+must be positive. \code{NULL} draws no bands.}
+
+\item{yAxis.bands}{Same as \code{xAxis.bands}, for the primary Y axis.}
 }
 \value{
 A highchart object if at least one of \code{data.lines}, \code{data.points},
