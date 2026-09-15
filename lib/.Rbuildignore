@@ -19,7 +19,6 @@
 ^index\.md$
 ^TODO_buildTable\.md$
 ^_pkgdown\.yml$
-^inst/doc$
 ^dev$
 ^cli$
 ^app$
