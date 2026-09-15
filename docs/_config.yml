@@ -1,7 +1,6 @@
 title: NGR
 url: https://averriK.github.io
 baseurl: /NGR
-repository_url: https://github.com/averriK/NGR
 markdown: kramdown
 strict_front_matter: true
 exclude: [Gemfile, Gemfile.lock, README.md]

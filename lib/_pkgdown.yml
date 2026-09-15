@@ -1,11 +1,7 @@
 url: https://averriK.github.io/NGR/lib/
 destination: ../_site/lib
 repo:
-  url:
-    home: https://github.com/averriK/NGR/
-    source: https://github.com/averriK/NGR/blob/HEAD/lib/
-    issue: https://github.com/averriK/NGR/issues/
-    user: https://github.com/
+  url: {}
 
 template:
   bootstrap: 5
@@ -19,7 +15,7 @@ home:
 navbar:
   structure:
     left:  [portal, intro, articles, reference, news]
-    right: [github]
+    right: []
   components:
     portal:
       text: Product
@@ -42,10 +38,6 @@ navbar:
           href: articles/themes-gridlines.html
         - text: Typewriter web fonts
           href: articles/adding-web-fonts-typewriter.html
-    github:
-      icon: fab fa-github fa-lg
-      href: https://github.com/averriK/NGR
-      aria-label: GitHub
 
 reference:
   - title: Plotting

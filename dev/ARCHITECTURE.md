@@ -53,6 +53,11 @@ separate operation through its maintenance scripts.
 
 ## Documentation and Pages
 
+Repositories are private by policy. GitHub Pages is the public documentation
+surface: links must point to published pages, not private source, Issues or
+repository files. Help uses the maintainer contact. Keep pkgdown repository
+URL discovery disabled with `repo: {url: {}}` and omit repository navigation.
+
 `docs/` contains source Markdown, templates and styles; R reference and
 articles remain in `lib/man/` and `lib/vignettes/`.
 With Ruby 3.3, Bundler, R, pkgdown and the package's dependencies available:

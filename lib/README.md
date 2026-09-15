@@ -2,7 +2,7 @@
 
 **Next Generation Reporting**
 
-[![R Version](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue)](https://www.r-project.org/) [![Version](https://img.shields.io/badge/version-0.3.3-green)](https://github.com/averriK/NGR) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![R Version](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue)](https://www.r-project.org/) [![Version](https://img.shields.io/badge/version-0.3.3-green)](https://averriK.github.io/NGR/lib/) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 R package for generating professional multi-format reports with advanced plotting and table formatting capabilities.
 
@@ -217,7 +217,7 @@ MIT License - see [LICENSE](LICENSE)
   title = {NGR: Next Generation Reporting},
   year = {2020},
   version = {0.3.3},
-  url = {https://github.com/averriK/NGR}
+  url = {https://averriK.github.io/NGR/lib/}
 }
 ```
 
