@@ -4,51 +4,47 @@
 
 # Session Data files
 .RData
-
 # User-specific files
 .Ruserdata
-
 # Example code in package build process
 *-Ex.R
-
 # Output files from R CMD build
 /*.tar.gz
-
 # Output files from R CMD check
 /*.Rcheck/
-
 # RStudio files
-
 # produced vignettes
-vignettes/*.html
-vignettes/*.pdf
-
+lib/vignettes/*.html
+lib/vignettes/*.pdf
 # OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
 .httr-oauth
-
 # knitr and R markdown default cache directories
 *_cache/
 /cache/
-
 # Temporary files created by R markdown
 *.utf8.md
 *.knit.md
-
 # R Environment Variables
 .Renviron
-
 _book/
 _output/
 _freeze/
 index.rmarkdown
-
 html/
 .Rproj.user
-
 .idea/
 .vscode
 venv
-
 # Local artifacts
-R/.tmp_webshot/
+lib/R/.tmp_webshot/
 .positai
+# Repository build output
+/_site/
+/docs/.jekyll-cache/
+/docs/.jekyll-metadata
+/.bundle/
+/vendor/bundle/
+/lib/*.tar.gz
+/lib/*.Rcheck/
+/lib/vignettes/*.html
+/lib/vignettes/*.pdf

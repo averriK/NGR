@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title | escape }} · {{ site.title | escape }}</title>
+  <link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}">
+  <link rel="canonical" href="{{ page.url | absolute_url }}">
+</head>
+<body>
+  <header><a class="brand" href="{{ '/' | relative_url }}">{{ site.title | escape }}</a>
+    <nav aria-label="Main">
+      <a href="{{ '/lib/' | relative_url }}">R library</a>
+      <a href="{{ '/cli/' | relative_url }}">CLI</a>
+      <a href="{{ '/guide/app/' | relative_url }}">App</a>
+      <a href="{{ '/skill/' | relative_url }}">Skill</a>
+      <a href="{{ '/mcp/' | relative_url }}">MCP</a>
+    </nav>
+  </header>
+  <main>{{ content }}</main>
+  <footer><a href="{{ site.repository_url }}">Source repository</a></footer>
+</body>
+</html>
