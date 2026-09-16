@@ -1,5 +1,30 @@
 # Changelog
 
+## NGR 0.3.11
+
+### API
+
+- [`buildPlot()`](https://averriK.github.io/NGR/reference/buildPlot.md)
+  gains `xAxis.bands` and `yAxis.bands` for shaded axis regions
+  (Highcharts `plotBands`) drawn behind the series. The semantic form
+  `list(cuts = , colors = )` splits an axis into `length(cuts) + 1`
+  open-ended regions, so a cut outside the plotted range is clipped by
+  Highcharts instead of producing an inverted band; a prebuilt list of
+  `list(from = , to = , color = )` entries passes through unchanged.
+  Both default to `NULL`, which leaves every existing configuration
+  untouched.
+
+## NGR 0.3.10
+
+### API
+
+- Add
+  [`buildSectionResultantsPlot()`](https://averriK.github.io/NGR/reference/buildSectionResultantsPlot.md)
+  for responsive, interactive `N`/`M`/`Q` diagrams around a circular
+  section. The function renders any non-empty caller-prepared subset as
+  one or more square panels, preserves independent radial ordinates, and
+  keeps the widget width responsive.
+
 ## NGR 0.3.9
 
 ### API

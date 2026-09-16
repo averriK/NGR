@@ -4,7 +4,7 @@
 
 [![R
 Version](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue)](https://www.r-project.org/)
-[![Version](https://img.shields.io/badge/version-0.3.3-green)](https://github.com/averriK/NGR)
+[![Version](https://img.shields.io/badge/version-0.3.3-green)](https://averriK.github.io/NGR/lib/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://averriK.github.io/NGR/LICENSE)
 
 R package for generating professional multi-format reports with advanced
@@ -50,7 +50,7 @@ with configurable templates.
 ``` r
 
 # From GitHub
-devtools::install_github("averriK/NGR")
+devtools::install_github("averriK/NGR", subdir = "lib")
 
 # From CRAN (when published)
 # install.packages("NGR")
@@ -172,7 +172,7 @@ showMarkdownRendered("README.md")   # Rendered markdown
 
 ## Exported API
 
-The package exports 29 functions (see `NAMESPACE`):
+The package exports 31 functions (see `NAMESPACE`):
 
 ### Plotting
 
@@ -182,6 +182,11 @@ The package exports 29 functions (see `NAMESPACE`):
   [`buildPlot.Histogram()`](https://averriK.github.io/NGR/reference/buildPlot.Histogram.md),
   [`buildPlot.Model()`](https://averriK.github.io/NGR/reference/buildPlot.Model.md)
   — specialised variants.
+- [`buildHeatmap()`](https://averriK.github.io/NGR/reference/buildHeatmap.md)
+  — categorical Highcharts heatmaps.
+- [`buildSectionResultantsPlot()`](https://averriK.github.io/NGR/reference/buildSectionResultantsPlot.md)
+  — responsive circular-section diagrams for any prepared subset of `N`,
+  `M`, and `Q` layers.
 
 ### Tables and reporting
 
@@ -239,8 +244,8 @@ See function documentation via R help:
 ?buildTable
 ```
 
-Pkgdown is configured by `_pkgdown.yml` and builds the site into
-`docs/`, following the `gmsp`/`newmark` package-site layout.
+Pkgdown is configured by `_pkgdown.yml` and builds into `../_site/lib/`.
+The repository’s `docs/` directory contains the Jekyll portal sources.
 
 Pkgdown article sources:
 
@@ -264,7 +269,7 @@ MIT License - see [LICENSE](https://averriK.github.io/NGR/LICENSE)
   title = {NGR: Next Generation Reporting},
   year = {2020},
   version = {0.3.3},
-  url = {https://github.com/averriK/NGR}
+  url = {https://averriK.github.io/NGR/lib/}
 }
 ```
 
@@ -290,8 +295,14 @@ MIT License - see [LICENSE](https://averriK.github.io/NGR/LICENSE)
   : Build a histogram (and/or density) plot
 - [`buildPlot.Model()`](https://averriK.github.io/NGR/reference/buildPlot.Model.md)
   : Build a model plot
+- [`buildPlot.Profile()`](https://averriK.github.io/NGR/reference/buildPlot.Profile.md)
+  : Build a depth-profile plot
+- [`buildPlot.Time()`](https://averriK.github.io/NGR/reference/buildPlot.Time.md)
+  : Build a time-series plot
 - [`buildHeatmap()`](https://averriK.github.io/NGR/reference/buildHeatmap.md)
   : Build a heatmap plot (Highcharts)
+- [`buildSectionResultantsPlot()`](https://averriK.github.io/NGR/reference/buildSectionResultantsPlot.md)
+  : Build circular-section resultant diagrams
 
 ## Tables and report composition
 

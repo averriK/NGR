@@ -25,7 +25,7 @@ if an invalid line.type is provided, "line" is used; if an invalid or missing li
 
     <a class="navbar-brand me-2" href="../index.html">NGR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,7 +33,8 @@ if an invalid line.type is provided, "line" is used; if an invalid or missing li
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/dynamic-qmd-blocks.html">Get started</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../../">Product</a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/dynamic-qmd-blocks.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/dynamic-qmd-blocks.html">Dynamic QMD blocks</a></li>
@@ -45,8 +46,7 @@ if an invalid line.type is provided, "line" is used; if an invalid or missing li
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/averriK/NGR" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
-      </ul></div>
+      </ul><ul class="navbar-nav"></ul></div>
 
 
   </div>
@@ -134,7 +134,9 @@ if an invalid <code>line.type</code> is provided, <code>"line"</code> is used; i
 <span>  yAxis2.legend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  yAxis2.transform <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  yAxis2.decimals <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  data.ranges <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  data.ranges <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  xAxis.bands <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  yAxis.bands <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -395,6 +397,20 @@ be constant within each ID. Optional <code>"custom.lower"</code> and
 boundary points. Coincident bounds produce one solid line; distinct
 bounds produce linked solid boundary lines and a shaded range with one
 legend item.</p></dd>
+
+
+<dt id="arg-xaxis-bands">xAxis.bands<a class="anchor" aria-label="anchor" href="#arg-xaxis-bands"></a></dt>
+<dd><p>Optional shaded regions along the X axis. Either
+<code>list(cuts = &lt;numeric&gt;, colors = &lt;character&gt;)</code>, where <code>n</code> strictly
+increasing cuts split the axis into <code>n + 1</code> regions coloured in order,
+or a list of Highcharts <code>plotBands</code> entries (<code>list(from = , to = , color = )</code>) passed through unchanged. The outer regions of the <code>cuts</code>
+form are open-ended and Highcharts clips every band to the axis, so cuts
+outside the plotted range are harmless. On a logarithmic axis every cut
+must be positive. <code>NULL</code> draws no bands.</p></dd>
+
+
+<dt id="arg-yaxis-bands">yAxis.bands<a class="anchor" aria-label="anchor" href="#arg-yaxis-bands"></a></dt>
+<dd><p>Same as <code>xAxis.bands</code>, for the primary Y axis.</p></dd>
 
 </dl></div>
     <div class="section level2">

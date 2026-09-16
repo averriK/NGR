@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">NGR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -15,7 +15,8 @@
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/dynamic-qmd-blocks.html">Get started</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../../">Product</a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/dynamic-qmd-blocks.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/dynamic-qmd-blocks.html">Dynamic QMD blocks</a></li>
@@ -27,8 +28,7 @@
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/averriK/NGR" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
-      </ul></div>
+      </ul><ul class="navbar-nav"></ul></div>
 
 
   </div>
@@ -40,6 +40,21 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.11" id="ngr-0311">NGR 0.3.11<a class="anchor" aria-label="anchor" href="#ngr-0311"></a></h2>
+<div class="section level3">
+<h3 id="api-0-3-11">API<a class="anchor" aria-label="anchor" href="#api-0-3-11"></a></h3>
+<ul><li>
+<code><a href="../reference/buildPlot.html">buildPlot()</a></code> gains <code>xAxis.bands</code> and <code>yAxis.bands</code> for shaded axis regions (Highcharts <code>plotBands</code>) drawn behind the series. The semantic form <code>list(cuts = , colors = )</code> splits an axis into <code>length(cuts) + 1</code> open-ended regions, so a cut outside the plotted range is clipped by Highcharts instead of producing an inverted band; a prebuilt list of <code>list(from = , to = , color = )</code> entries passes through unchanged. Both default to <code>NULL</code>, which leaves every existing configuration untouched.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.10" id="ngr-0310">NGR 0.3.10<a class="anchor" aria-label="anchor" href="#ngr-0310"></a></h2>
+<div class="section level3">
+<h3 id="api-0-3-10">API<a class="anchor" aria-label="anchor" href="#api-0-3-10"></a></h3>
+<ul><li>Add <code><a href="../reference/buildSectionResultantsPlot.html">buildSectionResultantsPlot()</a></code> for responsive, interactive <code>N</code>/<code>M</code>/<code>Q</code> diagrams around a circular section. The function renders any non-empty caller-prepared subset as one or more square panels, preserves independent radial ordinates, and keeps the widget width responsive.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.9" id="ngr-039">NGR 0.3.9<a class="anchor" aria-label="anchor" href="#ngr-039"></a></h2>
 <div class="section level3">

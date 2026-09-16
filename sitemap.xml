@@ -2,7 +2,6 @@
 <url><loc>https://averriK.github.io/NGR/404.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/LICENSE-text.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/LICENSE.html</loc></url>
-<url><loc>https://averriK.github.io/NGR/TODO_buildTable.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/articles/adding-web-fonts-typewriter.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/articles/build-plot.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/articles/dynamic-qmd-blocks.html</loc></url>
@@ -18,7 +17,10 @@
 <url><loc>https://averriK.github.io/NGR/reference/buildPlot.Bar.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/buildPlot.Histogram.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/buildPlot.Model.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/reference/buildPlot.Profile.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/reference/buildPlot.Time.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/buildPlot.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/reference/buildSectionResultantsPlot.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/buildTable.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/buildYAML.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/export.html</loc></url>

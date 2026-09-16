@@ -10,8 +10,14 @@
   : Build a histogram (and/or density) plot
 - [`buildPlot.Model()`](https://averriK.github.io/NGR/reference/buildPlot.Model.md)
   : Build a model plot
+- [`buildPlot.Profile()`](https://averriK.github.io/NGR/reference/buildPlot.Profile.md)
+  : Build a depth-profile plot
+- [`buildPlot.Time()`](https://averriK.github.io/NGR/reference/buildPlot.Time.md)
+  : Build a time-series plot
 - [`buildHeatmap()`](https://averriK.github.io/NGR/reference/buildHeatmap.md)
   : Build a heatmap plot (Highcharts)
+- [`buildSectionResultantsPlot()`](https://averriK.github.io/NGR/reference/buildSectionResultantsPlot.md)
+  : Build circular-section resultant diagrams
 
 ## Tables and report composition
 

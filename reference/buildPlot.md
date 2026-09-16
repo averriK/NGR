@@ -76,7 +76,9 @@ buildPlot(
   yAxis2.legend = NULL,
   yAxis2.transform = NULL,
   yAxis2.decimals = 0,
-  data.ranges = NULL
+  data.ranges = NULL,
+  xAxis.bands = NULL,
+  yAxis.bands = NULL
 )
 ```
 
@@ -352,6 +354,21 @@ buildPlot(
   points. Coincident bounds produce one solid line; distinct bounds
   produce linked solid boundary lines and a shaded range with one legend
   item.
+
+- xAxis.bands:
+
+  Optional shaded regions along the X axis. Either
+  `list(cuts = <numeric>, colors = <character>)`, where `n` strictly
+  increasing cuts split the axis into `n + 1` regions coloured in order,
+  or a list of Highcharts `plotBands` entries
+  (`list(from = , to = , color = )`) passed through unchanged. The outer
+  regions of the `cuts` form are open-ended and Highcharts clips every
+  band to the axis, so cuts outside the plotted range are harmless. On a
+  logarithmic axis every cut must be positive. `NULL` draws no bands.
+
+- yAxis.bands:
+
+  Same as `xAxis.bands`, for the primary Y axis.
 
 ## Value
 
