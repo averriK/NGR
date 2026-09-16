@@ -6,6 +6,8 @@
   Functions](https://averriK.github.io/NGR/articles/adding-web-fonts-typewriter.md):
 - [buildPlot line and point
   layers](https://averriK.github.io/NGR/articles/build-plot.md):
+- [NGR command-line
+  interface](https://averriK.github.io/NGR/articles/cli.md):
 - [Dynamic QMD
   blocks](https://averriK.github.io/NGR/articles/dynamic-qmd-blocks.md):
 - [Quarto YAML

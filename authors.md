@@ -8,12 +8,12 @@
 ## Citation
 
 Verri Kozlowski A (2026). *NGR: Next Generation Reporting*. R package
-version 0.3.11, <https://averriK.github.io/NGR/lib/>.
+version 0.3.11, <https://averriK.github.io/NGR/>.
 
     @Manual{,
       title = {NGR: Next Generation Reporting},
       author = {Alejandro {Verri Kozlowski}},
       year = {2026},
       note = {R package version 0.3.11},
-      url = {https://averriK.github.io/NGR/lib/},
+      url = {https://averriK.github.io/NGR/},
     }

@@ -33,12 +33,12 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="../">Product</a></li>
 <li class="nav-item"><a class="nav-link" href="articles/dynamic-qmd-blocks.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/dynamic-qmd-blocks.html">Dynamic QMD blocks</a></li>
+<li><a class="dropdown-item" href="articles/cli.html">Command-line interface</a></li>
+    <li><a class="dropdown-item" href="articles/dynamic-qmd-blocks.html">Dynamic QMD blocks</a></li>
     <li><a class="dropdown-item" href="articles/build-plot.html">buildPlot line and point layers</a></li>
     <li><a class="dropdown-item" href="articles/quarto-yaml.html">Quarto YAML helpers</a></li>
     <li><a class="dropdown-item" href="articles/secondary-y-axis.html">Secondary Y axis in buildPlot()</a></li>
@@ -60,7 +60,7 @@
 <div class="page-header"><h1 id="ngr">NGR<a class="anchor" aria-label="anchor" href="#ngr"></a>
 </h1></div>
 <p><strong>Next Generation Reporting</strong></p>
-<p><a href="https://www.r-project.org/" class="external-link"><img src="https://img.shields.io/badge/R-%3E%3D%204.1.0-blue" alt="R Version"></a> <a href="https://averriK.github.io/NGR/lib/"><img src="https://img.shields.io/badge/version-0.3.3-green" alt="Version"></a> <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a></p>
+<p><a href="https://www.r-project.org/" class="external-link"><img src="https://img.shields.io/badge/R-%3E%3D%204.1.0-blue" alt="R Version"></a> <a href="https://averriK.github.io/NGR/"><img src="https://img.shields.io/badge/version-0.3.3-green" alt="Version"></a> <a href="https://averrik.github.io/NGR/LICENSE.html" class="external-link"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a></p>
 <p>R package for generating professional multi-format reports with advanced plotting and table formatting capabilities.</p>
 <div class="section level2">
 <h2 id="contents">Contents<a class="anchor" aria-label="anchor" href="#contents"></a>
@@ -136,7 +136,7 @@
 <h4 id="basic-line-plot">Basic line plot<a class="anchor" aria-label="anchor" href="#basic-line-plot"></a>
 </h4>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://averriK.github.io/NGR/lib/">NGR</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://averriK.github.io/NGR/">NGR</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">lines</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
@@ -186,7 +186,7 @@
 <h3 id="tables-buildtable">Tables (<code>buildTable()</code>)<a class="anchor" aria-label="anchor" href="#tables-buildtable"></a>
 </h3>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://averriK.github.io/NGR/lib/">NGR</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://averriK.github.io/NGR/">NGR</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">tbl</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/buildTable.html">buildTable</a></span><span class="op">(</span></span>
 <span>  <span class="va">iris</span>,</span>
@@ -200,7 +200,7 @@
 </h3>
 <p>These helpers are ordinary R APIs for qrt-style runtime Quarto YAML. They do not call the <code>qrt</code> CLI.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://averriK.github.io/NGR/lib/">NGR</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://averriK.github.io/NGR/">NGR</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">frontmatter</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/quartoYaml.html">quartoReadFrontmatter</a></span><span class="op">(</span><span class="st">"report.qmd"</span><span class="op">)</span></span>
 <span><span class="va">base</span> <span class="op">&lt;-</span> <span class="fu">yaml</span><span class="fu">::</span><span class="fu"><a href="https://yaml.r-lib.org/reference/read_yaml.html" class="external-link">read_yaml</a></span><span class="op">(</span><span class="st">"yml/_quarto.yml"</span><span class="op">)</span></span>
@@ -298,7 +298,7 @@
 <code class="sourceCode R"><span><span class="op">?</span><span class="va">NGR</span></span>
 <span><span class="op">?</span><span class="va">buildPlot</span></span>
 <span><span class="op">?</span><span class="va">buildTable</span></span></code></pre></div>
-<p>Pkgdown is configured by <code>_pkgdown.yml</code> and builds into <code>../_site/lib/</code>. The repository’s <code>docs/</code> directory contains the Jekyll portal sources.</p>
+<p>Pkgdown is configured by <code>_pkgdown.yml</code> and renders the articles in <code>vignettes/</code> and the R reference in <code>man/</code>. The public site is <a href="https://averrik.github.io/NGR/" class="external-link uri">https://averrik.github.io/NGR/</a>.</p>
 <p>Pkgdown article sources:</p>
 <ul>
 <li>
@@ -314,7 +314,7 @@
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
-<p>MIT License - see <a href="LICENSE">LICENSE</a></p>
+<p>MIT License - see <a href="https://averrik.github.io/NGR/LICENSE.html" class="external-link">LICENSE</a></p>
 </div>
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
@@ -324,7 +324,7 @@
 <span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">  title = {NGR: Next Generation Reporting},</span></span>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">  year = {2020},</span></span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">  version = {0.3.3},</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">  url = {https://averriK.github.io/NGR/lib/}</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">  url = {https://averriK.github.io/NGR/}</span></span>
 <span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">}</span></span></code></pre></div>
 <hr>
 </div>

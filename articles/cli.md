@@ -1,0 +1,76 @@
+# NGR command-line interface
+
+**Development interface.** This guide describes the development checkout
+containing `cli/main.R` and `install/`. These components have not yet
+been published in the repository distribution; obtain that complete
+development checkout before using the installation commands below.
+Installing the R package alone does not install the CLI.
+
+NGR combines project resources, Quarto rendering and Netlify
+publication. The CLI is implemented in `cli/`; the installed R package
+is a separate dependency. The initial candidate is under local
+verification.
+
+## Install
+
+The installation policy requires all installers and package maintenance
+tools under `install/`, with `install/install.sh` for macOS/Linux and
+`install/install.ps1` for Windows. The isolated CLI backend is
+`install/cli/install.py`: run
+`python3 install/cli/install.py --prefix <directory>` on macOS/Linux or
+`python install/cli/install.py --prefix <directory>` on Windows, then
+add `<directory>/bin` to PATH. The installer manages only the CLI;
+install the R package independently. Repeat the command to update, or
+add `--uninstall` to remove the owned CLI runtime. Modified or foreign
+runtime files block removal.
+
+## Work from your project directory
+
+``` sh
+ngr pull --from ngr styles yml lua bib/apa.csl
+ngr pull --from /path/to/book/ngr.source.json
+ngr status --check
+ngr doctor
+ngr render --manifest qrt.manifest.json --dry-run
+ngr render _master/book.en.qmd --profile book
+```
+
+`pull` incorporates and updates declared resources. Registered sources
+remain in `qrt.manifest.json`; subsequent pulls reuse them. Select
+destination paths positionally and registered sources with `--source`.
+Use `--force` to replace differing managed files. Existing project seeds
+and editable masters stay local; conflicting source contributions always
+fail before copying.
+
+Resource operations are provided by the installed R library through
+`pullResources()`, `compareResources()` and `checkResources()`. They can
+also be used directly from R. Resource commands do not require Python;
+the current CLI installer and DOCX correction still use it. Windows
+render staging also uses Python’s standard library when a project
+contains symbolic links. Scaffold checks can require additional software
+declared by their source.
+
+`render` supports HTML books, HTML documents, RevealJS presentations,
+simple and composed DOCX, and preserves existing static artifacts. It
+loads the installed NGR R package and calls `quartoRender()`,
+independently of a source checkout. That API owns staging, Quarto
+execution, DOCX repair and output delivery; its Python repair resource
+is included in the R package. `quartoRenderManifest()` owns batch
+selection, preflight and execution. Static and legacy map entries refer
+to external products; NGR does not run their producer scripts.
+
+`deploy` uploads existing outputs. `deploy init` associates Netlify
+sites; `deploy domain` manages domains and HTTPS; `deploy unbind`
+removes a local alias. Production requires `--prod`. Use
+`ngr deploy --help` for direct and manifest forms. Resource
+incorporation never publishes a site.
+
+The Bash, CMD and PowerShell launchers enter `cli/main.R`; the installed
+NGR package provides command dispatch and the reusable operations,
+including `netlifyRegister()`, `netlifyDeploy()`, `netlifyDomain()` and
+`netlifyUnbind()`. Runtime commands do not install dependencies or load
+R code from the source checkout.
+
+Run `ngr --help`, `ngr pull --help`, `ngr render --help` or
+`ngr deploy --help` for command arguments. Local verification does not
+certify a remote deployment.

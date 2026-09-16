@@ -4,8 +4,8 @@
 
 [![R
 Version](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue)](https://www.r-project.org/)
-[![Version](https://img.shields.io/badge/version-0.3.3-green)](https://averriK.github.io/NGR/lib/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://averriK.github.io/NGR/LICENSE)
+[![Version](https://img.shields.io/badge/version-0.3.3-green)](https://averriK.github.io/NGR/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://averrik.github.io/NGR/LICENSE.html)
 
 R package for generating professional multi-format reports with advanced
 plotting and table formatting capabilities.
@@ -244,8 +244,9 @@ See function documentation via R help:
 ?buildTable
 ```
 
-Pkgdown is configured by `_pkgdown.yml` and builds into `../_site/lib/`.
-The repository’s `docs/` directory contains the Jekyll portal sources.
+Pkgdown is configured by `_pkgdown.yml` and renders the articles in
+`vignettes/` and the R reference in `man/`. The public site is
+<https://averrik.github.io/NGR/>.
 
 Pkgdown article sources:
 
@@ -259,7 +260,7 @@ Pkgdown article sources:
 
 ## License
 
-MIT License - see [LICENSE](https://averriK.github.io/NGR/LICENSE)
+MIT License - see [LICENSE](https://averrik.github.io/NGR/LICENSE.html)
 
 ## Citation
 
@@ -269,7 +270,7 @@ MIT License - see [LICENSE](https://averriK.github.io/NGR/LICENSE)
   title = {NGR: Next Generation Reporting},
   year = {2020},
   version = {0.3.3},
-  url = {https://averriK.github.io/NGR/lib/}
+  url = {https://averriK.github.io/NGR/}
 }
 ```
 
