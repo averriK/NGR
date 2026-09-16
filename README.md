@@ -10,7 +10,8 @@
 | Skill | [skill/](skill/) | Planned |
 | MCP | [mcp/](mcp/) | Planned |
 
-Documentation sources live in `docs/`; build output is `_site/`.
+Public documentation is rendered by pkgdown from `lib/vignettes/` and
+`lib/man/`, then published to `gh-pages`.
 
 ## R package installation
 

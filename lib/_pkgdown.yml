@@ -13,18 +13,17 @@ home:
 
 navbar:
   structure:
-    left:  [portal, intro, articles, reference, news]
+    left:  [intro, articles, reference, news]
     right: []
   components:
-    portal:
-      text: Product
-      href: ../
     intro:
       text: Get started
       href: articles/dynamic-qmd-blocks.html
     articles:
       text: Articles
       menu:
+        - text: Command-line interface
+          href: articles/cli.html
         - text: Dynamic QMD blocks
           href: articles/dynamic-qmd-blocks.html
         - text: buildPlot line and point layers

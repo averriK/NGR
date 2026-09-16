@@ -39,11 +39,6 @@ venv
 lib/R/.tmp_webshot/
 .positai
 # Repository build output
-/_site/
-/docs/.jekyll-cache/
-/docs/.jekyll-metadata
-/.bundle/
-/vendor/bundle/
 /lib/*.tar.gz
 /lib/*.Rcheck/
 /lib/vignettes/*.html
