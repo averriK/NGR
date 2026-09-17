@@ -4,7 +4,7 @@
 
 [![R
 Version](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue)](https://www.r-project.org/)
-[![Version](https://img.shields.io/badge/version-0.3.3-green)](https://averriK.github.io/NGR/)
+[![Version](https://img.shields.io/badge/version-0.3.11-green)](https://averriK.github.io/NGR/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://averrik.github.io/NGR/LICENSE.html)
 
 R package for generating professional multi-format reports with advanced
@@ -36,7 +36,7 @@ with configurable templates.
   styling
 - **Professional tables**: Multiple backends (flextable, gt, kableExtra)
 - **Multi-format output**: HTML, PDF, DOCX via Quarto integration
-- **Interactive visualizations**: highcharter and plotly support
+- **Interactive visualizations**: highcharter widgets
 - **Configurable templates**: YAML-based report customization
 - **Quarto YAML helpers**: reusable frontmatter and runtime
   `_quarto.yml` utilities for qrt-style render pipelines
@@ -45,16 +45,14 @@ with configurable templates.
 
 ## Installation
 
-### R package
-
-``` r
-
-# From GitHub
-devtools::install_github("averriK/NGR", subdir = "lib")
-
-# From CRAN (when published)
-# install.packages("NGR")
-```
+The R package and CLI are separate components. Use the repository’s
+common installer from the repository root, selecting an R library
+explicitly. The [installation
+guide](https://averrik.github.io/NGR/articles/cli.html#install) explains
+the macOS and Windows entries, package-only installation and the
+separate CLI destination. Runtime commands do not install dependencies.
+The repository is private; obtaining its development sources requires
+access.
 
 ## Usage
 
@@ -142,7 +140,9 @@ tbl <- buildTable(
 ### Quarto YAML helpers
 
 These helpers are ordinary R APIs for qrt-style runtime Quarto YAML.
-They do not call the `qrt` CLI.
+They do not call the `qrt` CLI. This example requires your existing
+`report.qmd` and `yml/_quarto.yml` in the working directory and writes
+`_quarto.yml` there.
 
 ``` r
 
@@ -158,7 +158,9 @@ single_file_config <- quartoSetProjectRender(base, "report.qmd")
 quartoAsYaml(single_file_config)
 ```
 
-See `vignettes/quarto-yaml.Rmd` for the package-facing article source.
+See the [Quarto YAML
+guide](https://averrik.github.io/NGR/articles/quarto-yaml.html) for
+complete examples.
 
 ### Display utilities
 
@@ -172,7 +174,9 @@ showMarkdownRendered("README.md")   # Rendered markdown
 
 ## Exported API
 
-The package exports 31 functions (see `NAMESPACE`):
+The [function
+reference](https://averrik.github.io/NGR/reference/index.html) lists the
+exported API. The principal families are:
 
 ### Plotting
 
@@ -187,6 +191,9 @@ The package exports 31 functions (see `NAMESPACE`):
 - [`buildSectionResultantsPlot()`](https://averriK.github.io/NGR/reference/buildSectionResultantsPlot.md)
   — responsive circular-section diagrams for any prepared subset of `N`,
   `M`, and `Q` layers.
+- [`buildSpectrumPlot()`](https://averriK.github.io/NGR/reference/buildSpectrumPlot.md)
+  — acceleration spectra from prepared series, without scientific
+  selection or calculation.
 
 ### Tables and reporting
 
@@ -202,6 +209,23 @@ The package exports 31 functions (see `NAMESPACE`):
   and related helpers — reusable qrt-style Quarto YAML utilities.
 - [`export()`](https://averriK.github.io/NGR/reference/export.md) —
   render/export utility.
+
+### Project resources, rendering and publication
+
+- [`pullResources()`](https://averriK.github.io/NGR/reference/pullResources.md),
+  [`compareResources()`](https://averriK.github.io/NGR/reference/compareResources.md),
+  [`checkResources()`](https://averriK.github.io/NGR/reference/checkResources.md)
+  — composition, comparison and declared checks for project sources.
+- [`quartoRender()`](https://averriK.github.io/NGR/reference/quartoRender.md),
+  [`quartoRenderManifest()`](https://averriK.github.io/NGR/reference/quartoRenderManifest.md),
+  [`quartoRenderStamp()`](https://averriK.github.io/NGR/reference/quartoRenderStamp.md)
+  — Quarto output, batch selection and provenance.
+- [`netlifyRegister()`](https://averriK.github.io/NGR/reference/netlifyRegister.md),
+  [`netlifyDeploy()`](https://averriK.github.io/NGR/reference/netlifyDeploy.md),
+  [`netlifyDomain()`](https://averriK.github.io/NGR/reference/netlifyDomain.md),
+  [`netlifyUnbind()`](https://averriK.github.io/NGR/reference/netlifyUnbind.md)
+  — explicit site and publication operations. Rendering does not publish
+  a site.
 
 ### Highcharter themes (gridlines)
 
@@ -230,7 +254,8 @@ The package exports 31 functions (see `NAMESPACE`):
 - R (\>= 4.1.0)
 - yaml, brio, data.table
 - flextable, gt, officer, kableExtra (table backends)
-- highcharter, htmlwidgets, webshot2, plotly (interactive plots)
+- highcharter, htmlwidgets, webshot2 (interactive plots)
+- fs, digest, jsonlite, stringi (resources and manifests)
 - grDevices, stats, graphics
 
 ## Documentation (how to read)
@@ -248,15 +273,18 @@ Pkgdown is configured by `_pkgdown.yml` and renders the articles in
 `vignettes/` and the R reference in `man/`. The public site is
 <https://averrik.github.io/NGR/>.
 
-Pkgdown article sources:
+Public articles:
 
-- `vignettes/quarto-yaml.Rmd` — package-facing vignette for the Quarto
-  YAML helper API.
-- `vignettes/secondary-y-axis.Rmd` — primary/secondary Y axis
-  configuration.
-- `vignettes/themes-gridlines.Rmd` — `hc_theme_*_gridlines()` reference.
-- `vignettes/adding-web-fonts-typewriter.Rmd` — maintainer guide for
-  typewriter web fonts.
+- [Command-line
+  interface](https://averrik.github.io/NGR/articles/cli.html).
+- [Quarto YAML
+  helpers](https://averrik.github.io/NGR/articles/quarto-yaml.html).
+- [Secondary Y
+  axis](https://averrik.github.io/NGR/articles/secondary-y-axis.html).
+- [Themes with
+  gridlines](https://averrik.github.io/NGR/articles/themes-gridlines.html).
+- [Typewriter web
+  fonts](https://averrik.github.io/NGR/articles/adding-web-fonts-typewriter.html).
 
 ## License
 
@@ -269,7 +297,7 @@ MIT License - see [LICENSE](https://averrik.github.io/NGR/LICENSE.html)
   author = {Verri Kozlowski, Alejandro},
   title = {NGR: Next Generation Reporting},
   year = {2020},
-  version = {0.3.3},
+  version = {0.3.11},
   url = {https://averriK.github.io/NGR/}
 }
 ```
@@ -304,6 +332,8 @@ MIT License - see [LICENSE](https://averrik.github.io/NGR/LICENSE.html)
   : Build a heatmap plot (Highcharts)
 - [`buildSectionResultantsPlot()`](https://averriK.github.io/NGR/reference/buildSectionResultantsPlot.md)
   : Build circular-section resultant diagrams
+- [`buildSpectrumPlot()`](https://averriK.github.io/NGR/reference/buildSpectrumPlot.md)
+  : Build an acceleration response spectrum plot
 
 ## Tables and report composition
 
@@ -313,6 +343,35 @@ MIT License - see [LICENSE](https://averrik.github.io/NGR/LICENSE.html)
   : Build Quarto YAML and prepare project structure
 - [`knitBlock()`](https://averriK.github.io/NGR/reference/knitBlock.md)
   : Knit a QMD block with dynamic labels
+
+## Project resources
+
+- [`pullResources()`](https://averriK.github.io/NGR/reference/pullResources.md)
+  : Incorporate and update project resources
+- [`compareResources()`](https://averriK.github.io/NGR/reference/compareResources.md)
+  : Compare project resources with their sources
+- [`checkResources()`](https://averriK.github.io/NGR/reference/checkResources.md)
+  : Run checks declared by registered resource sources
+
+## Quarto rendering
+
+- [`quartoRender()`](https://averriK.github.io/NGR/reference/quartoRender.md)
+  : Render a Quarto document in a disposable project copy
+- [`quartoRenderManifest()`](https://averriK.github.io/NGR/reference/quartoRenderManifest.md)
+  : Render a selection of project artifacts
+- [`quartoRenderStamp()`](https://averriK.github.io/NGR/reference/quartoRenderStamp.md)
+  : Resolve the publication stamp from scaffold provenance
+
+## Netlify publication
+
+- [`netlifyRegister()`](https://averriK.github.io/NGR/reference/netlifyRegister.md)
+  : Register local aliases for Netlify sites
+- [`netlifyDeploy()`](https://averriK.github.io/NGR/reference/netlifyDeploy.md)
+  : Upload existing directories to Netlify
+- [`netlifyDomain()`](https://averriK.github.io/NGR/reference/netlifyDomain.md)
+  : Configure domains for registered Netlify sites
+- [`netlifyUnbind()`](https://averriK.github.io/NGR/reference/netlifyUnbind.md)
+  : Remove a local Netlify alias association
 
 ## Quarto YAML helpers
 
@@ -379,6 +438,8 @@ the qrt CLI.
   blocks](https://averriK.github.io/NGR/articles/dynamic-qmd-blocks.md):
 - [Quarto YAML
   Helpers](https://averriK.github.io/NGR/articles/quarto-yaml.md):
+- [Scaffolds, project folders and shared
+  builders](https://averriK.github.io/NGR/articles/scaffolds.md):
 - [Secondary Y axis in
   buildPlot()](https://averriK.github.io/NGR/articles/secondary-y-axis.md):
 - [Temas con líneas de grilla para escalas

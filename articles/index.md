@@ -12,6 +12,8 @@
   blocks](https://averriK.github.io/NGR/articles/dynamic-qmd-blocks.md):
 - [Quarto YAML
   Helpers](https://averriK.github.io/NGR/articles/quarto-yaml.md):
+- [Scaffolds, project folders and shared
+  builders](https://averriK.github.io/NGR/articles/scaffolds.md):
 - [Secondary Y axis in
   buildPlot()](https://averriK.github.io/NGR/articles/secondary-y-axis.md):
 - [Temas con líneas de grilla para escalas

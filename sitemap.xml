@@ -8,6 +8,7 @@
 <url><loc>https://averriK.github.io/NGR/articles/dynamic-qmd-blocks.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/articles/index.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/articles/quarto-yaml.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/articles/scaffolds.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/articles/secondary-y-axis.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/articles/themes-gridlines.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/authors.html</loc></url>
@@ -22,8 +23,11 @@
 <url><loc>https://averriK.github.io/NGR/reference/buildPlot.Time.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/buildPlot.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/buildSectionResultantsPlot.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/reference/buildSpectrumPlot.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/buildTable.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/buildYAML.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/reference/checkResources.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/reference/compareResources.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/export.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/hc_theme_538_gridlines.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/hc_theme_economist_gridlines.html</loc></url>
@@ -31,6 +35,14 @@
 <url><loc>https://averriK.github.io/NGR/reference/hc_theme_hcrt_gridlines.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/index.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/knitBlock.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/reference/netlifyDeploy.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/reference/netlifyDomain.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/reference/netlifyRegister.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/reference/netlifyUnbind.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/reference/pullResources.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/reference/quartoRender.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/reference/quartoRenderManifest.html</loc></url>
+<url><loc>https://averriK.github.io/NGR/reference/quartoRenderStamp.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/quartoYaml.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/rotateTypewriter.html</loc></url>
 <url><loc>https://averriK.github.io/NGR/reference/showASCII.html</loc></url>

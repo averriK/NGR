@@ -38,6 +38,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/cli.html">Command-line interface</a></li>
+    <li><a class="dropdown-item" href="articles/scaffolds.html">Scaffolds and shared builders</a></li>
     <li><a class="dropdown-item" href="articles/dynamic-qmd-blocks.html">Dynamic QMD blocks</a></li>
     <li><a class="dropdown-item" href="articles/build-plot.html">buildPlot line and point layers</a></li>
     <li><a class="dropdown-item" href="articles/quarto-yaml.html">Quarto YAML helpers</a></li>
@@ -60,7 +61,7 @@
 <div class="page-header"><h1 id="ngr">NGR<a class="anchor" aria-label="anchor" href="#ngr"></a>
 </h1></div>
 <p><strong>Next Generation Reporting</strong></p>
-<p><a href="https://www.r-project.org/" class="external-link"><img src="https://img.shields.io/badge/R-%3E%3D%204.1.0-blue" alt="R Version"></a> <a href="https://averriK.github.io/NGR/"><img src="https://img.shields.io/badge/version-0.3.3-green" alt="Version"></a> <a href="https://averrik.github.io/NGR/LICENSE.html" class="external-link"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a></p>
+<p><a href="https://www.r-project.org/" class="external-link"><img src="https://img.shields.io/badge/R-%3E%3D%204.1.0-blue" alt="R Version"></a> <a href="https://averriK.github.io/NGR/"><img src="https://img.shields.io/badge/version-0.3.11-green" alt="Version"></a> <a href="https://averrik.github.io/NGR/LICENSE.html" class="external-link"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a></p>
 <p>R package for generating professional multi-format reports with advanced plotting and table formatting capabilities.</p>
 <div class="section level2">
 <h2 id="contents">Contents<a class="anchor" aria-label="anchor" href="#contents"></a>
@@ -94,7 +95,7 @@
 <li>
 <strong>Multi-format output</strong>: HTML, PDF, DOCX via Quarto integration</li>
 <li>
-<strong>Interactive visualizations</strong>: highcharter and plotly support</li>
+<strong>Interactive visualizations</strong>: highcharter widgets</li>
 <li>
 <strong>Configurable templates</strong>: YAML-based report customization</li>
 <li>
@@ -106,16 +107,7 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<div class="section level3">
-<h3 id="r-package">R package<a class="anchor" aria-label="anchor" href="#r-package"></a>
-</h3>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># From GitHub</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/install-deprecated.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"averriK/NGR"</span>, subdir <span class="op">=</span> <span class="st">"lib"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># From CRAN (when published)</span></span>
-<span><span class="co"># install.packages("NGR")</span></span></code></pre></div>
-</div>
+<p>The R package and CLI are separate components. Use the repository’s common installer from the repository root, selecting an R library explicitly. The <a href="https://averrik.github.io/NGR/articles/cli.html#install" class="external-link">installation guide</a> explains the macOS and Windows entries, package-only installation and the separate CLI destination. Runtime commands do not install dependencies. The repository is private; obtaining its development sources requires access.</p>
 </div>
 <div class="section level2">
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
@@ -135,7 +127,7 @@
 <div class="section level4">
 <h4 id="basic-line-plot">Basic line plot<a class="anchor" aria-label="anchor" href="#basic-line-plot"></a>
 </h4>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://averriK.github.io/NGR/">NGR</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span></span>
@@ -156,7 +148,7 @@
 <h4 id="secondary-y-axis--linked-same-curve-relabel-ticks">Secondary Y axis — linked (same curve, relabel ticks)<a class="anchor" aria-label="anchor" href="#secondary-y-axis--linked-same-curve-relabel-ticks"></a>
 </h4>
 <p>Use this when you want <strong>one curve</strong> but the right axis shows a transformed label, e.g. <code>TR = 1 / AEP</code>.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plt</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/buildPlot.html">buildPlot</a></span><span class="op">(</span></span>
 <span>  data.lines <span class="op">=</span> <span class="va">lines</span>,</span>
 <span>  yAxis.legend  <span class="op">=</span> <span class="st">"AEP [1/yr]"</span>,</span>
@@ -169,7 +161,7 @@
 <h4 id="secondary-y-axis--independent-two-variables--two-scales">Secondary Y axis — independent (two variables / two scales)<a class="anchor" aria-label="anchor" href="#secondary-y-axis--independent-two-variables--two-scales"></a>
 </h4>
 <p>Assign each series to axis 0 or 1 via a <code>yAxis</code> column.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dt</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/rbindlist.html" class="external-link">rbindlist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span>ID <span class="op">=</span> <span class="st">"Pressure"</span>, X <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">50</span>, Y <span class="op">=</span> <span class="fl">10</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">50</span><span class="op">)</span><span class="op">/</span><span class="fl">6</span><span class="op">)</span>, yAxis <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>,</span>
 <span>  <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span>ID <span class="op">=</span> <span class="st">"Temp"</span>,     X <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">50</span>, Y <span class="op">=</span> <span class="fl">20</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">50</span><span class="op">)</span><span class="op">/</span><span class="fl">8</span><span class="op">)</span>, yAxis <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
@@ -185,7 +177,7 @@
 <div class="section level3">
 <h3 id="tables-buildtable">Tables (<code>buildTable()</code>)<a class="anchor" aria-label="anchor" href="#tables-buildtable"></a>
 </h3>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://averriK.github.io/NGR/">NGR</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">tbl</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/buildTable.html">buildTable</a></span><span class="op">(</span></span>
@@ -198,8 +190,8 @@
 <div class="section level3">
 <h3 id="quarto-yaml-helpers">Quarto YAML helpers<a class="anchor" aria-label="anchor" href="#quarto-yaml-helpers"></a>
 </h3>
-<p>These helpers are ordinary R APIs for qrt-style runtime Quarto YAML. They do not call the <code>qrt</code> CLI.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<p>These helpers are ordinary R APIs for qrt-style runtime Quarto YAML. They do not call the <code>qrt</code> CLI. This example requires your existing <code>report.qmd</code> and <code>yml/_quarto.yml</code> in the working directory and writes <code>_quarto.yml</code> there.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://averriK.github.io/NGR/">NGR</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">frontmatter</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/quartoYaml.html">quartoReadFrontmatter</a></span><span class="op">(</span><span class="st">"report.qmd"</span><span class="op">)</span></span>
@@ -210,12 +202,12 @@
 <span></span>
 <span><span class="va">single_file_config</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/quartoYaml.html">quartoSetProjectRender</a></span><span class="op">(</span><span class="va">base</span>, <span class="st">"report.qmd"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/quartoYaml.html">quartoAsYaml</a></span><span class="op">(</span><span class="va">single_file_config</span><span class="op">)</span></span></code></pre></div>
-<p>See <code>vignettes/quarto-yaml.Rmd</code> for the package-facing article source.</p>
+<p>See the <a href="https://averrik.github.io/NGR/articles/quarto-yaml.html" class="external-link">Quarto YAML guide</a> for complete examples.</p>
 </div>
 <div class="section level3">
 <h3 id="display-utilities">Display utilities<a class="anchor" aria-label="anchor" href="#display-utilities"></a>
 </h3>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/showCode.html">showCode</a></span><span class="op">(</span><span class="st">"script.R"</span><span class="op">)</span>                <span class="co"># Syntax-highlighted code</span></span>
 <span><span class="fu"><a href="reference/showHTML.html">showHTML</a></span><span class="op">(</span><span class="st">"report.html"</span><span class="op">)</span>             <span class="co"># Rendered HTML</span></span>
 <span><span class="fu"><a href="reference/showPDF.html">showPDF</a></span><span class="op">(</span><span class="st">"document.pdf"</span><span class="op">)</span>             <span class="co"># PDF viewer</span></span>
@@ -225,7 +217,7 @@
 <div class="section level2">
 <h2 id="exported-api">Exported API<a class="anchor" aria-label="anchor" href="#exported-api"></a>
 </h2>
-<p>The package exports 31 functions (see <code>NAMESPACE</code>):</p>
+<p>The <a href="https://averrik.github.io/NGR/reference/index.html" class="external-link">function reference</a> lists the exported API. The principal families are:</p>
 <div class="section level3">
 <h3 id="plotting">Plotting<a class="anchor" aria-label="anchor" href="#plotting"></a>
 </h3>
@@ -238,6 +230,8 @@
 <code><a href="reference/buildHeatmap.html">buildHeatmap()</a></code> — categorical Highcharts heatmaps.</li>
 <li>
 <code><a href="reference/buildSectionResultantsPlot.html">buildSectionResultantsPlot()</a></code> — responsive circular-section diagrams for any prepared subset of <code>N</code>, <code>M</code>, and <code>Q</code> layers.</li>
+<li>
+<code><a href="reference/buildSpectrumPlot.html">buildSpectrumPlot()</a></code> — acceleration spectra from prepared series, without scientific selection or calculation.</li>
 </ul>
 </div>
 <div class="section level3">
@@ -252,6 +246,18 @@
 <code><a href="reference/quartoYaml.html">quartoReadFrontmatter()</a></code>, <code><a href="reference/quartoYaml.html">quartoMergeBookManifest()</a></code>, <code><a href="reference/quartoYaml.html">quartoSetProjectRender()</a></code>, <code><a href="reference/quartoYaml.html">quartoDocxBookProfile()</a></code>, <code><a href="reference/quartoYaml.html">quartoAsYaml()</a></code>, and related helpers — reusable qrt-style Quarto YAML utilities.</li>
 <li>
 <code><a href="reference/export.html">export()</a></code> — render/export utility.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="project-resources-rendering-and-publication">Project resources, rendering and publication<a class="anchor" aria-label="anchor" href="#project-resources-rendering-and-publication"></a>
+</h3>
+<ul>
+<li>
+<code><a href="reference/pullResources.html">pullResources()</a></code>, <code><a href="reference/compareResources.html">compareResources()</a></code>, <code><a href="reference/checkResources.html">checkResources()</a></code> — composition, comparison and declared checks for project sources.</li>
+<li>
+<code><a href="reference/quartoRender.html">quartoRender()</a></code>, <code><a href="reference/quartoRenderManifest.html">quartoRenderManifest()</a></code>, <code><a href="reference/quartoRenderStamp.html">quartoRenderStamp()</a></code> — Quarto output, batch selection and provenance.</li>
+<li>
+<code><a href="reference/netlifyRegister.html">netlifyRegister()</a></code>, <code><a href="reference/netlifyDeploy.html">netlifyDeploy()</a></code>, <code><a href="reference/netlifyDomain.html">netlifyDomain()</a></code>, <code><a href="reference/netlifyUnbind.html">netlifyUnbind()</a></code> — explicit site and publication operations. Rendering does not publish a site.</li>
 </ul>
 </div>
 <div class="section level3">
@@ -286,7 +292,8 @@
 <li>R (&gt;= 4.1.0)</li>
 <li>yaml, brio, data.table</li>
 <li>flextable, gt, officer, kableExtra (table backends)</li>
-<li>highcharter, htmlwidgets, webshot2, plotly (interactive plots)</li>
+<li>highcharter, htmlwidgets, webshot2 (interactive plots)</li>
+<li>fs, digest, jsonlite, stringi (resources and manifests)</li>
 <li>grDevices, stats, graphics</li>
 </ul>
 </div>
@@ -294,21 +301,23 @@
 <h2 id="documentation-how-to-read">Documentation (how to read)<a class="anchor" aria-label="anchor" href="#documentation-how-to-read"></a>
 </h2>
 <p>See function documentation via R help:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">?</span><span class="va">NGR</span></span>
 <span><span class="op">?</span><span class="va">buildPlot</span></span>
 <span><span class="op">?</span><span class="va">buildTable</span></span></code></pre></div>
 <p>Pkgdown is configured by <code>_pkgdown.yml</code> and renders the articles in <code>vignettes/</code> and the R reference in <code>man/</code>. The public site is <a href="https://averrik.github.io/NGR/" class="external-link uri">https://averrik.github.io/NGR/</a>.</p>
-<p>Pkgdown article sources:</p>
+<p>Public articles:</p>
 <ul>
 <li>
-<code>vignettes/quarto-yaml.Rmd</code> — package-facing vignette for the Quarto YAML helper API.</li>
+<a href="https://averrik.github.io/NGR/articles/cli.html" class="external-link">Command-line interface</a>.</li>
 <li>
-<code>vignettes/secondary-y-axis.Rmd</code> — primary/secondary Y axis configuration.</li>
+<a href="https://averrik.github.io/NGR/articles/quarto-yaml.html" class="external-link">Quarto YAML helpers</a>.</li>
 <li>
-<code>vignettes/themes-gridlines.Rmd</code> — <code>hc_theme_*_gridlines()</code> reference.</li>
+<a href="https://averrik.github.io/NGR/articles/secondary-y-axis.html" class="external-link">Secondary Y axis</a>.</li>
 <li>
-<code>vignettes/adding-web-fonts-typewriter.Rmd</code> — maintainer guide for typewriter web fonts.</li>
+<a href="https://averrik.github.io/NGR/articles/themes-gridlines.html" class="external-link">Themes with gridlines</a>.</li>
+<li>
+<a href="https://averrik.github.io/NGR/articles/adding-web-fonts-typewriter.html" class="external-link">Typewriter web fonts</a>.</li>
 </ul>
 </div>
 <div class="section level2">
@@ -319,13 +328,13 @@
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
-<div class="sourceCode" id="cb9"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co">@software{ngr,</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">  author = {Verri Kozlowski, Alejandro},</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">  title = {NGR: Next Generation Reporting},</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">  year = {2020},</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">  version = {0.3.3},</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">  url = {https://averriK.github.io/NGR/}</span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co">@software{ngr,</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">  author = {Verri Kozlowski, Alejandro},</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">  title = {NGR: Next Generation Reporting},</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">  year = {2020},</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">  version = {0.3.11},</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">  url = {https://averriK.github.io/NGR/}</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">}</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">

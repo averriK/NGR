@@ -34,6 +34,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/cli.html">Command-line interface</a></li>
+    <li><a class="dropdown-item" href="../articles/scaffolds.html">Scaffolds and shared builders</a></li>
     <li><a class="dropdown-item" href="../articles/dynamic-qmd-blocks.html">Dynamic QMD blocks</a></li>
     <li><a class="dropdown-item" href="../articles/build-plot.html">buildPlot line and point layers</a></li>
     <li><a class="dropdown-item" href="../articles/quarto-yaml.html">Quarto YAML helpers</a></li>
@@ -67,52 +68,104 @@
 
     
     
-<p><strong>Development interface.</strong> This guide describes the
-development checkout containing <code>cli/main.R</code> and
-<code>install/</code>. These components have not yet been published in
-the repository distribution; obtain that complete development checkout
-before using the installation commands below. Installing the R package
-alone does not install the CLI.</p>
+<p><strong>Development interface.</strong> The repository contains
+<code>cli/main.R</code> and <code>install/</code>. Installing the R
+package alone does not install the CLI. The complete scaffold builder
+migration remains in progress.</p>
 <p>NGR combines project resources, Quarto rendering and Netlify
 publication. The CLI is implemented in <code>cli/</code>; the installed
-R package is a separate dependency. The initial candidate is under local
-verification.</p>
+R package is a separate dependency. Development builds are verified in
+isolated installations. Complete project acceptance remains separate
+from command and installer tests.</p>
 <div class="section level2">
 <h2 id="install">Install<a class="anchor" aria-label="anchor" href="#install"></a>
 </h2>
-<p>The installation policy requires all installers and package
-maintenance tools under <code>install/</code>, with
-<code>install/install.sh</code> for macOS/Linux and
-<code>install/install.ps1</code> for Windows. The isolated CLI backend
-is <code>install/cli/install.py</code>: run
-<code>python3 install/cli/install.py --prefix &lt;directory&gt;</code>
-on macOS/Linux or
-<code>python install/cli/install.py --prefix &lt;directory&gt;</code> on
-Windows, then add <code>&lt;directory&gt;/bin</code> to PATH. The
-installer manages only the CLI; install the R package independently.
-Repeat the command to update, or add <code>--uninstall</code> to remove
-the owned CLI runtime. Modified or foreign runtime files block
-removal.</p>
+<p>Run installation commands from the <strong>repository root</strong>,
+where <code>install/</code> and <code>lib/</code> are siblings. Replace
+the example paths with your actual destinations before running a
+command. Install R first and make <code>Rscript</code> available. The
+installer does not install R or operating-system tools.</p>
+<div class="section level3">
+<h3 id="r-package">R package<a class="anchor" aria-label="anchor" href="#r-package"></a>
+</h3>
+<p>Build and install only the package into an explicit, writable R
+library:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">bash</span> install/install.sh <span class="at">--component</span> lib <span class="at">--library</span> /absolute/path/to/R/library <span class="at">--build</span> /absolute/path/to/build</span></code></pre></div>
+<p>On Windows, run the corresponding entry from PowerShell:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="op">./</span>install<span class="op">/</span>install<span class="op">.</span><span class="fu">ps1</span> <span class="op">--</span>component lib <span class="op">--</span>library C<span class="op">:/</span><span class="fu">R</span><span class="op">/</span>library <span class="op">--</span>build C<span class="op">:/</span>Build<span class="op">/</span>NGR</span></code></pre></div>
+<p><code>--build</code> creates a development archive without building
+manuals or vignettes; it does not run a release check. Choose a new
+build directory for each attempt. Use
+<code>--tarball /absolute/path/to/NGR_version.tar.gz</code> instead to
+select an existing archive with its adjacent <code>.tar.gz.rds</code>
+build record. Keep the chosen R library visible through
+<code>R_LIBS</code> or <code>R_LIBS_USER</code> in later sessions.
+Compatible visible dependencies are reused; missing or incompatible
+requirements can be installed into the selected library.</p>
+</div>
+<div class="section level3">
+<h3 id="system-cli">System CLI<a class="anchor" aria-label="anchor" href="#system-cli"></a>
+</h3>
+<p>The CLI requires the installed NGR package, Python and Quarto. Select
+a system CLI prefix and use the platform’s required privileges. For
+example, on macOS:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">sudo</span> bash install/install.sh <span class="at">--component</span> cli <span class="at">--library</span> /absolute/path/to/R/library <span class="at">--prefix</span> /usr/local</span></code></pre></div>
+<p>On Windows, open PowerShell <strong>as Administrator</strong>, select
+the same R library, and choose the system CLI destination:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="op">./</span>install<span class="op">/</span>install<span class="op">.</span><span class="fu">ps1</span> <span class="op">--</span>component <span class="fu">cli</span> <span class="op">--</span>library C<span class="op">:/</span><span class="fu">R</span><span class="op">/</span>library <span class="op">--</span>prefix <span class="st">"C:/Program Files/NGR"</span></span></code></pre></div>
+<p>The CLI component does not install, update or remove R packages. The
+macOS entry keeps R verification under the invoking user when elevating
+the CLI installation. On Windows, use the explicitly selected library
+when elevating. Add the prefix’s <code>bin</code> directory to PATH;
+neither installer changes your shell profile. Repeat the same command to
+update the CLI. Modified or foreign runtime files block replacement.
+These installation templates do not certify a particular elevated
+destination or change its ownership policy.</p>
+<p>After installation, verify the selected environment:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">ngr</span> <span class="at">--version</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="ex">ngr</span> <span class="at">--help</span></span></code></pre></div>
+<p>Package installation and CLI installation are separate effects. The
+common entry can also coordinate both with <code>--component all</code>,
+an explicit library, prefix and exactly one of <code>--build</code> or
+<code>--tarball</code>. A CLI failure does not undo a completed package
+installation.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="work-from-your-project-directory">Work from your project directory<a class="anchor" aria-label="anchor" href="#work-from-your-project-directory"></a>
 </h2>
-<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">ngr</span> pull <span class="at">--from</span> ngr styles yml lua bib/apa.csl</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">ngr</span> pull <span class="at">--from</span> /path/to/book/ngr.source.json</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="ex">ngr</span> status <span class="at">--check</span></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="ex">ngr</span> doctor</span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="ex">ngr</span> render <span class="at">--manifest</span> qrt.manifest.json <span class="at">--dry-run</span></span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="ex">ngr</span> render _master/book.en.qmd <span class="at">--profile</span> book</span></code></pre></div>
+<p>Change to the project directory before using resource or render
+commands. The source manifest and master in this example must already
+exist. They are project choices, not files supplied by the installation.
+Review the source’s declared checks before running
+<code>doctor</code>.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">ngr</span> pull <span class="at">--from</span> ngr <span class="at">--from</span> /path/to/book/manifest.json</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="ex">ngr</span> status <span class="at">--check</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="ex">ngr</span> doctor</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="ex">ngr</span> render <span class="at">--manifest</span> manifest.json <span class="at">--dry-run</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="ex">ngr</span> render _master/book.en.qmd <span class="at">--profile</span> book</span></code></pre></div>
+<p>These are separate operation examples. Rendering the book also
+requires all chapters, data and software referenced by its master. A
+successful manifest dry run does not execute the book or prove those
+scientific inputs are present.</p>
 <p><code>pull</code> incorporates and updates declared resources.
-Registered sources remain in <code>qrt.manifest.json</code>; subsequent
+Registered sources remain in <code>manifest.json</code>; subsequent
 pulls reuse them. Select destination paths positionally and registered
 sources with <code>--source</code>. Use <code>--force</code> to replace
 differing managed files. Existing project seeds and editable masters
 stay local; conflicting source contributions always fail before
 copying.</p>
+<p>Each scaffold also has its own <code>manifest.json</code>, declaring
+its resources. The project manifest records the composition and
+provenance instead. For existing projects, preserve a copy, rename
+<code>qrt.manifest.json</code>, and update source associations and
+readers together. NGR rejects unmigrated project manifests; it does not
+maintain two state files or silently fall back to the old name. The <a href="scaffolds.html">scaffold guide</a> explains source and destination
+folders, builder ownership and the additional source-association
+migration required by older PSHA projects.</p>
 <p>Resource operations are provided by the installed R library through
-<code>pullResources()</code>, <code>compareResources()</code> and
-<code>checkResources()</code>. They can also be used directly from R.
+<code><a href="../reference/pullResources.html">pullResources()</a></code>, <code><a href="../reference/compareResources.html">compareResources()</a></code> and
+<code><a href="../reference/checkResources.html">checkResources()</a></code>. They can also be used directly from R.
 Resource commands do not require Python; the current CLI installer and
 DOCX correction still use it. Windows render staging also uses Python’s
 standard library when a project contains symbolic links. Scaffold checks
@@ -120,10 +173,10 @@ can require additional software declared by their source.</p>
 <p><code>render</code> supports HTML books, HTML documents, RevealJS
 presentations, simple and composed DOCX, and preserves existing static
 artifacts. It loads the installed NGR R package and calls
-<code>quartoRender()</code>, independently of a source checkout. That
+<code><a href="../reference/quartoRender.html">quartoRender()</a></code>, independently of a source checkout. That
 API owns staging, Quarto execution, DOCX repair and output delivery; its
 Python repair resource is included in the R package.
-<code>quartoRenderManifest()</code> owns batch selection, preflight and
+<code><a href="../reference/quartoRenderManifest.html">quartoRenderManifest()</a></code> owns batch selection, preflight and
 execution. Static and legacy map entries refer to external products; NGR
 does not run their producer scripts.</p>
 <p><code>deploy</code> uploads existing outputs.
@@ -132,12 +185,64 @@ does not run their producer scripts.</p>
 <code>deploy unbind</code> removes a local alias. Production requires
 <code>--prod</code>. Use <code>ngr deploy --help</code> for direct and
 manifest forms. Resource incorporation never publishes a site.</p>
+</div>
+<div class="section level2">
+<h2 id="library-operations">Library operations<a class="anchor" aria-label="anchor" href="#library-operations"></a>
+</h2>
 <p>The Bash, CMD and PowerShell launchers enter <code>cli/main.R</code>;
 the installed NGR package provides command dispatch and the reusable
-operations, including <code>netlifyRegister()</code>,
-<code>netlifyDeploy()</code>, <code>netlifyDomain()</code> and
-<code>netlifyUnbind()</code>. Runtime commands do not install
+operations, including <code><a href="../reference/netlifyRegister.html">netlifyRegister()</a></code>,
+<code><a href="../reference/netlifyDeploy.html">netlifyDeploy()</a></code>, <code><a href="../reference/netlifyDomain.html">netlifyDomain()</a></code> and
+<code><a href="../reference/netlifyUnbind.html">netlifyUnbind()</a></code>. Runtime commands do not install
 dependencies or load R code from the source checkout.</p>
+<p>R consumers can call these operations without the CLI:</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr class="header">
+<th>Operation</th>
+<th>R interface</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Incorporate or update resources</td>
+<td><code><a href="../reference/pullResources.html">pullResources()</a></code></td>
+</tr>
+<tr class="even">
+<td>Compare resources</td>
+<td><code><a href="../reference/compareResources.html">compareResources()</a></code></td>
+</tr>
+<tr class="odd">
+<td>Diagnose source requirements</td>
+<td><code><a href="../reference/checkResources.html">checkResources()</a></code></td>
+</tr>
+<tr class="even">
+<td>Render one source or a manifest selection</td>
+<td>
+<code><a href="../reference/quartoRender.html">quartoRender()</a></code>,
+<code><a href="../reference/quartoRenderManifest.html">quartoRenderManifest()</a></code>
+</td>
+</tr>
+<tr class="odd">
+<td>Inspect render provenance</td>
+<td><code><a href="../reference/quartoRenderStamp.html">quartoRenderStamp()</a></code></td>
+</tr>
+<tr class="even">
+<td>Associate, publish or configure Netlify sites</td>
+<td>
+<code><a href="../reference/netlifyRegister.html">netlifyRegister()</a></code>, <code><a href="../reference/netlifyDeploy.html">netlifyDeploy()</a></code>,
+<code><a href="../reference/netlifyDomain.html">netlifyDomain()</a></code>, <code><a href="../reference/netlifyUnbind.html">netlifyUnbind()</a></code>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Scaffolds use <code><a href="../reference/buildSpectrumPlot.html">buildSpectrumPlot()</a></code> for prepared
+acceleration spectra and <code><a href="../reference/buildPlot.html">buildPlot()</a></code> for other supported
+graphics. The scaffold or scientific producer owns data selection and
+calculation; NGR owns the representation. Existing map HTML is an input
+to reports. Rendering never starts a map producer or OpenQuake.</p>
 <p>Run <code>ngr --help</code>, <code>ngr pull --help</code>,
 <code>ngr render --help</code> or <code>ngr deploy --help</code> for
 command arguments. Local verification does not certify a remote

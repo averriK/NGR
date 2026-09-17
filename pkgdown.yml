@@ -7,9 +7,10 @@ articles:
   cli: cli.html
   dynamic-qmd-blocks: dynamic-qmd-blocks.html
   quarto-yaml: quarto-yaml.html
+  scaffolds: scaffolds.html
   secondary-y-axis: secondary-y-axis.html
   themes-gridlines: themes-gridlines.html
-last_built: 2026-09-16T23:38Z
+last_built: 2026-09-17T21:31Z
 urls:
   reference: https://averriK.github.io/NGR/reference
   article: https://averriK.github.io/NGR/articles

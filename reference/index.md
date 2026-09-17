@@ -18,6 +18,8 @@
   : Build a heatmap plot (Highcharts)
 - [`buildSectionResultantsPlot()`](https://averriK.github.io/NGR/reference/buildSectionResultantsPlot.md)
   : Build circular-section resultant diagrams
+- [`buildSpectrumPlot()`](https://averriK.github.io/NGR/reference/buildSpectrumPlot.md)
+  : Build an acceleration response spectrum plot
 
 ## Tables and report composition
 
@@ -27,6 +29,35 @@
   : Build Quarto YAML and prepare project structure
 - [`knitBlock()`](https://averriK.github.io/NGR/reference/knitBlock.md)
   : Knit a QMD block with dynamic labels
+
+## Project resources
+
+- [`pullResources()`](https://averriK.github.io/NGR/reference/pullResources.md)
+  : Incorporate and update project resources
+- [`compareResources()`](https://averriK.github.io/NGR/reference/compareResources.md)
+  : Compare project resources with their sources
+- [`checkResources()`](https://averriK.github.io/NGR/reference/checkResources.md)
+  : Run checks declared by registered resource sources
+
+## Quarto rendering
+
+- [`quartoRender()`](https://averriK.github.io/NGR/reference/quartoRender.md)
+  : Render a Quarto document in a disposable project copy
+- [`quartoRenderManifest()`](https://averriK.github.io/NGR/reference/quartoRenderManifest.md)
+  : Render a selection of project artifacts
+- [`quartoRenderStamp()`](https://averriK.github.io/NGR/reference/quartoRenderStamp.md)
+  : Resolve the publication stamp from scaffold provenance
+
+## Netlify publication
+
+- [`netlifyRegister()`](https://averriK.github.io/NGR/reference/netlifyRegister.md)
+  : Register local aliases for Netlify sites
+- [`netlifyDeploy()`](https://averriK.github.io/NGR/reference/netlifyDeploy.md)
+  : Upload existing directories to Netlify
+- [`netlifyDomain()`](https://averriK.github.io/NGR/reference/netlifyDomain.md)
+  : Configure domains for registered Netlify sites
+- [`netlifyUnbind()`](https://averriK.github.io/NGR/reference/netlifyUnbind.md)
+  : Remove a local Netlify alias association
 
 ## Quarto YAML helpers
 
