@@ -50,7 +50,6 @@ reference:
       - buildPlot.Time
       - buildHeatmap
       - buildSectionResultantsPlot
-      - buildSpectrumPlot
 
   - title: Tables and report composition
     contents:

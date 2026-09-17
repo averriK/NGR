@@ -21,8 +21,9 @@ no se ha ejecutado; su entrada es `sudo bash install/install.sh`.
 - `fix_docx.py` distribuido privadamente por el paquete. NGR no ejecuta
   OpenQuake ni produce mapas; consume los resultados externos existentes.
 - Scaffold candidato en `/Users/averrik/Cloud/github/reports/sha`.
-  UHS y MCE usan `NGR::buildSpectrumPlot()`; selección y preparación permanecen
-  en el scaffold. El antiguo `scripts/fig/UHS.R` se retiró sólo del candidato.
+  El propietario rechazó la extracción UHS/MCE. Se restauraron su builder
+  `scripts/fig/UHS.R`, setup y cuatro bloques originales; la función pública
+  añadida se retiró. La arquitectura de builders sigue pendiente.
 
 ## Actualización: manifiestos y pruebas
 
@@ -235,19 +236,22 @@ instalación personal con privilegios elevados.
 
 ## Trabajo que sigue siendo responsabilidad de esta tarea
 
-Con el oráculo real SRS ya disponible, migrar sus builders por familia,
-revisar las familias restantes con sus productores y aceptar los
-12 masters pendientes sobre otro proyecto completo. Reutilizar APIs existentes no equivale a dar por
-migrado un consumidor; cada extracción necesita evidencia propia.
+Resolver la arquitectura de builders a partir de sus consumidores y de las
+APIs existentes, justificando el beneficio antes de proponer otra extracción.
+La retirada UHS/MCE no autoriza continuar TS/ITS por analogía. También quedan
+los 12 masters pendientes sobre otro proyecto completo.
 También corresponden a esta tarea la publicación autorizada y la instrucción
 de instalación. No se trasladan esas obligaciones al propietario como
 decisiones técnicas nuevas.
 
-La revisión estructural de esta tanda conserva una sola preparación UHS/MCE
-y una API de representación, sin nueva función ni dispatcher para MCE. Los
-dos cambios de portabilidad no alteran la interfaz; documentación y vocabulario
-corresponden a APIs efectivamente distribuidas. No se modificó la suite común
-del coordinador ni el productor PSHA.
+La corrección del rechazo restaura UHS.R y sus consumidores originales y retira
+la API añadida, su exportación, manual y prueba específica. Los seis archivos
+restaurados son iguales por bytes a la referencia previa; el widget completo
+coincide con la referencia. La documentación se regeneró y pasó el gate
+ortográfico. Evidencia y límites en
+[rejected-spectrum-20260917/REVIEW.md](../../SoT/cli-fusion/rejected-spectrum-20260917/REVIEW.md).
+Las instalaciones SoT anteriores conservan la versión histórica; no se
+presentan como nuevas instalaciones de esta corrección.
 
 ## Retención y continuidad
 

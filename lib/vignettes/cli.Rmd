@@ -153,8 +153,7 @@ R consumers can call these operations without the CLI:
 | Inspect render provenance | `quartoRenderStamp()` |
 | Associate, publish or configure Netlify sites | `netlifyRegister()`, `netlifyDeploy()`, `netlifyDomain()`, `netlifyUnbind()` |
 
-Scaffolds use `buildSpectrumPlot()` for prepared acceleration spectra and
-`buildPlot()` for other supported graphics. The scaffold or scientific producer
+Scaffolds use `buildPlot()` for supported graphics. The scaffold or scientific producer
 owns data selection and calculation; NGR owns the representation. Existing map
 HTML is an input to reports. Rendering never starts a map producer or OpenQuake.
 

@@ -32,6 +32,8 @@ Configuración
 controlan
 creado
 crear
+CSL
+customizations
 datos
 DDDDDD
 de
@@ -72,7 +74,9 @@ fontsize
 fontSize
 formatter
 frontmatter
+fs
 funciones
+globals
 gmsp
 grDevices
 gridline
@@ -102,6 +106,7 @@ Intervalo
 intervalos
 js
 JS
+jsonlite
 kableExtra
 kashima
 knitr
@@ -182,11 +187,14 @@ rotateTypewriter
 roxygen
 RStudio
 scrollbar
+schemas
 se
 secundarias
+SHA
 shortcodes
 spacelab
 specialised
+stringi
 sudo
 sutiles
 syne
@@ -203,6 +211,7 @@ un
 unescaped
 Universidad
 unlabelled
+unmigrated
 Uso
 útiles
 UUID

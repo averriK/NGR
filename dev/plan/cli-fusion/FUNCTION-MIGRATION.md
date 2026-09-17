@@ -16,8 +16,8 @@ CLI sean proporcionadas por la biblioteca instalada, conservando en la CLI
 argumentos, ayuda, entrada/salida y traducción de errores a códigos de salida.
 
 La frontera de comandos está implementada: YAML, procedencia, recursos, render
-individual/lotes y publicación pertenecen a la biblioteca. La migración de
-builders está aceptada para UHS/MCE y sigue abierta para las familias restantes.
+individual/lotes y publicación pertenecen a la biblioteca. El propietario
+rechazó la extracción UHS/MCE; se retiró y la arquitectura de builders sigue abierta.
 El mapa de main.R y las operaciones está en
 [CLI-LIBRARY.md](CLI-LIBRARY.md). No se interpreta una prueba funcional
 satisfactoria como prueba de esta frontera arquitectónica.
@@ -223,23 +223,11 @@ No se modificaron ni retiraron ejecutables durante esta corrección documental.
 
 ## Builders: representación frente a selección científica
 
-Familia UHS/MCE integrada el 2026-09-17:
-`NGR::buildSpectrumPlot(data, logScale, fill, fillSize)` proporciona la política
-visual y reutiliza `buildPlot` sin modificarlo. `reports/sha` conserva la
-selección/preparación en `scripts/setup/prepareUHS.R`; UHS.TR, UHS.sites,
-UHS.one y MCE.UHS llaman la API instalada. MCETable real permitió aceptar los
-dos consumidores restantes y retirar UHS.R del scaffold candidato. PSHA original
-permanece intacto. No se declara migrado el conjunto de builders del scaffold.
-
-Evidencia: [revisión SoT](../../SoT/cli-fusion/uhs-builder-20260916/REVIEW.md),
-`candidate.json`, 10 comparaciones de datos/widget y rechazo de duplicados,
-14 aserciones en macOS y Windows 11, tres bloques renderizados por ngr con
-widgets/captions/IDs iguales y cotejo del setup integrado. El tar aislado es
-SHA-256 `a11ee5e9aa26f4fe43af90beb7fe8ac94e83b2d4589f400eda6c94419a13cbcd`.
-La rama MCE tiene comparación propia en
-[mce-builder-20260917/REVIEW.md](../../SoT/cli-fusion/mce-builder-20260917/REVIEW.md).
-La documentación y el check del paquete sucesor están aprobados con la identidad
-exacta de CLOSURE.md; esto no acredita todos los masters.
+El propietario rechazó la extracción UHS/MCE el 2026-09-17 porque no justificaba
+su beneficio. Se retiró la API añadida y se restauraron UHS.R, setup y sus cuatro
+consumidores desde la referencia exacta. Los resultados funcionales históricos
+quedan en SoT; no constituyen aprobación de esa arquitectura. No se continuará
+TS/ITS por analogía ni se creará una función pública por cada script.
 
 La lectura posterior recorrió los 37 masters y sus dependencias efectivas.
 CLOSURE.md distingue las comparaciones aprobadas de los masters pendientes;
@@ -252,7 +240,7 @@ sigue pendiente y los hubs no sustituyen sus productos.
 
 | Cadena leída | Reutilización real | Trabajo pendiente y frontera |
 | --- | --- | --- |
-| `sha.qmd` → bloques UHS/MCE | Los bloques usan `buildSpectrumPlot`; preparación explícita en scaffold | API y consumidores comparados; conservar tablas OQT y elección de escenario fuera de NGR |
+| `sha.qmd` → bloques UHS/MCE | Builder original UHS.R, que usa `buildPlot` | Extracción rechazada y retirada; conservar la implementación previa mientras se resuelve la arquitectura |
 | `srs.at.qmd` → bloque AT → [TS.R](../../../../../reports/sha/scripts/fig/TS.R) | Ya llama a `buildPlot`, con segundos numéricos | Reutilizar el gráfico XY. `buildPlot.Time` requiere Date/POSIXct y representa calendario; no es sustitución válida por compartir la palabra tiempo |
 | [kh.R](../../../../../reports/sha/scripts/fig/kh.R) | Ya llama a `buildPlot`, con bandas y estilos | Selecciona kmax, une alturas, calcula Da/H y aplica límite 10 %. Revisar esos contratos con el productor antes de extraerlos; no tratarlos como mero dibujo |
 | [buildSectionResultantsPlot](../../../lib/man/buildSectionResultantsPlot.Rd) | Recibe curvas y rayos preparados | Ejemplo existente de frontera: NGR dibuja, el consumidor decide resultantes, signos, ángulos y transformación a coordenadas |

@@ -478,6 +478,10 @@ la entrada MCE y cualquier aceptación remota con destinos autorizados.
 
 ## UHS probabilístico como API instalada — 2026-09-16
 
+Registro histórico: el propietario rechazó esta extracción el 2026-09-17.
+Su paridad funcional no acredita aceptación de arquitectura. API y consumidores
+extraídos se retiraron/restauraron en rejected-spectrum-20260917.
+
 `buildSpectrumPlot` integrado en lib recibe series preparadas y aplica la
 representación común mediante buildPlot, sin selección científica ni archivos.
 En reports/sha, `.prepareUHS` conserva la preparación y los tres consumidores

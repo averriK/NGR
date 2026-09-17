@@ -163,10 +163,10 @@ Estado y evidencia por tramo:
 - La extracción previa de `quartoRenderStamp` conserva su comparación aprobada;
   no se repitieron renders sin cambios. Cada tarball y su alcance constan en
   LOCAL-VALIDATION.md; un número de versión compartido no acredita identidad.
-- La entrada MCETable real permitió completar SHA y aceptar la familia UHS/MCE.
-  Los cuatro bloques de esa familia usan `NGR::buildSpectrumPlot()`;
-  `reports/sha/scripts/fig/UHS.R` se retiró del candidato tras comprobar sus
-  consumidores. CLOSURE.md registra las comparaciones e identidades.
+- La comparación funcional UHS/MCE pasó, pero el propietario rechazó la
+  extracción y su nueva API. Se restauraron UHS.R y sus cuatro consumidores;
+  no se considera aceptada una nueva arquitectura de builders. La corrección
+  queda delimitada en rejected-spectrum-20260917.
 - El backend CLI reside en install/cli; requisitos y guard de instalación tienen
   un solo propietario. Las entradas comunes y herramientas R ya están en install/.
   Se retiró el motor Bash de render/publicación; no se migró generación de mapas.
@@ -174,7 +174,7 @@ Estado y evidencia por tramo:
   La corrida CFD permitió comparar once masters SRS y 77 widgets en
   `srs-20260917`; IPSA tiene equivalencia CSS nativa documentada tras un fallo
   de igualdad de assets por bytes. Dinámica/Newmark y los informes completos siguen pendientes
-  de ShearTable/DnTable/kmaxTable. El deck sha no acredita `_chapters/` completo.
+  de comparación con las tablas localizadas en AR-S2L1W. El deck sha no acredita `_chapters/` completo.
   Tampoco hay una composición real SHA + blasting/SSEL aceptada.
 
 [LOCAL-VALIDATION.md](LOCAL-VALIDATION.md) conserva comandos, identidades y

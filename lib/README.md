@@ -158,7 +158,6 @@ lists the exported API. The principal families are:
 - `buildPlot.Bar()`, `buildPlot.Histogram()`, `buildPlot.Model()` — specialised variants.
 - `buildHeatmap()` — categorical Highcharts heatmaps.
 - `buildSectionResultantsPlot()` — responsive circular-section diagrams for any prepared subset of `N`, `M`, and `Q` layers.
-- `buildSpectrumPlot()` — acceleration spectra from prepared series, without scientific selection or calculation.
 
 ### Tables and reporting
 
