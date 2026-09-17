@@ -75,8 +75,14 @@ class RenderTest(unittest.TestCase):
             Cases = [(NGR_TEST_BIN, Candidate, "manifest.json")]
             if NGR_REFERENCE_BIN:
                 # Each tool stamps through its own filters; their stamp variables differ.
+                # The receipts follow the replaced filters so neither project is a draft.
                 subprocess.run([NGR_REFERENCE_BIN, "init", "--force", "lua"], cwd=Reference,
                                check=True, capture_output=True)
+                DATA = json.loads((Reference / "qrt.manifest.json").read_text())
+                for FILE, Receipt in DATA["scaffolds"]["ngr"]["files"].items():
+                    if FILE.startswith("lua/"):
+                        Receipt["md5"] = hashlib.md5((Reference / FILE).read_bytes()).hexdigest()
+                (Reference / "qrt.manifest.json").write_text(json.dumps(DATA), encoding="utf-8")
                 Cases.append((NGR_REFERENCE_BIN, Reference, "qrt.manifest.json"))
             for Binary, Project, Name in Cases:
                 Before = {x: hashlib.sha256((Project / x).read_bytes()).hexdigest() for x in Inputs}
