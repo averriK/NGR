@@ -15,6 +15,22 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def sourceRevision(source, paths):
+    """Return the BUILD_INFO text of a Git checkout, or None outside one.
+
+    Only the distributed paths decide whether the revision is dirty."""
+    if shutil.which("git") is None:
+        return None
+    DATA = subprocess.run(["git", "-C", str(source), "rev-parse", "HEAD"], capture_output=True, text=True)
+    if DATA.returncode != 0:
+        return None
+    Commit = DATA.stdout.strip()
+    DATA = subprocess.run(["git", "-C", str(source), "status", "--porcelain", "--untracked-files=all", "--", *paths],
+                          capture_output=True, text=True)
+    Describe = Commit[:7] + ("-dirty" if DATA.returncode != 0 or DATA.stdout.strip() else "")
+    return f"git_commit={Commit}\ngit_describe={Describe}\n"
+
+
 def installRuntime(prefix, uninstall, check=False):
     Source = Path(__file__).resolve().parents[2] / "cli"
     Prefix = prefix.expanduser().resolve()
@@ -100,6 +116,13 @@ def installRuntime(prefix, uninstall, check=False):
             shutil.copy2(FILE, Target)
             Target.chmod(0o755 if Name == "bin/ngr" else 0o644)
             DATA["files"][Name] = digest(Target)
+        # The installed base has no checkout: record the revision its receipts and render stamps report.
+        Revision = sourceRevision(Source, paths=sorted({x.split("/")[0] for x in Assets} | {"manifest.json"}))
+        if Revision is not None:
+            Target = Stage / "scaffold/BUILD_INFO"
+            Target.write_text(Revision, encoding="utf-8")
+            Target.chmod(0o644)
+            DATA["files"]["scaffold/BUILD_INFO"] = digest(Target)
         LauncherBytes = {}
         LauncherBackups = {}
         for Key, Entry in Launchers.items():

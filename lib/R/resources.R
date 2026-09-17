@@ -152,13 +152,26 @@
   Project
 }
 
+# An installed source has no Git checkout; its installer records the revision
+# it was taken from in a BUILD_INFO file beside the source manifest.
+.recordedRevision <- function(path) {
+  FILE <- file.path(dirname(path), "BUILD_INFO")
+  if (!file_test("-f", FILE)) return(list(commit = "unknown", dirty = TRUE))
+  AUX <- readLines(FILE, warn = FALSE)
+  Commit <- sub("^git_commit=", "", AUX[startsWith(AUX, "git_commit=")])
+  if (length(Commit) != 1L || !grepl("^[0-9a-f]{7,64}$", Commit)) {
+    stop("Invalid revision record: ", FILE, call. = FALSE)
+  }
+  list(commit = Commit, dirty = any(endsWith(AUX[startsWith(AUX, "git_describe=")], "-dirty")))
+}
+
 .resourceRevision <- function(path) {
-  if (!nzchar(Sys.which("git"))) return(list(commit = "unknown", dirty = TRUE))
+  if (!nzchar(Sys.which("git"))) return(.recordedRevision(path))
   # Non-Git sources are supported; rev-parse's nonzero exit is the expected test.
   Commit <- suppressWarnings(system2("git", c("-C", shQuote(dirname(path)), "rev-parse", "HEAD"),
                                      stdout = TRUE, stderr = FALSE))
   if (!length(Commit) || !is.null(attr(Commit, "status"))) {
-    return(list(commit = "unknown", dirty = TRUE))
+    return(.recordedRevision(path))
   }
   Status <- system2("git", c("-C", shQuote(dirname(path)), "status", "--porcelain", "--", "."),
                     stdout = TRUE, stderr = TRUE)

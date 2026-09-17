@@ -114,8 +114,10 @@ claim `bib/references.bib`.
 `scaffolds.<id>` records the source manifest
 path, enrolled selection, applied source claims, checks and per-file receipts.
 Managed receipts retain `commit`, `dirty`, `md5` and add SHA-256; seeds never gain
-a receipt for customized local bytes. A non-Git source has revision `unknown`
-and content hashes remain exact. Partial updates preserve other file receipts.
+a receipt for customized local bytes. A source outside Git reports the revision
+recorded in a `BUILD_INFO` file beside its manifest, which the CLI installer
+writes for the installed base; without that record the revision is `unknown`,
+renders are marked DRAFT and content hashes remain exact. Partial updates preserve other file receipts.
 Legacy provenance without a source association requires explicit `--from`.
 
 ### Moving an existing project to NGR

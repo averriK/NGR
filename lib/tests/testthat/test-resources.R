@@ -182,3 +182,22 @@ test_that("artifact seeds resolve {project_id} once the project declares its own
   pullResources(root = Fixture$project)
   expect_identical(jsonlite::fromJSON(Manifest, simplifyVector = FALSE)$artifacts[[1L]]$siteSlug, "artest0-toc")
 })
+
+test_that("a source outside Git takes its revision from the record beside its manifest", {
+  Fixture <- resourceFixture()
+  on.exit(unlink(Fixture$root, recursive = TRUE), add = TRUE)
+  Record <- file.path(Fixture$source, "BUILD_INFO")
+  expect_identical(.resourceRevision(Fixture$manifest), list(commit = "unknown", dirty = TRUE))
+  writeLines(c("git_commit=0123456789abcdef0123456789abcdef01234567", "git_describe=0123456"), Record)
+  expect_identical(.resourceRevision(Fixture$manifest),
+                   list(commit = "0123456789abcdef0123456789abcdef01234567", dirty = FALSE))
+  pullResources(from = Fixture$manifest, root = Fixture$project)
+  Project <- jsonlite::fromJSON(file.path(Fixture$project, "manifest.json"), simplifyVector = FALSE)
+  expect_false(file.exists(file.path(Fixture$project, "BUILD_INFO")))
+  expect_identical(quartoRenderStamp(Project, root = Fixture$project),
+                   paste0("Pub: ", format(Sys.time(), "%d/%m/%Y"), " Rev.0123456"))
+  writeLines(c("git_commit=0123456789abcdef0123456789abcdef01234567", "git_describe=0123456-dirty"), Record)
+  expect_true(.resourceRevision(Fixture$manifest)$dirty)
+  writeLines("git_commit=not-a-commit", Record)
+  expect_error(.resourceRevision(Fixture$manifest), "BUILD_INFO")
+})

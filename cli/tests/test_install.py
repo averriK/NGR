@@ -73,6 +73,9 @@ class InstallTest(unittest.TestCase):
             self.assertTrue((Project / "yml/_quarto.yml").is_file())
             DATA = json.loads((Project / "manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(Path(DATA["scaffolds"]["ngr"]["manifest"]), (Prefix / "libexec/ngr/scaffold/manifest.json").resolve())
+            Commit = subprocess.run(["git", "-C", str(Installer.parent), "rev-parse", "HEAD"],
+                                    capture_output=True, text=True).stdout.strip() or "unknown"
+            self.assertEqual({x["commit"] for x in DATA["scaffolds"]["ngr"]["files"].values()}, {Commit})
 
     def testForeignLauncherBlocksPreflight(self):
         with tempfile.TemporaryDirectory(dir=NGR_TEST_ROOT) as DIR:
