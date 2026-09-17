@@ -1,0 +1,20 @@
+project:
+  type: default
+  execute-dir: project
+  output-dir: docx
+
+format:
+  docx:
+    reference-doc: styles/reference.docx
+    filters:
+      - lua/cover-title.lua
+      - lua/list-style.lua
+      - at: post-render
+        path: lua/appendix-style.lua
+    toc: false
+    number-sections: false
+    number-depth: 4
+    fig-width: 6.3
+    fig-height: 4.5
+    fig-dpi: 300
+    fig-format: png

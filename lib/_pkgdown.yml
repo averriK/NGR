@@ -24,6 +24,8 @@ navbar:
       menu:
         - text: Command-line interface
           href: articles/cli.html
+        - text: Scaffolds and shared builders
+          href: articles/scaffolds.html
         - text: Dynamic QMD blocks
           href: articles/dynamic-qmd-blocks.html
         - text: buildPlot line and point layers
@@ -48,12 +50,32 @@ reference:
       - buildPlot.Time
       - buildHeatmap
       - buildSectionResultantsPlot
+      - buildSpectrumPlot
 
   - title: Tables and report composition
     contents:
       - buildTable
       - buildYAML
       - knitBlock
+
+  - title: Project resources
+    contents:
+      - pullResources
+      - compareResources
+      - checkResources
+
+  - title: Quarto rendering
+    contents:
+      - quartoRender
+      - quartoRenderManifest
+      - quartoRenderStamp
+
+  - title: Netlify publication
+    contents:
+      - netlifyRegister
+      - netlifyDeploy
+      - netlifyDomain
+      - netlifyUnbind
 
   - title: Quarto YAML helpers
     desc: >

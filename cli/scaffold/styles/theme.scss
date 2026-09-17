@@ -1,0 +1,790 @@
+/*======================================================================
+  Professional PSHA Theme - Light Mode
+  Optimized for technical reporting and scientific documentation
+======================================================================*/
+
+/*----------------------------------------------------------------------
+  1. SCSS DEFAULTS - Variables and Bootstrap Overrides
+----------------------------------------------------------------------*/
+/*-- scss:defaults --*/
+
+// Typography is configured via _brand.yml; defaults here use only system fonts.
+
+// Color Palette - SRK Professional (keep in sync with styles/_brand.yml palette)
+$srk-blue: #003366 !default;          // primary
+$srk-light-blue: #0066CC !default;    // secondary
+$srk-accent: #FFB81C !default;        // legacy accent (yellow)
+$srk-header-orange: #F37021 !default; // header/footer, links, footnotes
+$srk-heading-blue: #0F4761 !default;  // dark heading blue
+$dark-gray: #2C3E50 !default;
+$medium-gray: #6C757D !default;
+$light-gray: #ECF0F1 !default;
+
+// Base Bootstrap-style variables (safe defaults; brand.yml may override)
+$body-bg: #FFFFFF !default;
+$body-color: #212529 !default;
+$border-color: #DEE2E6 !default;
+
+// Brand semantic colors
+$primary: $srk-blue !default;
+$secondary: $srk-light-blue !default;
+$success: #28A745 !default;
+$info: #17A2B8 !default;
+$warning: #FFC107 !default;
+$danger: #DC3545 !default;
+$light: $light-gray !default;
+$dark: $dark-gray !default;
+
+// Links
+// Define a default $link-color so this file compiles even if brand.yml is not applied yet.
+$link-color: $srk-header-orange !default;
+$link-hover-color: darken($link-color, 15%) !default;
+
+// Typography families (brand.yml may override sans/mono)
+// IMPORTANT: define the stack as a font-family *list*, not a single quoted string,
+// so the browser can choose each face correctly.
+$font-family-sans-serif: Arial, "Helvetica Neue", Helvetica, sans-serif !default;
+$font-family-monospace: Menlo, Monaco, Consolas, "Courier New", monospace !default;
+
+// Typography (no serif corporate font; align serif with sans for consistency)
+$font-family-serif: $font-family-sans-serif !default;
+$font-size-root: 16px !default; // restore Quarto/Bootstrap default root font size
+$font-size-base: 1rem !default;
+$line-height-base: 1.6 !default;
+
+// Headings
+// Force headings to use the same sans family as body text so they visually
+// match an Arial/Helvetica style rather than a serif face.
+$headings-font-family: $font-family-sans-serif !default;
+$headings-font-weight: 700 !default;
+$headings-line-height: 1.3 !default;
+$headings-color: $body-color !default;
+// SRK Word hierarchy (reference.docx): body 10pt, H1 18pt, H2 14pt, H3 12pt,
+// H4 11pt → proportional web scale over a 1rem body (1.8/1.4/1.2/1.1×).
+$h1-font-size: 1.8rem !default;
+$h2-font-size: 1.4rem !default;
+$h3-font-size: 1.2rem !default;
+$h4-font-size: 1.1rem !default;
+$h5-font-size: 1rem !default;
+$h6-font-size: 1rem !default;
+
+// Spacing
+$spacer: 1rem !default;
+$paragraph-margin-bottom: 1.25rem !default;
+
+// Tables
+$table-cell-padding-y: 0.75rem !default;
+$table-cell-padding-x: 1rem !default;
+$table-striped-bg: rgba(0, 0, 0, 0.02) !default;
+$table-hover-bg: rgba($primary, 0.05) !default;
+$table-border-color: $border-color !default;
+$table-head-bg: #FFFFFF !default;
+$table-head-color: $body-color !default;
+
+// Code blocks
+$code-bg: #F8F9FA !default;
+$code-color: $body-color !default;
+$code-block-bg: #F5F5F5 !default;
+$code-block-color: $body-color !default;
+$code-block-border-left: 4px solid $border-color !default;
+$code-block-padding-left: 1rem !default;
+
+// Callouts
+$callout-border-width: 4px !default;
+$callout-border-radius: 0.25rem !default;
+
+// TOC
+$toc-color: $body-color !default;
+$toc-active-border: $primary !default;
+$toc-active-color: $primary !default;
+$tertiary-bg: #F8F9FA !default;
+
+// Navbar
+$navbar-dark-color: $body-color !default;
+$navbar-dark-hover-color: $link-color !default;
+$navbar-dark-active-color: $link-color !default;
+
+// Borders and radius
+$border-radius: 0.375rem !default;
+$border-width: 1px !default;
+
+/*----------------------------------------------------------------------
+  2. CSS RULES - Custom Styling
+----------------------------------------------------------------------*/
+/*-- scss:rules --*/
+
+// Base typography improvements (do not change base font-family; rely on theme)
+body {
+  font-feature-settings: "kern" 1, "liga" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Headings with professional styling
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: $headings-font-weight;
+  line-height: $headings-line-height;
+  color: $headings-color;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+// SRK: flat headings, no rules/underlines. Sizes are set as explicit CSS
+// rules because Bootstrap's responsive calc() otherwise overrides the SCSS
+// size variables (E1, Hallazgo 5 in dev/plan/book-styles).
+h1 { font-size: $h1-font-size; margin-top: 0; }
+h2 { font-size: $h2-font-size; }
+h3 { font-size: $h3-font-size; }
+h4 { font-size: $h4-font-size; }
+h5 { font-size: $h5-font-size; }
+h6 { font-size: $h6-font-size; }
+
+// Improved links
+a {
+  color: $link-color;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    text-decoration: underline;
+    color: $link-hover-color;
+  }
+
+  &:focus {
+    outline: 2px solid $primary;
+    outline-offset: 2px;
+  }
+}
+
+// Professional tables
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+
+  thead {
+    background-color: $table-head-bg;
+    color: $table-head-color;
+    font-weight: 700;
+    text-align: left;
+
+    th {
+      padding: $table-cell-padding-y $table-cell-padding-x;
+    }
+  }
+
+  tbody {
+    td {
+      padding: $table-cell-padding-y $table-cell-padding-x;
+      border-bottom: 1px solid $table-border-color;
+    }
+  }
+}
+
+// Header rule: selector strength must beat Bootstrap's
+// `.table > :not(caption) > * > *`, which otherwise resets the width to 1px.
+.table > thead > tr > th,
+table > thead > tr > th {
+  border-bottom: 2px solid $body-color;
+}
+
+// Word-parity captions: same size as body, regular, dark (reference.docx
+// Caption is 10pt non-italic).
+caption, .table-caption {
+  font-size: 1rem;
+  color: $body-color;
+  font-style: normal;
+}
+
+// Enhanced callouts
+.callout {
+  border-left-width: $callout-border-width;
+  border-radius: $callout-border-radius;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+
+  &.callout-note {
+    border-left-color: $info;
+    background-color: lighten($info, 45%);
+  }
+
+  &.callout-warning {
+    border-left-color: $warning;
+    background-color: lighten($warning, 40%);
+  }
+
+  &.callout-important {
+    border-left-color: $danger;
+    background-color: lighten($danger, 45%);
+  }
+
+  &.callout-tip {
+    border-left-color: $success;
+    background-color: lighten($success, 50%);
+  }
+
+  .callout-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+// Figures and captions
+figure {
+  margin: 1.5rem 0;
+  text-align: center;
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  figcaption {
+    font-size: 1rem;
+    color: $body-color;
+    margin-top: 0.75rem;
+    text-align: center;
+    line-height: 1.4;
+  }
+}
+
+// Code blocks with professional styling
+pre {
+  margin: 1.5rem 0;
+}
+
+pre.sourceCode {
+  border-left: $code-block-border-left;
+  background-color: $code-block-bg;
+  padding: 1rem;
+  padding-left: $code-block-padding-left;
+  border-radius: $border-radius;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.5;
+
+  code {
+    background-color: transparent;
+    padding: 0;
+    font-family: $font-family-monospace;
+    font-feature-settings: "liga" 1, "calt" 1;
+  }
+}
+
+code {
+  background-color: $code-bg;
+  color: $code-color;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+  font-family: $font-family-monospace;
+}
+
+// Code copy button
+.code-copy-button {
+  background-color: $primary;
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: $border-radius;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: darken($primary, 10%);
+  }
+}
+
+// TOC styling
+#TOC {
+  border-left: 2px solid $primary;
+  padding-left: 1rem;
+
+  .nav-link {
+    color: $toc-color;
+    padding: 0.25rem 0.5rem;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: $primary;
+      background-color: rgba($primary, 0.05);
+    }
+
+    &.active {
+      font-weight: 600;
+      color: $toc-active-color;
+      border-left: 3px solid $toc-active-border;
+      margin-left: -1rem;
+      padding-left: calc(1rem - 3px);
+    }
+  }
+}
+
+// Sidebar and SRK logo placement
+.sidebar-navigation {
+  background-color: $tertiary-bg;
+  border-right: 1px solid $border-color;
+
+  .nav-link {
+    color: $body-color;
+    padding: 0.5rem 1rem;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: rgba($primary, 0.05);
+      color: $primary;
+    }
+
+    &.active {
+      background-color: rgba($primary, 0.1);
+      color: $primary;
+      font-weight: 600;
+      border-left: 3px solid $primary;
+    }
+  }
+}
+
+// SRK logo in the sidebar header (top-left of navigation)
+.sidebar-header .sidebar-logo-link {
+  display: inline-flex;
+  align-items: center;
+  margin: 0.5rem 0 0.75rem 0;
+  background-image: none;
+  min-height: 0;
+}
+// Report cover styling
+// The cover page carries its own title group (srk-cover); the generic
+// Quarto title banner would repeat it, so it is suppressed entirely here.
+.cover-page #title-block-header {
+  display: none;
+}
+.srk-cover {
+  margin: 0 0 3rem 0;
+  padding: 0;
+  color: $body-color;
+
+  .srk-cover__layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: stretch;
+    padding: 0;
+    background: #FFFFFF;
+    border: 1px solid $border-color;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  }
+
+  .srk-cover__content {
+    padding: 2.5rem 2.5rem 2.25rem 2.5rem;
+  }
+
+  .srk-cover__title-group {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 3px solid $srk-header-orange;
+  }
+
+
+  .srk-cover__kicker {
+    margin-bottom: 0.85rem;
+    font-size: 1.23rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $srk-header-orange;
+  }
+
+
+  .srk-cover__project {
+    display: grid;
+    gap: 0.2rem;
+    margin-top: 0;
+  }
+
+  .srk-cover__project-line {
+    font-size: 2.16rem;
+    line-height: 1.2;
+    font-weight: 700;
+    color: $srk-heading-blue;
+  }
+
+  .srk-cover__blocks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .srk-cover__block {
+    min-height: 100%;
+    padding: 1.25rem;
+    background: #F9FAFB;
+    border: 1px solid $border-color;
+  }
+
+  .srk-cover__block-title {
+    margin: 0 0 0.9rem;
+    padding: 0 0 0.4rem;
+    border-bottom: 1px solid lighten($srk-heading-blue, 45%);
+    font-size: 0.95rem;
+    line-height: 1.3;
+    color: $srk-heading-blue;
+  }
+
+  .srk-cover__block-body {
+    display: grid;
+    gap: 0.12rem;
+  }
+
+  .srk-cover__block-body p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.25;
+  }
+
+
+  .srk-cover__roles {
+    margin-bottom: 1.5rem;
+    border-top: 1px solid $border-color;
+    border-bottom: 1px solid $border-color;
+  }
+
+  .srk-cover__role-row {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr) 90px minmax(0, 140px);
+    gap: 0.75rem 1rem;
+    padding: 0.8rem 0;
+    align-items: start;
+  }
+
+  .srk-cover__role-row + .srk-cover__role-row {
+    border-top: 1px solid lighten($border-color, 4%);
+  }
+
+  .srk-cover__role-label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: $srk-heading-blue;
+  }
+
+  .srk-cover__role-value {
+    font-size: 0.88rem;
+    line-height: 1.4;
+    color: $body-color;
+  }
+
+  .srk-cover__meta {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .srk-cover__meta-item {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+  }
+
+  .srk-cover__meta-label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: $srk-heading-blue;
+  }
+
+  .srk-cover__meta-value {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: $body-color;
+  }
+
+}
+
+// SRK front cover (outer cover of cover.docx) — web replica. The HTML is
+// emitted by the project/psha builder with these classes; qrt only styles
+// them. Contract: dev/plan/book-styles/COVER-layout-20260720.md.
+// cover.docx scale over a 1rem body: title 22pt/10pt = 2.2x, meta 12pt = 1.2x.
+.srk-cover-front {
+  margin: 0 0 3rem 0;
+  background: #FFFFFF;
+  color: $body-color;
+
+  .srk-cover-front__status {
+    margin-bottom: 2.5rem;
+    font-size: 1.2rem;
+  }
+
+  .srk-cover-front__title {
+    margin: 0 0 1rem;
+    font-size: 2.2rem;
+    font-weight: 400;
+    line-height: 1.25;
+    color: $body-color;
+  }
+
+  .srk-cover-front__project {
+    margin: 0;
+    font-size: 1.2rem;
+    line-height: 1.4;
+  }
+
+  .srk-cover-front__client {
+    margin: 1.5rem 0 0;
+    font-size: 1.2rem;
+  }
+
+  .srk-cover-front__image {
+    margin: 2.5rem 0;
+
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+  }
+
+  .srk-cover-front__footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    gap: 0.5rem 1.5rem;
+    align-items: baseline;
+    padding-top: 1rem;
+    border-top: 1px solid $border-color;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .srk-cover-front .srk-cover-front__footer {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Footer styling
+.page-footer {
+  margin-top: 3rem;
+  padding: 1.15rem 0 0;
+  border-top: 3px solid $srk-header-orange;
+  color: $body-color;
+
+  .page-footer__inner {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0.2rem 0 0;
+  }
+
+  .page-footer__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
+  .page-footer__title {
+    font-size: 0.9rem;
+    line-height: 1.3;
+    font-weight: 700;
+    color: $srk-heading-blue;
+  }
+
+  .page-footer__meta {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: $dark-gray;
+  }
+
+  a {
+    color: $dark-gray;
+
+    &:hover {
+      color: $srk-header-orange;
+    }
+  }
+}
+
+// Layout adjustments for full-width HTML pages
+// (actual grid overrides now live in styles/layout.css to keep Bootstrap CSS clean).
+
+// NOTE: We intentionally avoid any global font-family override here so that
+// the base Quarto/bootstrap theme (simplex) controls typography.
+
+// Title block
+// Use Quarto's title-block banner structure when enabled. We keep the gradient
+// background and typography but do not inject the logo here because the SRK
+// logo file has a white background that clashes with the banner.
+// SRK flat title banner: white, dark title, orange rule (D2 in
+// dev/plan/book-styles/active.md).
+.quarto-title-block .quarto-title-banner {
+  margin-bottom: 2rem;
+  padding: 2rem 0 1.25rem;
+  background: #FFFFFF;
+  color: $body-color;
+  border-bottom: 3px solid $srk-header-orange;
+
+  .quarto-title {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  h1.title {
+    color: $body-color;
+    font-weight: $headings-font-weight;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    font-size: 1.25rem;
+    color: $dark-gray;
+  }
+
+  .description {
+    font-size: 1rem;
+    color: $medium-gray;
+  }
+}
+
+// Search styling
+#quarto-search {
+  .form-control {
+    border-color: $border-color;
+    background-color: $body-bg;
+    color: $body-color;
+
+    &:focus {
+      border-color: $primary;
+      box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+    }
+  }
+
+  .input-group-text {
+    background-color: $body-bg;
+    color: $body-color;
+    border-color: $border-color;
+  }
+}
+
+// Highcharts (interactive charts) - force consistent sans-serif fonts
+// regardless of any theme defaults coming from R/highcharter themes.
+.highcharts-root,
+.highcharts-title,
+.highcharts-subtitle,
+.highcharts-axis-labels text,
+.highcharts-axis-title text,
+.highcharts-legend-item text,
+.highcharts-data-label text,
+.highcharts-label text,
+.highcharts-tooltip text {
+  font-family: $font-family-sans-serif !important;
+}
+
+// Slightly reduce horizontal padding in the main body on large screens so
+// more of the central column is used for text without touching the grid layout.
+@media (min-width: 1200px) {
+  #quarto-content main.content {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  // Remove any default max-width cap on the main book column in "full" layout
+  // so it can use the entire available grid track.
+  .page-layout-full .column-body {
+    max-width: none;
+  }
+}
+
+// Responsive improvements
+@media (max-width: 768px) {
+  .srk-cover {
+    .srk-cover__content {
+      padding: 2rem 1.25rem 1.5rem;
+    }
+
+    .srk-cover__blocks {
+      grid-template-columns: 1fr;
+    }
+
+    .srk-cover__role-row,
+    .srk-cover__meta-item {
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+    }
+  }
+
+  table {
+    font-size: 0.875rem;
+  }
+
+  .quarto-title-block .quarto-title-banner {
+    padding: 2rem 0;
+  }
+}
+
+// Print styling
+@media print {
+  body {
+    font-size: 11pt;
+    line-height: 1.5;
+    color: black;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    color: black;
+  }
+
+  table, figure, img, pre {
+    page-break-inside: avoid;
+  }
+
+  a {
+    color: black;
+    text-decoration: underline;
+  }
+
+  .sidebar, .page-footer, #quarto-header, .nav-link {
+    display: none;
+  }
+}
+
+// PPT (revealjs) cover - SRK hierarchy without the top image band
+// (psha buildCoverPpt emits .ppt-cover; user waived the 50% image
+// constraint: content uses full slide height, vertically centered).
+.reveal .ppt-cover {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: left;
+}
+.reveal .ppt-cover__title-group {
+  border-left: 0.5rem solid $srk-header-orange;
+  padding-left: 1.8rem;
+  margin: 0 0 2.2rem;
+}
+.reveal .ppt-cover__title {
+  font-size: 2.3rem;
+  font-weight: 700;
+  line-height: 1.18;
+  color: #54565A;
+}
+.reveal .ppt-cover__subtitle {
+  font-size: 1.35rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: $srk-header-orange;
+}
+.reveal .ppt-cover__title + .ppt-cover__subtitle {
+  margin-top: 0.9rem;
+}
+.reveal .ppt-cover .cover-authors {
+  margin: 0;
+  padding-left: 2.3rem;
+  font-size: 0.95rem;
+  text-align: left;
+}

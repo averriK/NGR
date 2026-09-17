@@ -7,7 +7,6 @@
 ^venv$
 ^\.venv$
 ^dist$
-^build$
 ^\.pytest_cache$
 ^\.mypy_cache$
 ^\.tmp_webshot$

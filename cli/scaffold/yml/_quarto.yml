@@ -1,0 +1,29 @@
+engine: knitr
+language: styles/_language-en.yml
+
+# Bibliography is defined per-project in the YAML header of the manifest
+# file (index.qmd / memo.qmd / ppt.qmd / report.qmd). Each project lists
+# the bib files it wants (local + bib/references.bib as fallback).
+link-citations: true
+colorlinks: true
+
+execute:
+  eval: true
+  echo: false
+  freeze: false
+  warning: false
+  message: false
+
+crossref:
+  fig-title: Fig.
+  tbl-title: Table
+  eq-title: Equation
+  eq-prefix: eq.
+  tbl-prefix: tbl.
+  fig-prefix: fig.
+
+toc-title: Table of Contents
+
+profile:
+  group: [book, revealjs, docx, html]
+  default: book

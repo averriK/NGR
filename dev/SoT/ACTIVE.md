@@ -1,7 +1,1 @@
-# ACTIVE
-
-Current active topic:
-
-```text
-dev/plan/quarto-yaml/active.md
-```
+dev/plan/cli-fusion/STATE.md

@@ -1,0 +1,489 @@
+.isResourceObject <- function(x) is.list(x) && !is.null(names(x))
+
+.sameResourceValue <- function(x, y) {
+  if (!is.list(x) && !is.list(y)) return(isTRUE(all.equal(x, y, tolerance = 0)))
+  if (!is.list(x) || !is.list(y) || length(x) != length(y)) return(FALSE)
+  if (.isResourceObject(x) != .isResourceObject(y)) return(FALSE)
+  if (.isResourceObject(x)) {
+    if (!setequal(names(x), names(y))) return(FALSE)
+    y <- y[names(x)]
+  }
+  all(vapply(seq_along(x), function(i) .sameResourceValue(x[[i]], y[[i]]), logical(1L)))
+}
+
+.relativeResource <- function(path) {
+  if (!is.character(path) || length(path) != 1L || is.na(path) || !nzchar(path) ||
+      grepl("\\\\|[\\x01-\\x1f]", path, perl = TRUE) || startsWith(path, "/") ||
+      endsWith(path, "/") || grepl("//|(^|/)\\.{1,2}(/|$)", path)) {
+    stop("Invalid relative resource path: ", path, call. = FALSE)
+  }
+  path
+}
+
+.confinedResource <- function(root, path) {
+  Path <- file.path(root, .relativeResource(path))
+  DIR <- Path
+  while (!identical(DIR, root)) {
+    if (isTRUE(fs::is_link(DIR))) stop("Symlink is not a resource path: ", DIR, call. = FALSE)
+    DIR <- dirname(DIR)
+  }
+  Path
+}
+
+.selectedResource <- function(path, paths) {
+  !length(paths) || any(path == paths | startsWith(path, paste0(paths, "/")))
+}
+
+.readResourceSource <- function(path) {
+  Path <- normalizePath(path, winslash = "/", mustWork = TRUE)
+  Source <- jsonlite::fromJSON(Path, simplifyVector = FALSE)
+  if (!.isResourceObject(Source) || !isTRUE(Source$schemaVersion == 1)) {
+    stop("Expected source schemaVersion 1: ", path, call. = FALSE)
+  }
+  if (!is.character(Source$id) || length(Source$id) != 1L ||
+      !grepl("^[A-Za-z0-9][A-Za-z0-9._-]*$", Source$id)) {
+    stop("Invalid source id: ", path, call. = FALSE)
+  }
+  if (!is.list(Source$resources) || !length(Source$resources) ||
+      !is.null(names(Source$resources))) stop("Source resources must be a nonempty array", call. = FALSE)
+  Files <- stats::setNames(list(), character())
+  Root <- dirname(Path)
+  for (Resource in Source$resources) {
+    if (!.isResourceObject(Resource) ||
+        !setequal(names(Resource), c("from", "to", "ownership")) ||
+        !is.character(Resource$ownership) || length(Resource$ownership) != 1L ||
+        !Resource$ownership %in% c("managed", "seed")) {
+      stop("Resource requires from, to and managed/seed ownership", call. = FALSE)
+    }
+    Input <- .confinedResource(Root, Resource$from)
+    Target <- .relativeResource(Resource$to)
+    if (!file.exists(Input)) stop("Missing source resource: ", Input, call. = FALSE)
+    Paths <- Input
+    Files.input <- character()
+    while (length(Paths)) {
+      FILE <- Paths[[1L]]
+      Paths <- Paths[-1L]
+      if (isTRUE(fs::is_link(FILE))) stop("Symlink in source: ", FILE, call. = FALSE)
+      if (dir.exists(FILE)) {
+        Paths <- c(Paths, list.files(FILE, all.files = TRUE, no.. = TRUE, full.names = TRUE))
+        next
+      }
+      if (!file_test("-f", FILE)) stop("Not a regular resource: ", FILE, call. = FALSE)
+      Files.input <- c(Files.input, FILE)
+    }
+    for (FILE in sort(enc2utf8(Files.input), method = "radix")) {
+      Name <- Target
+      if (dir.exists(Input)) Name <- paste0(Target, "/", substring(FILE, nchar(Input) + 2L))
+      .relativeResource(Name)
+      if (Name %in% names(Files)) stop("Duplicate destination in source: ", Name, call. = FALSE)
+      if (stringi::stri_trans_casefold(strsplit(Name, "/", fixed = TRUE)[[1L]][1L]) %in%
+          c(".git", ".ngr", "oq", "gmsp", "manifest.json", "qrt.manifest.json")) {
+        stop("Project-owned destination cannot be supplied: ", Name, call. = FALSE)
+      }
+      Files[[Name]] <- list(path = FILE, sha256 = digest::digest(file = FILE, algo = "sha256"),
+                            ownership = Resource$ownership)
+    }
+  }
+  for (Field in intersect(c("checks", "artifacts"), names(Source))) {
+    if (!is.list(Source[[Field]]) || !is.null(names(Source[[Field]]))) {
+      stop("Source ", Field, " must be an array", call. = FALSE)
+    }
+  }
+  for (Check in Source$checks) {
+    if (!is.list(Check) || !is.null(names(Check)) || !length(Check) ||
+        !all(vapply(Check, function(x) is.character(x) && length(x) == 1L &&
+                      !is.na(x) && nzchar(x), logical(1L)))) {
+      stop("Source check must be an argv array", call. = FALSE)
+    }
+  }
+  Source$files <- Files
+  Source$manifest <- Path
+  Source
+}
+
+.readResourceProject <- function(root) {
+  if (file.exists(file.path(root, "qrt.manifest.json"))) {
+    stop("Migrate qrt.manifest.json to manifest.json and update its source associations and consumers before continuing; do not keep both files.", call. = FALSE)
+  }
+  Path <- .confinedResource(root, "manifest.json")
+  if (!file.exists(Path)) {
+    return(list(schemaVersion = 2L, artifacts = list(),
+                scaffolds = stats::setNames(list(), character())))
+  }
+  Project <- jsonlite::fromJSON(Path, simplifyVector = FALSE)
+  if (!.isResourceObject(Project) || !isTRUE(Project$schemaVersion %in% c(1, 2)) ||
+      !is.list(Project$artifacts) || !is.null(names(Project$artifacts))) {
+    stop("Invalid project manifest: ", Path, call. = FALSE)
+  }
+  if (!"scaffolds" %in% names(Project)) Project$scaffolds <- stats::setNames(list(), character())
+  if (!.isResourceObject(Project$scaffolds)) stop("Invalid scaffold records", call. = FALSE)
+  for (Name in names(Project$scaffolds)) {
+    Entry <- Project$scaffolds[[Name]]
+    if (!.isResourceObject(Entry)) stop("Invalid source record: ", Name, call. = FALSE)
+    for (Field in intersect(c("files", "claims"), names(Entry))) {
+      if (!.isResourceObject(Entry[[Field]])) stop("Invalid source ", Field, ": ", Name, call. = FALSE)
+      for (Path in names(Entry[[Field]])) {
+        .relativeResource(Path)
+        Receipt <- Entry[[Field]][[Path]]
+        if (!.isResourceObject(Receipt)) stop("Invalid resource receipt: ", Path, call. = FALSE)
+        Hash <- Receipt$md5
+        Pattern <- "^[0-9a-f]{32}$"
+        if (Field == "claims") {
+          Hash <- Receipt$sha256
+          Pattern <- "^[0-9a-f]{64}$"
+          if (!isTRUE(Receipt$ownership %in% c("managed", "seed"))) {
+            stop("Invalid claim ownership: ", Path, call. = FALSE)
+          }
+        }
+        if (!is.character(Hash) || length(Hash) != 1L || !grepl(Pattern, Hash)) {
+          stop("Invalid resource digest: ", Path, call. = FALSE)
+        }
+      }
+    }
+  }
+  Project
+}
+
+.resourceRevision <- function(path) {
+  if (!nzchar(Sys.which("git"))) return(list(commit = "unknown", dirty = TRUE))
+  # Non-Git sources are supported; rev-parse's nonzero exit is the expected test.
+  Commit <- suppressWarnings(system2("git", c("-C", shQuote(dirname(path)), "rev-parse", "HEAD"),
+                                     stdout = TRUE, stderr = FALSE))
+  if (!length(Commit) || !is.null(attr(Commit, "status"))) {
+    return(list(commit = "unknown", dirty = TRUE))
+  }
+  Status <- system2("git", c("-C", shQuote(dirname(path)), "status", "--porcelain", "--", "."),
+                    stdout = TRUE, stderr = TRUE)
+  if (!is.null(attr(Status, "status"))) stop("Cannot inspect source Git status: ", path, call. = FALSE)
+  list(commit = trimws(Commit[[1L]]), dirty = length(Status) > 0L)
+}
+
+.loadResourceSources <- function(from, source, paths, project) {
+  if (length(from) && length(source)) stop("--source and --from cannot be combined", call. = FALSE)
+  Sources <- stats::setNames(list(), character())
+  for (Path in from) {
+    Source <- .readResourceSource(Path)
+    if (Source$id %in% names(Sources)) stop("Duplicate source: ", Source$id, call. = FALSE)
+    Sources[[Source$id]] <- Source
+  }
+  if (!length(from)) {
+    Names <- source
+    if (!length(Names)) Names <- names(project$scaffolds)
+    for (Name in Names) {
+      if (!Name %in% names(project$scaffolds)) stop("Unknown registered source: ", Name, call. = FALSE)
+      Entry <- project$scaffolds[[Name]]
+      if (is.null(Entry$manifest) || !nzchar(Entry$manifest)) {
+        stop("Source ", Name, " has legacy provenance but no association; use --from its source manifest", call. = FALSE)
+      }
+      Source <- .readResourceSource(Entry$manifest)
+      if (!identical(Source$id, Name)) stop("Source identity changed: ", Name, call. = FALSE)
+      Sources[[Name]] <- Source
+    }
+  }
+  if (!length(Sources)) stop("No registered sources; start with pull --from <manifest>", call. = FALSE)
+  for (Path in paths) {
+    .relativeResource(Path)
+    if (!any(vapply(Sources, function(x) any(vapply(names(x$files), .selectedResource,
+                         logical(1L), paths = Path)), logical(1L)))) {
+      stop("Unknown resource target: ", Path, call. = FALSE)
+    }
+  }
+  Sources
+}
+
+.checkResourceClaims <- function(project) {
+  Claims <- list()
+  for (Name in names(project$scaffolds)) {
+    for (Path in names(project$scaffolds[[Name]]$claims)) {
+      .relativeResource(Path)
+      Claim <- project$scaffolds[[Name]]$claims[[Path]]
+      Key <- stringi::stri_trans_casefold(Path)
+      Peer <- Claims[[Key]]
+      if (!is.null(Peer) && (!identical(Peer$path, Path) || !.sameResourceValue(Peer$claim, Claim))) {
+        stop("Source conflict at ", Path, ": ", Peer$source, " vs ", Name,
+             "; --force cannot resolve it", call. = FALSE)
+      }
+      Claims[[Key]] <- list(source = Name, path = Path, claim = Claim)
+    }
+  }
+  for (Key in names(Claims)) {
+    DIR <- dirname(Key)
+    while (DIR != ".") {
+      if (DIR %in% names(Claims)) stop("File/directory source conflict: ", Key, call. = FALSE)
+      DIR <- dirname(DIR)
+    }
+  }
+  invisible(NULL)
+}
+
+.planResources <- function(root, project, sources, paths, from, force) {
+  Actions <- list()
+  Artifacts <- list()
+  for (Name in names(sources)) {
+    Source <- sources[[Name]]
+    Entry <- project$scaffolds[[Name]]
+    if (is.null(Entry)) Entry <- list(files = stats::setNames(list(), character()),
+                                    claims = stats::setNames(list(), character()))
+    if (!is.null(Entry$manifest) && !identical(Entry$manifest, Source$manifest)) {
+      stop("Source ", Name, " already associated; refusing implicit retarget", call. = FALSE)
+    }
+    Paths <- paths
+    if (!length(Paths) && !length(from)) Paths <- unlist(Entry$selection, use.names = FALSE)
+    Entry$manifest <- Source$manifest
+    Entry$checks <- Source$checks
+    if (is.null(Entry$checks)) Entry$checks <- list()
+    if (is.null(Entry$claims)) Entry$claims <- stats::setNames(list(), character())
+    if (is.null(Entry$files)) Entry$files <- stats::setNames(list(), character())
+    if (!"selection" %in% names(Entry)) Entry$selection <- as.list(Paths)
+    if (length(Entry$selection) && length(Paths)) {
+      Entry$selection <- as.list(sort(unique(c(unlist(Entry$selection), Paths)), method = "radix"))
+    }
+    if (!length(Paths)) Entry$selection <- list()
+    Revision <- .resourceRevision(Source$manifest)
+    for (Path in names(Source$files)) {
+      if (!.selectedResource(Path, Paths)) next
+      Resource <- Source$files[[Path]]
+      Target <- .confinedResource(root, Path)
+      if (file.exists(Target) && !file_test("-f", Target)) {
+        stop("Destination is not a regular file: ", Path, call. = FALSE)
+      }
+      DIR <- dirname(Target)
+      while (DIR != root) {
+        if (file.exists(DIR) && !dir.exists(DIR)) stop("Destination parent is not a directory: ", DIR, call. = FALSE)
+        DIR <- dirname(DIR)
+      }
+      Entry$claims[[Path]] <- Resource[c("sha256", "ownership")]
+      Action <- "create"
+      if (file.exists(Target)) {
+        Action <- "replace"
+        if (Resource$ownership == "seed") Action <- "preserve"
+        if (identical(digest::digest(file = Target, algo = "sha256"), Resource$sha256)) Action <- "keep"
+      }
+      Actions[[length(Actions) + 1L]] <- list(source = Name, path = Path, resource = Resource, action = Action)
+      if (Resource$ownership == "managed") {
+        Entry$files[[Path]] <- c(Revision, list(md5 = unname(tools::md5sum(Resource$path)), sha256 = Resource$sha256))
+      }
+    }
+    Entry$complete <- all(vapply(names(Entry$claims), function(x) {
+      Entry$claims[[x]]$ownership != "managed" || x %in% names(Entry$files)
+    }, logical(1L)))
+    project$scaffolds[[Name]] <- Entry
+    for (Artifact in Source$artifacts) {
+      if (!.isResourceObject(Artifact) || !is.character(Artifact$alias) || length(Artifact$alias) != 1L) {
+        stop("Invalid artifact seed in ", Name, call. = FALSE)
+      }
+      Alias <- Artifact$alias
+      if (Alias %in% names(Artifacts) && !.sameResourceValue(Artifacts[[Alias]], Artifact)) {
+        stop("Incompatible artifact seeds at alias ", Alias, call. = FALSE)
+      }
+      Artifacts[[Alias]] <- Artifact
+    }
+  }
+  if (!length(project$artifacts)) project$artifacts <- unname(Artifacts)
+  for (Name in names(project$scaffolds)) {
+    Entry <- project$scaffolds[[Name]]
+    if (Name %in% names(sources) || "claims" %in% names(Entry)) next
+    for (Path in names(Entry$files)) {
+      if (any(vapply(Actions, function(x) identical(Path, x$path), logical(1L)))) {
+        stop("Unresolved legacy claim from ", Name, " at ", Path, call. = FALSE)
+      }
+    }
+  }
+  .checkResourceClaims(project)
+  Conflicts <- vapply(Filter(function(x) x$action == "replace", Actions), `[[`, character(1L), "path")
+  if (length(Conflicts) && !force) stop("Local differences require --force: ", paste(Conflicts, collapse = ", "), call. = FALSE)
+  list(manifest = project, actions = Actions)
+}
+
+.replaceResource <- function(from, to) {
+  Path <- tempfile(".ngr-", tmpdir = dirname(to))
+  on.exit(unlink(Path), add = TRUE)
+  if (!file.copy(from, Path, copy.mode = TRUE, copy.date = TRUE) || !file.rename(Path, to)) {
+    stop("Cannot replace resource: ", to, call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+.applyResources <- function(root, manifest, actions) {
+  Stage <- tempfile("ngr-pull-")
+  if (!dir.create(Stage)) stop("Cannot create resource staging directory", call. = FALSE)
+  Cleanup <- TRUE
+  on.exit(if (Cleanup) unlink(Stage, recursive = TRUE), add = TRUE)
+  Writes <- list()
+  for (Action in actions) {
+    if (!Action$action %in% c("create", "replace")) next
+    Path <- file.path(Stage, "source", Action$path)
+    dir.create(dirname(Path), recursive = TRUE, showWarnings = FALSE)
+    if (!file.copy(Action$resource$path, Path, overwrite = TRUE, copy.mode = TRUE, copy.date = TRUE)) {
+      stop("Cannot stage resource: ", Action$path, call. = FALSE)
+    }
+    if (!identical(digest::digest(file = Path, algo = "sha256"), Action$resource$sha256)) {
+      stop("Source changed during pull: ", Action$path, call. = FALSE)
+    }
+    Writes[[Action$path]] <- Path
+  }
+  Path <- file.path(Stage, "manifest.json")
+  jsonlite::write_json(manifest, Path, auto_unbox = TRUE, pretty = TRUE, null = "null", digits = NA)
+  Writes[["manifest.json"]] <- Path
+  Backups <- list()
+  for (Name in names(Writes)) {
+    Target <- .confinedResource(root, Name)
+    Backups[Name] <- list(NULL)
+    if (!file.exists(Target)) next
+    Path <- file.path(Stage, "backup", Name)
+    dir.create(dirname(Path), recursive = TRUE, showWarnings = FALSE)
+    if (!file.copy(Target, Path, copy.mode = TRUE, copy.date = TRUE)) {
+      stop("Cannot back up resource: ", Name, call. = FALSE)
+    }
+    Backups[[Name]] <- Path
+  }
+  Written <- Created <- character()
+  tryCatch({
+    for (Name in names(Writes)) {
+      Target <- .confinedResource(root, Name)
+      Parents <- character()
+      DIR <- dirname(Target)
+      while (DIR != root && !dir.exists(DIR)) {
+        Parents <- c(DIR, Parents)
+        DIR <- dirname(DIR)
+      }
+      for (DIR in Parents) {
+        if (!dir.create(DIR)) stop("Cannot create resource directory: ", DIR, call. = FALSE)
+        Created <- c(Created, DIR)
+      }
+      .replaceResource(from = Writes[[Name]], to = Target)
+      Written <- c(Written, Name)
+    }
+  }, error = function(e) {
+    tryCatch({
+      for (Name in rev(Written)) {
+        if (is.null(Backups[[Name]])) {
+          if (unlink(file.path(root, Name)) != 0L) stop("Cannot remove resource: ", Name)
+          next
+        }
+        if (!file.copy(Backups[[Name]], file.path(root, Name), overwrite = TRUE, copy.mode = TRUE, copy.date = TRUE)) {
+          stop("Cannot restore resource: ", Name)
+        }
+      }
+      for (DIR in rev(Created)) {
+        if (length(list.files(DIR, all.files = TRUE, no.. = TRUE)) || unlink(DIR, recursive = TRUE) != 0L) {
+          stop("Cannot remove created directory: ", DIR)
+        }
+      }
+    }, error = function(error) {
+      Cleanup <<- FALSE
+      stop(errorCondition(paste0("Rollback failed; recovery retained at ", Stage, ": ", conditionMessage(error)),
+                          parent = e, recovery = Stage))
+    })
+    stop(e)
+  })
+  invisible(NULL)
+}
+
+#' Incorporate and update project resources
+#'
+#' Sources declare mappings to shared project paths. All implicated claims are
+#' checked before writes, including claims of sources not selected for update.
+#' Existing seeds, extra project files and scientific data are preserved. Files
+#' retired from a source are not deleted. Ordinary write errors restore the
+#' files already written; concurrent writers and process termination are not
+#' covered by this recovery.
+#'
+#' @param from Character vector of source manifest paths, or `NULL` to use
+#'   existing project associations. Relative paths resolve from the R working
+#'   directory. Incompatible with a nonempty `source`.
+#' @param source Registered source identities, or `NULL` for all associations.
+#' @param paths Destination files or directory prefixes. Empty selection uses
+#'   the enrolled selection, or the complete source when `from` is supplied.
+#' @param root Existing project directory; defaults to the working directory.
+#' @param force Replace different managed files; never replace existing seeds
+#'   or override incompatible source claims.
+#' @param dryRun Return the same validated plan without writing files.
+#' @return A list containing `actions` (a data frame with source, path and
+#'   action columns) and `manifest` (the resulting project manifest).
+#' @export
+pullResources <- function(from = NULL, source = NULL, paths = character(),
+                          root = getwd(), force = FALSE, dryRun = FALSE) {
+  Root <- normalizePath(root, winslash = "/", mustWork = TRUE)
+  if (!dir.exists(Root)) stop("Project root must be a directory", call. = FALSE)
+  Project <- .readResourceProject(Root)
+  Sources <- .loadResourceSources(from = from, source = source, paths = paths, project = Project)
+  Plan <- .planResources(root = Root, project = Project, sources = Sources,
+                         paths = paths, from = from, force = force)
+  if (!dryRun) .applyResources(root = Root, manifest = Plan$manifest, actions = Plan$actions)
+  Actions <- data.frame(source = character(), path = character(), action = character())
+  if (length(Plan$actions)) {
+    Actions <- as.data.frame(lapply(c("source", "path", "action"), function(x) {
+      vapply(Plan$actions, `[[`, character(1L), x)
+    }), stringsAsFactors = FALSE)
+    names(Actions) <- c("source", "path", "action")
+  }
+  list(actions = Actions, manifest = Plan$manifest)
+}
+
+#' Compare project resources with their sources
+#'
+#' Reads sources, local files and per-file receipts without writing them.
+#' @inheritParams pullResources
+#' @return A list with `files` (source, state, path and modified columns) and
+#'   `changed`, which is true for differences, missing/retired files or edits
+#'   against a receipt. Customized seeds alone do not set `changed`.
+#' @export
+compareResources <- function(from = NULL, source = NULL, paths = character(), root = getwd()) {
+  Root <- normalizePath(root, winslash = "/", mustWork = TRUE)
+  Project <- .readResourceProject(Root)
+  Sources <- .loadResourceSources(from = from, source = source, paths = paths, project = Project)
+  Files <- data.frame(source = character(), state = character(), path = character(), modified = logical())
+  for (Name in names(Sources)) {
+    Source <- Sources[[Name]]
+    Entry <- Project$scaffolds[[Name]]
+    Paths <- paths
+    if (!length(Paths)) Paths <- unlist(Entry$selection, use.names = FALSE)
+    for (Path in sort(union(names(Source$files), names(Entry$claims)), method = "radix")) {
+      if (!.selectedResource(Path, Paths)) next
+      FILE <- .confinedResource(Root, Path)
+      Resource <- Source$files[[Path]]
+      State <- "retired"
+      if (!is.null(Resource)) {
+        State <- "missing"
+        if (file.exists(FILE)) State <- "different"
+        if (file_test("-f", FILE) && identical(digest::digest(file = FILE, algo = "sha256"), Resource$sha256)) State <- "equal"
+        if (State == "different" && Resource$ownership == "seed") State <- "project-seed"
+      }
+      Receipt <- Entry$files[[Path]]
+      Modified <- length(Receipt) > 0L && (!file_test("-f", FILE) || !identical(unname(tools::md5sum(FILE)), Receipt$md5))
+      Files[nrow(Files) + 1L, ] <- list(Name, State, Path, Modified)
+    }
+  }
+  list(files = Files, changed = any(!Files$state %in% c("equal", "project-seed") | Files$modified))
+}
+
+#' Run checks declared by registered resource sources
+#'
+#' Validates all applied source claims, then runs the selected sources' declared
+#' argument vectors in the project directory. Those commands can have effects;
+#' this is not a read-only query. A failed command stops the operation.
+#' @inheritParams pullResources
+#' @return Invisibly, a list of completed checks with source, command and status.
+#' @export
+checkResources <- function(source = NULL, root = getwd()) {
+  Root <- normalizePath(root, winslash = "/", mustWork = TRUE)
+  Project <- .readResourceProject(Root)
+  .checkResourceClaims(Project)
+  if (!length(source)) source <- names(Project$scaffolds)
+  WD <- getwd()
+  on.exit(setwd(WD), add = TRUE)
+  setwd(Root)
+  Checks <- list()
+  for (Name in source) {
+    if (!Name %in% names(Project$scaffolds)) stop("Unknown registered source: ", Name, call. = FALSE)
+    for (Check in Project$scaffolds[[Name]]$checks) {
+      Args <- unlist(Check, use.names = FALSE)
+      message("[doctor] ", Name, ": ", paste(Args, collapse = " "))
+      Status <- system2(Args[[1L]], args = shQuote(Args[-1L]))
+      if (Status != 0L) stop("Source check failed: ", Name, " (exit ", Status, ")", call. = FALSE)
+      Checks[[length(Checks) + 1L]] <- list(source = Name, command = Check, status = Status)
+    }
+  }
+  invisible(Checks)
+}

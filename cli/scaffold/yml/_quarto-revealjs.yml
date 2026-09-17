@@ -1,0 +1,49 @@
+project:
+  type: default
+  output-dir: html
+  resources:
+    - _pdfjs/**
+
+format:
+  revealjs:
+    filters:
+      - lua/footer.lua
+    output-file: index.html
+    theme: simple
+    margin: 0
+    center: false
+    reference-location: document
+    revealOptions:
+      width: 1920
+      height: 1080
+      autoScale: true
+    scrollable: true
+    controls: true
+    progress: true
+    keyboard: true
+    touch: true
+    hash: true
+    loop: false
+    history: false
+    transition: fade
+    transition-speed: default
+    background-transition: fade
+    fragments: true
+    fragment-in-url: true
+    highlight-style: nord
+    code-line-numbers: true
+    code-copy: false
+    code-overflow: scroll
+    slide-number: c/t
+    plugins:
+      - search
+      - chalkboard
+      - zoom
+      - menu
+    chalkboard: true
+    search: true
+    menu: true
+    zoom: true
+    title-slide: false
+    logo: styles/logo.png
+    css: styles/styles.css

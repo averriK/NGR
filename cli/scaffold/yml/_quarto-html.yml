@@ -1,0 +1,36 @@
+project:
+  type: default
+  output-dir: html
+  execute-dir: project
+
+format:
+  html:
+    output-file: index.html
+    page-layout: article
+    brand: styles/_brand.yml
+    theme: styles/theme.scss
+    logo: styles/logo.png
+    title-block-banner: true
+    filters:
+      - lua/page-footer.lua
+    toc: true
+    toc-depth: 4
+    toc-expand: true
+    toc-location: left
+    number-sections: false
+    number-depth: 4
+    highlight-style: a11y
+    code-fold: true
+    code-summary: "Source"
+    code-line-numbers: true
+    code-copy: false
+    code-overflow: scroll
+    link-citations: true
+    link-external-newwindow: true
+    anchor-sections: true
+    embed-resources: false
+    self-contained: false
+    fig-width: 7
+    fig-height: 5
+    math: true
+    math-output: mathjax

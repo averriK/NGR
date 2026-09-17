@@ -2,7 +2,7 @@
 
 **Next Generation Reporting**
 
-[![R Version](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue)](https://www.r-project.org/) [![Version](https://img.shields.io/badge/version-0.3.3-green)](https://averriK.github.io/NGR/) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://averrik.github.io/NGR/LICENSE.html)
+[![R Version](https://img.shields.io/badge/R-%3E%3D%204.1.0-blue)](https://www.r-project.org/) [![Version](https://img.shields.io/badge/version-0.3.11-green)](https://averriK.github.io/NGR/) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://averrik.github.io/NGR/LICENSE.html)
 
 R package for generating professional multi-format reports with advanced plotting and table formatting capabilities.
 
@@ -28,22 +28,19 @@ NGR streamlines data visualization and presentation by providing high-level func
 - **High-quality plots**: Advanced plotting functions with consistent styling
 - **Professional tables**: Multiple backends (flextable, gt, kableExtra)
 - **Multi-format output**: HTML, PDF, DOCX via Quarto integration
-- **Interactive visualizations**: highcharter and plotly support
+- **Interactive visualizations**: highcharter widgets
 - **Configurable templates**: YAML-based report customization
 - **Quarto YAML helpers**: reusable frontmatter and runtime `_quarto.yml` utilities for qrt-style render pipelines
 - **Display utilities**: Built-in rendering functions for code, HTML, PDF, Markdown
 
 ## Installation
 
-### R package
-
-```r
-# From GitHub
-devtools::install_github("averriK/NGR", subdir = "lib")
-
-# From CRAN (when published)
-# install.packages("NGR")
-```
+The R package and CLI are separate components. Use the repository's common
+installer from the repository root, selecting an R library explicitly.
+The [installation guide](https://averrik.github.io/NGR/articles/cli.html#install)
+explains the macOS and Windows entries, package-only installation and the
+separate CLI destination. Runtime commands do not install dependencies.
+The repository is private; obtaining its development sources requires access.
 
 ## Usage
 
@@ -122,7 +119,8 @@ tbl <- buildTable(
 ### Quarto YAML helpers
 
 These helpers are ordinary R APIs for qrt-style runtime Quarto YAML. They do not
-call the `qrt` CLI.
+call the `qrt` CLI. This example requires your existing `report.qmd` and
+`yml/_quarto.yml` in the working directory and writes `_quarto.yml` there.
 
 ```r
 library(NGR)
@@ -137,7 +135,8 @@ single_file_config <- quartoSetProjectRender(base, "report.qmd")
 quartoAsYaml(single_file_config)
 ```
 
-See `vignettes/quarto-yaml.Rmd` for the package-facing article source.
+See the [Quarto YAML guide](https://averrik.github.io/NGR/articles/quarto-yaml.html)
+for complete examples.
 
 ### Display utilities
 
@@ -150,7 +149,8 @@ showMarkdownRendered("README.md")   # Rendered markdown
 
 ## Exported API
 
-The package exports 31 functions (see `NAMESPACE`):
+The [function reference](https://averrik.github.io/NGR/reference/index.html)
+lists the exported API. The principal families are:
 
 ### Plotting
 
@@ -158,6 +158,7 @@ The package exports 31 functions (see `NAMESPACE`):
 - `buildPlot.Bar()`, `buildPlot.Histogram()`, `buildPlot.Model()` — specialised variants.
 - `buildHeatmap()` — categorical Highcharts heatmaps.
 - `buildSectionResultantsPlot()` — responsive circular-section diagrams for any prepared subset of `N`, `M`, and `Q` layers.
+- `buildSpectrumPlot()` — acceleration spectra from prepared series, without scientific selection or calculation.
 
 ### Tables and reporting
 
@@ -165,6 +166,15 @@ The package exports 31 functions (see `NAMESPACE`):
 - `buildYAML()` — compose Quarto YAML blocks for multi-format rendering.
 - `quartoReadFrontmatter()`, `quartoMergeBookManifest()`, `quartoSetProjectRender()`, `quartoDocxBookProfile()`, `quartoAsYaml()`, and related helpers — reusable qrt-style Quarto YAML utilities.
 - `export()` — render/export utility.
+
+### Project resources, rendering and publication
+
+- `pullResources()`, `compareResources()`, `checkResources()` — composition,
+  comparison and declared checks for project sources.
+- `quartoRender()`, `quartoRenderManifest()`, `quartoRenderStamp()` — Quarto
+  output, batch selection and provenance.
+- `netlifyRegister()`, `netlifyDeploy()`, `netlifyDomain()`, `netlifyUnbind()` —
+  explicit site and publication operations. Rendering does not publish a site.
 
 ### Highcharter themes (gridlines)
 
@@ -183,7 +193,8 @@ The package exports 31 functions (see `NAMESPACE`):
 - R (>= 4.1.0)
 - yaml, brio, data.table
 - flextable, gt, officer, kableExtra (table backends)
-- highcharter, htmlwidgets, webshot2, plotly (interactive plots)
+- highcharter, htmlwidgets, webshot2 (interactive plots)
+- fs, digest, jsonlite, stringi (resources and manifests)
 - grDevices, stats, graphics
 
 ## Documentation (how to read)
@@ -200,12 +211,13 @@ Pkgdown is configured by `_pkgdown.yml` and renders the articles in
 `vignettes/` and the R reference in `man/`. The public site is
 <https://averrik.github.io/NGR/>.
 
-Pkgdown article sources:
+Public articles:
 
-- `vignettes/quarto-yaml.Rmd` — package-facing vignette for the Quarto YAML helper API.
-- `vignettes/secondary-y-axis.Rmd` — primary/secondary Y axis configuration.
-- `vignettes/themes-gridlines.Rmd` — `hc_theme_*_gridlines()` reference.
-- `vignettes/adding-web-fonts-typewriter.Rmd` — maintainer guide for typewriter web fonts.
+- [Command-line interface](https://averrik.github.io/NGR/articles/cli.html).
+- [Quarto YAML helpers](https://averrik.github.io/NGR/articles/quarto-yaml.html).
+- [Secondary Y axis](https://averrik.github.io/NGR/articles/secondary-y-axis.html).
+- [Themes with gridlines](https://averrik.github.io/NGR/articles/themes-gridlines.html).
+- [Typewriter web fonts](https://averrik.github.io/NGR/articles/adding-web-fonts-typewriter.html).
 
 ## License
 
@@ -218,7 +230,7 @@ MIT License - see [LICENSE](https://averrik.github.io/NGR/LICENSE.html)
   author = {Verri Kozlowski, Alejandro},
   title = {NGR: Next Generation Reporting},
   year = {2020},
-  version = {0.3.3},
+  version = {0.3.11},
   url = {https://averriK.github.io/NGR/}
 }
 ```

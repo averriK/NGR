@@ -8,6 +8,10 @@ URL: https://averriK.github.io/NGR/
 Depends: R (>= 4.1.0)
 Roxygen: list(markdown = TRUE)
 Imports: 
+    fs,
+    digest,
+    jsonlite,
+    stringi,
     yaml,
     brio,
     data.table,
@@ -29,7 +33,6 @@ Suggests:
     rmarkdown
 Config/testthat/edition: 3 
 VignetteBuilder: knitr
-Author: Alejandro Verri Kozlowski [aut, cre]
 Maintainer: Alejandro Verri Kozlowski <averri@fi.uba.ar>
 Authors@R: 
     person("Alejandro", "Verri Kozlowski", , "averri@fi.uba.ar", role = c("aut", "cre"),
