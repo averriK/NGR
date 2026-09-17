@@ -1,5 +1,45 @@
 # Changelog
 
+## NGR 0.4.0
+
+### Project resources, rendering and publication
+
+- New project resource operations:
+  [`pullResources()`](https://averriK.github.io/NGR/reference/pullResources.md),
+  [`compareResources()`](https://averriK.github.io/NGR/reference/compareResources.md)
+  and
+  [`checkResources()`](https://averriK.github.io/NGR/reference/checkResources.md)
+  incorporate, compare and check resources declared by source manifests.
+  A source is identified by its `id`, so naming a registered source
+  again re-points it to another location. A file entry may override the
+  ownership given by its directory entry, artifact seeds may name the
+  project through `{project_id}`, and a source outside Git reports the
+  revision recorded in a `BUILD_INFO` file beside its manifest.
+- New rendering operations:
+  [`quartoRender()`](https://averriK.github.io/NGR/reference/quartoRender.md),
+  [`quartoRenderManifest()`](https://averriK.github.io/NGR/reference/quartoRenderManifest.md)
+  and
+  [`quartoRenderStamp()`](https://averriK.github.io/NGR/reference/quartoRenderStamp.md).
+  The publication stamp reaches filters and scaffolds through the
+  `NGR_RENDER_STAMP` environment variable.
+- New Netlify operations:
+  [`netlifyRegister()`](https://averriK.github.io/NGR/reference/netlifyRegister.md),
+  [`netlifyDeploy()`](https://averriK.github.io/NGR/reference/netlifyDeploy.md),
+  [`netlifyDomain()`](https://averriK.github.io/NGR/reference/netlifyDomain.md)
+  and
+  [`netlifyUnbind()`](https://averriK.github.io/NGR/reference/netlifyUnbind.md),
+  with the manifest forms
+  [`netlifyRegisterManifest()`](https://averriK.github.io/NGR/reference/netlifyRegisterManifest.md),
+  [`netlifyDeployManifest()`](https://averriK.github.io/NGR/reference/netlifyRegisterManifest.md)
+  and
+  [`netlifyDomainManifest()`](https://averriK.github.io/NGR/reference/netlifyRegisterManifest.md).
+- The `ngr` command-line interface interprets its arguments in
+  `cli/main.R` and calls only exported functions; it requires NGR \>=
+  0.4.0.
+
+Existing plotting, table, Quarto YAML and display functions are
+unchanged.
+
 ## NGR 0.3.11
 
 ### API

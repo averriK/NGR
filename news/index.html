@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">NGR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,6 +41,17 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.0" id="ngr-040">NGR 0.4.0<a class="anchor" aria-label="anchor" href="#ngr-040"></a></h2>
+<div class="section level3">
+<h3 id="project-resources-rendering-and-publication-0-4-0">Project resources, rendering and publication<a class="anchor" aria-label="anchor" href="#project-resources-rendering-and-publication-0-4-0"></a></h3>
+<ul><li>New project resource operations: <code><a href="../reference/pullResources.html">pullResources()</a></code>, <code><a href="../reference/compareResources.html">compareResources()</a></code> and <code><a href="../reference/checkResources.html">checkResources()</a></code> incorporate, compare and check resources declared by source manifests. A source is identified by its <code>id</code>, so naming a registered source again re-points it to another location. A file entry may override the ownership given by its directory entry, artifact seeds may name the project through <code>{project_id}</code>, and a source outside Git reports the revision recorded in a <code>BUILD_INFO</code> file beside its manifest.</li>
+<li>New rendering operations: <code><a href="../reference/quartoRender.html">quartoRender()</a></code>, <code><a href="../reference/quartoRenderManifest.html">quartoRenderManifest()</a></code> and <code><a href="../reference/quartoRenderStamp.html">quartoRenderStamp()</a></code>. The publication stamp reaches filters and scaffolds through the <code>NGR_RENDER_STAMP</code> environment variable.</li>
+<li>New Netlify operations: <code><a href="../reference/netlifyRegister.html">netlifyRegister()</a></code>, <code><a href="../reference/netlifyDeploy.html">netlifyDeploy()</a></code>, <code><a href="../reference/netlifyDomain.html">netlifyDomain()</a></code> and <code><a href="../reference/netlifyUnbind.html">netlifyUnbind()</a></code>, with the manifest forms <code><a href="../reference/netlifyRegisterManifest.html">netlifyRegisterManifest()</a></code>, <code><a href="../reference/netlifyRegisterManifest.html">netlifyDeployManifest()</a></code> and <code><a href="../reference/netlifyRegisterManifest.html">netlifyDomainManifest()</a></code>.</li>
+<li>The <code>ngr</code> command-line interface interprets its arguments in <code>cli/main.R</code> and calls only exported functions; it requires NGR &gt;= 0.4.0.</li>
+</ul><p>Existing plotting, table, Quarto YAML and display functions are unchanged.</p>
+</div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.11" id="ngr-0311">NGR 0.3.11<a class="anchor" aria-label="anchor" href="#ngr-0311"></a></h2>
 <div class="section level3">

@@ -144,16 +144,12 @@ incorporation never publishes a site.
 
 ## Library operations
 
-The Bash, CMD and PowerShell launchers enter `cli/main.R`; the installed
-NGR package provides command dispatch and the reusable operations,
-including
-[`netlifyRegister()`](https://averriK.github.io/NGR/reference/netlifyRegister.md),
-[`netlifyDeploy()`](https://averriK.github.io/NGR/reference/netlifyDeploy.md),
-[`netlifyDomain()`](https://averriK.github.io/NGR/reference/netlifyDomain.md)
-and
-[`netlifyUnbind()`](https://averriK.github.io/NGR/reference/netlifyUnbind.md).
-Runtime commands do not install dependencies or load R code from the
-source checkout.
+The Bash, CMD and PowerShell launchers enter `cli/main.R`, which
+interprets the arguments and calls only exported functions of the
+installed NGR package. `ngr --help` and `ngr --version` work without the
+library; any other command names a missing library or one older than the
+version the CLI requires. Runtime commands do not install dependencies
+or load R code from the source checkout.
 
 R consumers can call these operations without the CLI:
 
@@ -165,6 +161,7 @@ R consumers can call these operations without the CLI:
 | Render one source or a manifest selection | [`quartoRender()`](https://averriK.github.io/NGR/reference/quartoRender.md), [`quartoRenderManifest()`](https://averriK.github.io/NGR/reference/quartoRenderManifest.md) |
 | Inspect render provenance | [`quartoRenderStamp()`](https://averriK.github.io/NGR/reference/quartoRenderStamp.md) |
 | Associate, publish or configure Netlify sites | [`netlifyRegister()`](https://averriK.github.io/NGR/reference/netlifyRegister.md), [`netlifyDeploy()`](https://averriK.github.io/NGR/reference/netlifyDeploy.md), [`netlifyDomain()`](https://averriK.github.io/NGR/reference/netlifyDomain.md), [`netlifyUnbind()`](https://averriK.github.io/NGR/reference/netlifyUnbind.md) |
+| The same for a manifest selection | [`netlifyRegisterManifest()`](https://averriK.github.io/NGR/reference/netlifyRegisterManifest.md), [`netlifyDeployManifest()`](https://averriK.github.io/NGR/reference/netlifyRegisterManifest.md), [`netlifyDomainManifest()`](https://averriK.github.io/NGR/reference/netlifyRegisterManifest.md) |
 
 Scaffolds use
 [`buildPlot()`](https://averriK.github.io/NGR/reference/buildPlot.md)

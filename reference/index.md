@@ -56,6 +56,11 @@
   : Configure domains for registered Netlify sites
 - [`netlifyUnbind()`](https://averriK.github.io/NGR/reference/netlifyUnbind.md)
   : Remove a local Netlify alias association
+- [`netlifyRegisterManifest()`](https://averriK.github.io/NGR/reference/netlifyRegisterManifest.md)
+  [`netlifyDeployManifest()`](https://averriK.github.io/NGR/reference/netlifyRegisterManifest.md)
+  [`netlifyDomainManifest()`](https://averriK.github.io/NGR/reference/netlifyRegisterManifest.md)
+  : Register, publish or configure the Netlify sites of a manifest
+  selection
 
 ## Quarto YAML helpers
 

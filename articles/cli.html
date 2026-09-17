@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">NGR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -187,12 +187,13 @@ manifest forms. Resource incorporation never publishes a site.</p>
 <div class="section level2">
 <h2 id="library-operations">Library operations<a class="anchor" aria-label="anchor" href="#library-operations"></a>
 </h2>
-<p>The Bash, CMD and PowerShell launchers enter <code>cli/main.R</code>;
-the installed NGR package provides command dispatch and the reusable
-operations, including <code><a href="../reference/netlifyRegister.html">netlifyRegister()</a></code>,
-<code><a href="../reference/netlifyDeploy.html">netlifyDeploy()</a></code>, <code><a href="../reference/netlifyDomain.html">netlifyDomain()</a></code> and
-<code><a href="../reference/netlifyUnbind.html">netlifyUnbind()</a></code>. Runtime commands do not install
-dependencies or load R code from the source checkout.</p>
+<p>The Bash, CMD and PowerShell launchers enter <code>cli/main.R</code>,
+which interprets the arguments and calls only exported functions of the
+installed NGR package. <code>ngr --help</code> and
+<code>ngr --version</code> work without the library; any other command
+names a missing library or one older than the version the CLI requires.
+Runtime commands do not install dependencies or load R code from the
+source checkout.</p>
 <p>R consumers can call these operations without the CLI:</p>
 <table class="table">
 <colgroup>
@@ -232,6 +233,14 @@ dependencies or load R code from the source checkout.</p>
 <td>
 <code><a href="../reference/netlifyRegister.html">netlifyRegister()</a></code>, <code><a href="../reference/netlifyDeploy.html">netlifyDeploy()</a></code>,
 <code><a href="../reference/netlifyDomain.html">netlifyDomain()</a></code>, <code><a href="../reference/netlifyUnbind.html">netlifyUnbind()</a></code>
+</td>
+</tr>
+<tr class="odd">
+<td>The same for a manifest selection</td>
+<td>
+<code><a href="../reference/netlifyRegisterManifest.html">netlifyRegisterManifest()</a></code>,
+<code><a href="../reference/netlifyRegisterManifest.html">netlifyDeployManifest()</a></code>,
+<code><a href="../reference/netlifyRegisterManifest.html">netlifyDomainManifest()</a></code>
 </td>
 </tr>
 </tbody>
