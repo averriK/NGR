@@ -152,17 +152,15 @@ scientific inputs are present.</p>
 Registered sources remain in <code>manifest.json</code>; subsequent
 pulls reuse them. Select destination paths positionally and registered
 sources with <code>--source</code>. Use <code>--force</code> to replace
-differing managed files. Existing project seeds and editable masters
-stay local; conflicting source contributions always fail before
-copying.</p>
+differing managed files. Existing project seeds stay local, including
+the masters a scaffold declares as seeds; conflicting source
+contributions always fail before copying. Naming a registered source
+again with <code>--from</code> re-points it to that location.</p>
 <p>Each scaffold also has its own <code>manifest.json</code>, declaring
 its resources. The project manifest records the composition and
-provenance instead. For existing projects, preserve a copy, rename
-<code>qrt.manifest.json</code>, and update source associations and
-readers together. NGR rejects unmigrated project manifests; it does not
-maintain two state files or silently fall back to the old name. The <a href="scaffolds.html">scaffold guide</a> explains source and destination
-folders, builder ownership and the additional source-association
-migration required by older PSHA projects.</p>
+provenance instead. NGR does not read <code>qrt.manifest.json</code>;
+the <a href="scaffolds.html">scaffold guide</a> gives the three steps
+that move a project created with the earlier tools.</p>
 <p>Resource operations are provided by the installed R library through
 <code><a href="../reference/pullResources.html">pullResources()</a></code>, <code><a href="../reference/compareResources.html">compareResources()</a></code> and
 <code><a href="../reference/checkResources.html">checkResources()</a></code>. They can also be used directly from R.

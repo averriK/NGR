@@ -110,9 +110,15 @@ or <code>seed</code> ownership:</p>
 <span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="dt">"id"</span><span class="fu">:</span> <span class="st">"book"</span><span class="fu">,</span></span>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="dt">"resources"</span><span class="fu">:</span> <span class="ot">[</span></span>
 <span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"from"</span><span class="fu">:</span> <span class="st">"content/chapters"</span><span class="fu">,</span> <span class="dt">"to"</span><span class="fu">:</span> <span class="st">"_chapters"</span><span class="fu">,</span> <span class="dt">"ownership"</span><span class="fu">:</span> <span class="st">"managed"</span><span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"from"</span><span class="fu">:</span> <span class="st">"masters"</span><span class="fu">,</span> <span class="dt">"to"</span><span class="fu">:</span> <span class="st">"_master"</span><span class="fu">,</span> <span class="dt">"ownership"</span><span class="fu">:</span> <span class="st">"seed"</span><span class="fu">}</span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="ot">]</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"from"</span><span class="fu">:</span> <span class="st">"masters"</span><span class="fu">,</span> <span class="dt">"to"</span><span class="fu">:</span> <span class="st">"_master"</span><span class="fu">,</span> <span class="dt">"ownership"</span><span class="fu">:</span> <span class="st">"managed"</span><span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"from"</span><span class="fu">:</span> <span class="st">"masters/book.qmd"</span><span class="fu">,</span> <span class="dt">"to"</span><span class="fu">:</span> <span class="st">"_master/book.qmd"</span><span class="fu">,</span> <span class="dt">"ownership"</span><span class="fu">:</span> <span class="st">"seed"</span><span class="fu">}</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="ot">]</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p>A file entry may restate one file already covered by a directory
+entry of the same source to give it a different ownership. Here
+<code>pull</code> keeps every master up to date except
+<code>book.qmd</code>, which becomes project-owned after it is first
+seeded.</p>
 <p>The source layout is independent of the project layout. Several
 sources may contribute to <code>_chapters/</code>, <code>_fig/</code> or
 <code>_tbl/</code>; NGR does not insert a folder named after each
@@ -138,7 +144,10 @@ over it. NGR does not create a second resource database in
 <tbody>
 <tr class="odd">
 <td><code>_master/</code></td>
-<td>Editable project masters, seeded once</td>
+<td>Deck, hub and transmittal masters kept up to date by
+<code>pull</code>; <code>book.{es,en}.qmd</code> and
+<code>docx.{es,en}.qmd</code> are seeded once and then
+project-owned</td>
 </tr>
 <tr class="even">
 <td>
@@ -225,32 +234,31 @@ master that composes them.</p>
 <div class="section level2">
 <h2 id="existing-psha-projects">Existing PSHA projects<a class="anchor" aria-label="anchor" href="#existing-psha-projects"></a>
 </h2>
-<p>Work on a preserved project copy first. Keep the original tools and
-project available for comparison.</p>
+<p>A project created with the earlier tools keeps its artifacts and
+publication destinations in <code>qrt.manifest.json</code>, together
+with a <code>scaffolds</code> block of per-file receipts written by
+those tools. NGR does not read that file name. Work on a preserved copy
+first; the earlier tools stop recognizing the project once the file is
+renamed.</p>
 <ol style="list-style-type: decimal">
-<li>Rename <code>qrt.manifest.json</code> to <code>manifest.json</code>.
-If both exist, reconcile them before running resource commands.</li>
-<li>Preserve artifacts, publication destinations and file receipts. An
-old <code>scaffolds.psha</code> entry may have receipts but no source
-association. When replacing it with the source whose <code>id</code> is
-<code>sha</code>, explicitly migrate that entry to
-<code>scaffolds.sha</code> and set its <code>manifest</code> to the
-selected SHA manifest path. Do not keep both entries claiming the same
-files.</li>
-<li>Set that association’s <code>selection</code> to the destination
-components the project uses. This preserves partial scope; an empty
-selection enrolls the full source.</li>
-<li>Review <code>ngr status</code>. Use
-<code>ngr pull --source sha --force</code> for selected managed
-replacements. Existing masters, parameters and <code>_local/</code> stay
-local.</li>
-<li>Update manifest readers with the scaffold and render the actual
-project masters. Renaming the JSON file alone is not a completed
-consumer migration.</li>
+<li>Rename <code>qrt.manifest.json</code> to
+<code>manifest.json</code>.</li>
+<li>Delete its <code>scaffolds</code> block. Those receipts describe
+copies made by the earlier tool; the next step records new ones for
+every file. Keep <code>artifacts</code> unchanged, including
+<code>siteSlug</code> and <code>domain</code>.</li>
+<li>Incorporate the sources, allowing managed files to be replaced:</li>
 </ol>
-<p>NGR rejects unmigrated manifests and unresolved legacy claims. It
-does not infer that two differently named sources are the same book or
-discard old provenance to make an update proceed.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">ngr</span> pull <span class="at">--from</span> ngr <span class="at">--from</span> /path/to/sha/manifest.json <span class="at">--force</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="ex">ngr</span> status <span class="at">--check</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="ex">ngr</span> doctor</span></code></pre></div>
+<p>Name destination folders after the manifests to enroll only part of a
+source. Parameters, <code>_local/</code> and the four book and DOCX
+masters stay as the project has them. The scaffold’s manifest readers
+(<code>scripts/setup/toc.R</code>, <code>transmittal.R</code>,
+<code>utils.R</code>) arrive with <code>scripts/</code> and read
+<code>manifest.json</code>. Render the project’s masters before relying
+on the result.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

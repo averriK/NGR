@@ -103,18 +103,15 @@ inputs are present.
 remain in `manifest.json`; subsequent pulls reuse them. Select
 destination paths positionally and registered sources with `--source`.
 Use `--force` to replace differing managed files. Existing project seeds
-and editable masters stay local; conflicting source contributions always
-fail before copying.
+stay local, including the masters a scaffold declares as seeds;
+conflicting source contributions always fail before copying. Naming a
+registered source again with `--from` re-points it to that location.
 
 Each scaffold also has its own `manifest.json`, declaring its resources.
-The project manifest records the composition and provenance instead. For
-existing projects, preserve a copy, rename `qrt.manifest.json`, and
-update source associations and readers together. NGR rejects unmigrated
-project manifests; it does not maintain two state files or silently fall
-back to the old name. The [scaffold
-guide](https://averriK.github.io/NGR/articles/scaffolds.md) explains
-source and destination folders, builder ownership and the additional
-source-association migration required by older PSHA projects.
+The project manifest records the composition and provenance instead. NGR
+does not read `qrt.manifest.json`; the [scaffold
+guide](https://averriK.github.io/NGR/articles/scaffolds.md) gives the
+three steps that move a project created with the earlier tools.
 
 Resource operations are provided by the installed R library through
 [`pullResources()`](https://averriK.github.io/NGR/reference/pullResources.md),

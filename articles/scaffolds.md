@@ -55,10 +55,16 @@ ownership:
   "id": "book",
   "resources": [
     {"from": "content/chapters", "to": "_chapters", "ownership": "managed"},
-    {"from": "masters", "to": "_master", "ownership": "seed"}
+    {"from": "masters", "to": "_master", "ownership": "managed"},
+    {"from": "masters/book.qmd", "to": "_master/book.qmd", "ownership": "seed"}
   ]
 }
 ```
+
+A file entry may restate one file already covered by a directory entry
+of the same source to give it a different ownership. Here `pull` keeps
+every master up to date except `book.qmd`, which becomes project-owned
+after it is first seeded.
 
 The source layout is independent of the project layout. Several sources
 may contribute to `_chapters/`, `_fig/` or `_tbl/`; NGR does not insert
@@ -76,7 +82,7 @@ For the current SHA scaffold:
 
 | Destination | Responsibility |
 |----|----|
-| `_master/` | Editable project masters, seeded once |
+| `_master/` | Deck, hub and transmittal masters kept up to date by `pull`; `book.{es,en}.qmd` and `docx.{es,en}.qmd` are seeded once and then project-owned |
 | `_chapters/`, `_fig/`, `_tbl/` | Shared destinations for narrative and executable Quarto blocks |
 | `_book/`, `_docx/`, `_revealjs/` | Format-specific composition; source blocks, not generated output |
 | `_captions/`, `_scope/`, `_results/` | Scaffold captions and report sections |
@@ -119,27 +125,27 @@ master that composes them.
 
 ## Existing PSHA projects
 
-Work on a preserved project copy first. Keep the original tools and
-project available for comparison.
+A project created with the earlier tools keeps its artifacts and
+publication destinations in `qrt.manifest.json`, together with a
+`scaffolds` block of per-file receipts written by those tools. NGR does
+not read that file name. Work on a preserved copy first; the earlier
+tools stop recognizing the project once the file is renamed.
 
-1.  Rename `qrt.manifest.json` to `manifest.json`. If both exist,
-    reconcile them before running resource commands.
-2.  Preserve artifacts, publication destinations and file receipts. An
-    old `scaffolds.psha` entry may have receipts but no source
-    association. When replacing it with the source whose `id` is `sha`,
-    explicitly migrate that entry to `scaffolds.sha` and set its
-    `manifest` to the selected SHA manifest path. Do not keep both
-    entries claiming the same files.
-3.  Set that association’s `selection` to the destination components the
-    project uses. This preserves partial scope; an empty selection
-    enrolls the full source.
-4.  Review `ngr status`. Use `ngr pull --source sha --force` for
-    selected managed replacements. Existing masters, parameters and
-    `_local/` stay local.
-5.  Update manifest readers with the scaffold and render the actual
-    project masters. Renaming the JSON file alone is not a completed
-    consumer migration.
+1.  Rename `qrt.manifest.json` to `manifest.json`.
+2.  Delete its `scaffolds` block. Those receipts describe copies made by
+    the earlier tool; the next step records new ones for every file.
+    Keep `artifacts` unchanged, including `siteSlug` and `domain`.
+3.  Incorporate the sources, allowing managed files to be replaced:
 
-NGR rejects unmigrated manifests and unresolved legacy claims. It does
-not infer that two differently named sources are the same book or
-discard old provenance to make an update proceed.
+``` sh
+ngr pull --from ngr --from /path/to/sha/manifest.json --force
+ngr status --check
+ngr doctor
+```
+
+Name destination folders after the manifests to enroll only part of a
+source. Parameters, `_local/` and the four book and DOCX masters stay as
+the project has them. The scaffold’s manifest readers
+(`scripts/setup/toc.R`, `transmittal.R`, `utils.R`) arrive with
+`scripts/` and read `manifest.json`. Render the project’s masters before
+relying on the result.
