@@ -92,6 +92,12 @@ associations:</p>
 explicitly permits replacing differing managed files in the named
 destination folders. Existing seeds remain project-owned even with
 <code>--force</code>.</p>
+<p>A source is identified by its <code>id</code>, not by where it lives.
+To hydrate from another copy of a registered source, or after moving the
+project or the source, name its manifest again:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="ex">ngr</span> pull <span class="at">--from</span> /another/location/sha/manifest.json <span class="at">--force</span> scripts</span></code></pre></div>
+<p>The project then follows that location until another
+<code>--from</code> re-points it.</p>
 </div>
 <div class="section level2">
 <h2 id="source-and-destination-structure">Source and destination structure<a class="anchor" aria-label="anchor" href="#source-and-destination-structure"></a>
@@ -99,14 +105,14 @@ destination folders. Existing seeds remain project-owned even with
 <p>Each source has its own manifest beside its resources. The manifest
 maps source paths to destination paths and declares <code>managed</code>
 or <code>seed</code> ownership:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="dt">"schemaVersion"</span><span class="fu">:</span> <span class="dv">1</span><span class="fu">,</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="dt">"id"</span><span class="fu">:</span> <span class="st">"book"</span><span class="fu">,</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="dt">"resources"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"from"</span><span class="fu">:</span> <span class="st">"content/chapters"</span><span class="fu">,</span> <span class="dt">"to"</span><span class="fu">:</span> <span class="st">"_chapters"</span><span class="fu">,</span> <span class="dt">"ownership"</span><span class="fu">:</span> <span class="st">"managed"</span><span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"from"</span><span class="fu">:</span> <span class="st">"masters"</span><span class="fu">,</span> <span class="dt">"to"</span><span class="fu">:</span> <span class="st">"_master"</span><span class="fu">,</span> <span class="dt">"ownership"</span><span class="fu">:</span> <span class="st">"seed"</span><span class="fu">}</span></span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="ot">]</span></span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="dt">"schemaVersion"</span><span class="fu">:</span> <span class="dv">1</span><span class="fu">,</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="dt">"id"</span><span class="fu">:</span> <span class="st">"book"</span><span class="fu">,</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="dt">"resources"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"from"</span><span class="fu">:</span> <span class="st">"content/chapters"</span><span class="fu">,</span> <span class="dt">"to"</span><span class="fu">:</span> <span class="st">"_chapters"</span><span class="fu">,</span> <span class="dt">"ownership"</span><span class="fu">:</span> <span class="st">"managed"</span><span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">"from"</span><span class="fu">:</span> <span class="st">"masters"</span><span class="fu">,</span> <span class="dt">"to"</span><span class="fu">:</span> <span class="st">"_master"</span><span class="fu">,</span> <span class="dt">"ownership"</span><span class="fu">:</span> <span class="st">"seed"</span><span class="fu">}</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="ot">]</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 <p>The source layout is independent of the project layout. Several
 sources may contribute to <code>_chapters/</code>, <code>_fig/</code> or
 <code>_tbl/</code>; NGR does not insert a folder named after each

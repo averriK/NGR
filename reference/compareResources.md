@@ -17,9 +17,10 @@ compareResources(
 
 - from:
 
-  Character vector of source manifest paths, or `NULL` to use existing
-  project associations. Relative paths resolve from the R working
-  directory. Incompatible with a nonempty `source`.
+  Character vector of source manifest paths to compare against instead
+  of the recorded locations, or `NULL` to use existing project
+  associations. Associations are read, never re-pointed. Incompatible
+  with a nonempty `source`.
 
 - source:
 

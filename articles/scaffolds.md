@@ -32,6 +32,17 @@ The first update requires no repeated source path. The second explicitly
 permits replacing differing managed files in the named destination
 folders. Existing seeds remain project-owned even with `--force`.
 
+A source is identified by its `id`, not by where it lives. To hydrate
+from another copy of a registered source, or after moving the project or
+the source, name its manifest again:
+
+``` sh
+ngr pull --from /another/location/sha/manifest.json --force scripts
+```
+
+The project then follows that location until another `--from` re-points
+it.
+
 ## Source and destination structure
 
 Each source has its own manifest beside its resources. The manifest maps

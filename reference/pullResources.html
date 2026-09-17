@@ -80,7 +80,9 @@ covered by this recovery.</p>
 <dl><dt id="arg-from">from<a class="anchor" aria-label="anchor" href="#arg-from"></a></dt>
 <dd><p>Character vector of source manifest paths, or <code>NULL</code> to use
 existing project associations. Relative paths resolve from the R working
-directory. Incompatible with a nonempty <code>source</code>.</p></dd>
+directory. A source is identified by its <code>id</code>: a manifest whose <code>id</code> is
+already associated re-points that association to the new location, with a
+message. Incompatible with a nonempty <code>source</code>.</p></dd>
 
 
 <dt id="arg-source">source<a class="anchor" aria-label="anchor" href="#arg-source"></a></dt>

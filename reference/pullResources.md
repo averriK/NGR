@@ -26,7 +26,9 @@ pullResources(
 
   Character vector of source manifest paths, or `NULL` to use existing
   project associations. Relative paths resolve from the R working
-  directory. Incompatible with a nonempty `source`.
+  directory. A source is identified by its `id`: a manifest whose `id`
+  is already associated re-points that association to the new location,
+  with a message. Incompatible with a nonempty `source`.
 
 - source:
 
