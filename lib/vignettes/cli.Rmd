@@ -103,17 +103,15 @@ dry run does not execute the book or prove those scientific inputs are present.
 `pull` incorporates and updates declared resources. Registered sources remain
 in `manifest.json`; subsequent pulls reuse them. Select destination paths
 positionally and registered sources with `--source`. Use `--force` to replace
-differing managed files. Existing project seeds and editable masters stay local;
-conflicting source contributions always fail before copying.
+differing managed files. Existing project seeds stay local, including the
+masters a scaffold declares as seeds; conflicting source contributions always
+fail before copying. Naming a registered source again with `--from` re-points
+it to that location.
 
 Each scaffold also has its own `manifest.json`, declaring its resources. The
-project manifest records the composition and provenance instead. For existing
-projects, preserve a copy, rename `qrt.manifest.json`, and update source
-associations and readers together. NGR rejects unmigrated project manifests;
-it does not maintain two state files or silently fall back to the old name.
-The [scaffold guide](scaffolds.html) explains source and destination folders,
-builder ownership and the additional source-association migration required by
-older PSHA projects.
+project manifest records the composition and provenance instead. NGR does not
+read `qrt.manifest.json`; the [scaffold guide](scaffolds.html) gives the three
+steps that move a project created with the earlier tools.
 
 Resource operations are provided by the installed R library through
 `pullResources()`, `compareResources()` and `checkResources()`. They can also

@@ -122,3 +122,37 @@ test_that("an explicit source manifest re-points an associated source", {
   pullResources(from = Fixture$manifest, root = Fixture$project, force = TRUE)
   expect_identical(readLines(file.path(Fixture$project, "nested/first.txt")), "one")
 })
+
+test_that("a file entry overrides the ownership given by its directory entry", {
+  Fixture <- resourceFixture()
+  on.exit(unlink(Fixture$root, recursive = TRUE), add = TRUE)
+  dir.create(file.path(Fixture$source, "masters"))
+  writeLines("deck", file.path(Fixture$source, "masters/deck.qmd"))
+  writeLines("book", file.path(Fixture$source, "masters/book.qmd"))
+  Entries <- list(
+    list(from = "masters", to = "_master", ownership = "managed"),
+    list(from = "masters/book.qmd", to = "_master/book.qmd", ownership = "seed")
+  )
+  for (Resources in list(Entries, rev(Entries))) {
+    jsonlite::write_json(list(schemaVersion = 1L, id = "fixture", resources = Resources),
+                         Fixture$manifest, auto_unbox = TRUE)
+    Files <- .readResourceSource(Fixture$manifest)$files
+    expect_identical(Files[["_master/deck.qmd"]]$ownership, "managed")
+    expect_identical(Files[["_master/book.qmd"]]$ownership, "seed")
+  }
+  pullResources(from = Fixture$manifest, root = Fixture$project)
+  writeLines("project deck", file.path(Fixture$project, "_master/deck.qmd"))
+  writeLines("project book", file.path(Fixture$project, "_master/book.qmd"))
+  expect_true(compareResources(root = Fixture$project)$changed)
+  pullResources(root = Fixture$project, force = TRUE)
+  expect_identical(readLines(file.path(Fixture$project, "_master/deck.qmd")), "deck")
+  expect_identical(readLines(file.path(Fixture$project, "_master/book.qmd")), "project book")
+  Resources <- c(Entries, list(list(from = "first.txt", to = "_master/book.qmd", ownership = "seed")))
+  jsonlite::write_json(list(schemaVersion = 1L, id = "fixture", resources = Resources),
+                       Fixture$manifest, auto_unbox = TRUE)
+  expect_error(.readResourceSource(Fixture$manifest), "Duplicate destination")
+  Resources <- c(Entries, Entries[2L])
+  jsonlite::write_json(list(schemaVersion = 1L, id = "fixture", resources = Resources),
+                       Fixture$manifest, auto_unbox = TRUE)
+  expect_error(.readResourceSource(Fixture$manifest), "Duplicate destination")
+})

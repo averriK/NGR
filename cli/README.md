@@ -80,12 +80,18 @@ project manifest are rejected.
   "id": "my-book",
   "resources": [
     {"from": "chapters", "to": "_chapters", "ownership": "managed"},
-    {"from": "masters", "to": "_master", "ownership": "seed"}
+    {"from": "masters", "to": "_master", "ownership": "managed"},
+    {"from": "masters/book.qmd", "to": "_master/book.qmd", "ownership": "seed"}
   ],
   "artifacts": [],
   "checks": []
 }
 ```
+
+A file entry may restate one file already covered by a directory entry of the
+same source to give it a different ownership; here every master is updated by
+`pull` except `book.qmd`, which the project owns after the first incorporation.
+Any other repeated destination within a source is rejected.
 
 `artifacts` can seed an empty project artifact list using the existing QRT
 schema; an existing nonempty list remains project-owned. Source authors supply
@@ -107,25 +113,22 @@ a receipt for customized local bytes. A non-Git source has revision `unknown`
 and content hashes remain exact. Partial updates preserve other file receipts.
 Legacy provenance without a source association requires explicit `--from`.
 
-### Migrating an existing project
+### Moving an existing project to NGR
 
-Preserve a copy before migration. Rename the project's `qrt.manifest.json` to
-`manifest.json`; if both exist, reconcile their contents first. Rename each
-scaffold's `ngr.source.json` to `manifest.json` and update the exact paths stored
-in `scaffolds.<id>.manifest`. Keep artifact metadata, claims and per-file
-receipts intact. Update project consumers such as `scripts/setup/toc.R`,
-`transmittal.R` and `utils.R` to read the new name, then run `ngr status` and
-render the affected masters. The SHA candidate already has these readers.
-For original PSHA receipts under `scaffolds.psha`, explicitly migrate that
-association to the new source ID `sha`, preserve its receipts and set its
-manifest and enrolled selection. Keeping both identities creates unresolved
-claims; renaming only the JSON file is insufficient. See the
-[scaffold migration guide](https://averrik.github.io/NGR/articles/scaffolds.html).
+A project created with the earlier tools keeps its artifacts in
+`qrt.manifest.json`, with a `scaffolds` block of receipts written by those
+tools. NGR does not read that file name and does not rename it for you. On a
+preserved copy: rename the file to `manifest.json`, delete its `scaffolds`
+block, keep `artifacts` unchanged, then run
 
-Resource commands and default direct rendering reject a project that still
-contains `qrt.manifest.json`. They do not rename it, fall back to it or create
-a second state file. The original QRT/PSHA installations keep their old contract;
-use preserved project copies when comparing them with NGR.
+```sh
+ngr pull --from ngr --from /path/to/sha/manifest.json --force
+```
+
+The pull records new receipts for every file, preserves project seeds and
+brings the scaffold's `manifest.json` readers with `scripts/`. The earlier tools
+stop recognizing the project after the rename. See the
+[scaffold guide](https://averrik.github.io/NGR/articles/scaffolds.html#existing-psha-projects).
 
 ## Render and deploy
 

@@ -47,6 +47,7 @@
   if (!is.list(Source$resources) || !length(Source$resources) ||
       !is.null(names(Source$resources))) stop("Source resources must be a nonempty array", call. = FALSE)
   Files <- stats::setNames(list(), character())
+  Exact <- logical()
   Root <- dirname(Path)
   for (Resource in Source$resources) {
     if (!.isResourceObject(Resource) ||
@@ -71,17 +72,24 @@
       if (!file_test("-f", FILE)) stop("Not a regular resource: ", FILE, call. = FALSE)
       Files.input <- c(Files.input, FILE)
     }
+    Single <- !dir.exists(Input)
     for (FILE in sort(enc2utf8(Files.input), method = "radix")) {
       Name <- Target
-      if (dir.exists(Input)) Name <- paste0(Target, "/", substring(FILE, nchar(Input) + 2L))
+      if (!Single) Name <- paste0(Target, "/", substring(FILE, nchar(Input) + 2L))
       .relativeResource(Name)
-      if (Name %in% names(Files)) stop("Duplicate destination in source: ", Name, call. = FALSE)
+      # A file entry may restate one file of a directory entry to change its ownership.
+      Peer <- Files[[Name]]
+      if (!is.null(Peer) && (!identical(Peer$path, FILE) || identical(Exact[[Name]], Single))) {
+        stop("Duplicate destination in source: ", Name, call. = FALSE)
+      }
+      if (!is.null(Peer) && !Single) next
       if (stringi::stri_trans_casefold(strsplit(Name, "/", fixed = TRUE)[[1L]][1L]) %in%
           c(".git", ".ngr", "oq", "gmsp", "manifest.json", "qrt.manifest.json")) {
         stop("Project-owned destination cannot be supplied: ", Name, call. = FALSE)
       }
       Files[[Name]] <- list(path = FILE, sha256 = digest::digest(file = FILE, algo = "sha256"),
                             ownership = Resource$ownership)
+      Exact[[Name]] <- Single
     }
   }
   for (Field in intersect(c("checks", "artifacts"), names(Source))) {
