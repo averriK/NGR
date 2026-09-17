@@ -127,6 +127,12 @@ identical content and ownership. Conflicts are rejected before any
 copying, including claims from sources not selected by the current
 command. <code>--force</code> does not choose a winner between
 incompatible sources.</p>
+<p>A source may also seed the project’s artifact list. Its string values
+can name the project through <code>{project_id}</code>, the lowercase
+alphanumeric form of <code>params.project_id</code> in the project’s
+<code>params.yml</code>. Nothing is seeded while that id is missing or
+still the placeholder shipped by the source; set it and run
+<code>ngr pull</code> again.</p>
 <p>The project’s <code>manifest.json</code> records artifacts, source
 associations and per-file provenance. The source manifest is not copied
 over it. NGR does not create a second resource database in
