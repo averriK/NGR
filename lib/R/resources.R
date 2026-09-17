@@ -1,3 +1,6 @@
+#' @importFrom utils file_test
+NULL
+
 .isResourceObject <- function(x) is.list(x) && !is.null(names(x))
 
 .sameResourceValue <- function(x, y) {

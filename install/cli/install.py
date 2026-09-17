@@ -98,7 +98,7 @@ def installRuntime(prefix, uninstall, check=False):
         print(f"CLI destination available: {Prefix}")
         return
     subprocess.run(["Rscript", str(Path(__file__).with_name("checkRuntime.R")),
-                    str(Source.parent / "install/requirements.R")], check=True)
+                    str(Source.parent / "install/requirements.R"), str(Source / "VERSION")], check=True)
     Runtime.parent.mkdir(parents=True, exist_ok=True)
     Launcher.parent.mkdir(parents=True, exist_ok=True)
     Directory = Path(tempfile.mkdtemp(prefix=".ngr-install-", dir=Runtime.parent))

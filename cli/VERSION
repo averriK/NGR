@@ -1,1 +1,2 @@
-ngr 0.1.0-dev
+ngr 0.2.0-dev
+requires NGR >= 0.4.0

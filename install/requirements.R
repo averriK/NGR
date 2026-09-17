@@ -5,5 +5,6 @@ list(
   check = c(if (.Platform$OS.type == "windows") "python" else "python3", "install.py", "--check", "--prefix"),
   install = c(if (.Platform$OS.type == "windows") "python" else "python3", "install.py", "--prefix"),
   exports = c("pullResources", "compareResources", "checkResources", "quartoRender",
-              "quartoRenderManifest", "netlifyRegister", "netlifyDeploy", "netlifyDomain", "netlifyUnbind")
+              "quartoRenderManifest", "netlifyRegister", "netlifyDeploy", "netlifyDomain", "netlifyUnbind",
+              "netlifyRegisterManifest", "netlifyDeployManifest", "netlifyDomainManifest")
 )

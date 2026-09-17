@@ -75,6 +75,7 @@ reference:
       - netlifyDeploy
       - netlifyDomain
       - netlifyUnbind
+      - netlifyRegisterManifest
 
   - title: Quarto YAML helpers
     desc: >

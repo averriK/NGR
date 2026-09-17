@@ -147,20 +147,27 @@ manifest selection, draft/production, site creation, domains, TLS and DNS
 diagnostics. `deploy init` registers sites; it does not incorporate resources.
 See `ngr render --help` and `ngr deploy --help` for exact arguments.
 
-The single `cli/main.R` loads the installed NGR package through normal R library
-resolution. `pull`, `status` and source checks use `NGR::pullResources()`,
+The single `cli/main.R` interprets the arguments, prints results and sets the
+exit status; every operation is an exported function of the installed NGR
+package, loaded through normal R library resolution. `--help` and `--version`
+need no library. `cli/VERSION` declares the minimum NGR version: a command that
+needs the library names a missing or older one instead of failing inside it,
+and `ngr --version` reports the CLI, its recorded revision and the library it
+finds. `pull`, `status` and source checks use `NGR::pullResources()`,
 `NGR::compareResources()` and `NGR::checkResources()`. These APIs also work
 from R without the CLI. `NGR::quartoRender()` owns staging, YAML composition,
 publication provenance, Quarto execution, DOCX repair and output delivery.
 The unchanged Python repair script is distributed inside the R package and
-resolved through `system.file()`. `install/cli/checkRuntime.R` reads the single
-`install/requirements.R` contract and checks the installed exports, CLI entry
-and `manifest.json` default before replacing the CLI; an incompatible package
-must be updated separately, even if it has the same development version label.
+resolved through `system.file()`. `install/cli/checkRuntime.R` reads the
+`install/requirements.R` contract and `cli/VERSION`, and checks the installed
+version and exports before replacing the CLI; an older package must be updated
+separately.
 `NGR::quartoRenderManifest()` owns batch selection, preflight and execution.
 Static and legacy map entries represent external products; NGR never runs their
 producer scripts. Netlify operations use `netlifyRegister()`, `netlifyDeploy()`,
-`netlifyDomain()` and `netlifyUnbind()` from the package. Publication uploads
+`netlifyDomain()` and `netlifyUnbind()` from the package, and their manifest
+forms `netlifyRegisterManifest()`, `netlifyDeployManifest()` and
+`netlifyDomainManifest()`. Publication uploads
 existing directories with `--no-build`; dry runs do not contact the provider.
 Preflight precedes batch mutations; a later failure can retain earlier completed
 effects.

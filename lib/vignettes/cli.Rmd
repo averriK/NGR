@@ -135,10 +135,11 @@ forms. Resource incorporation never publishes a site.
 
 ## Library operations
 
-The Bash, CMD and PowerShell launchers enter `cli/main.R`; the installed NGR package provides
-command dispatch and the reusable operations, including `netlifyRegister()`,
-`netlifyDeploy()`, `netlifyDomain()` and `netlifyUnbind()`. Runtime commands do
-not install dependencies or load R code from the source checkout.
+The Bash, CMD and PowerShell launchers enter `cli/main.R`, which interprets the
+arguments and calls only exported functions of the installed NGR package.
+`ngr --help` and `ngr --version` work without the library; any other command
+names a missing library or one older than the version the CLI requires. Runtime
+commands do not install dependencies or load R code from the source checkout.
 
 R consumers can call these operations without the CLI:
 
@@ -150,6 +151,7 @@ R consumers can call these operations without the CLI:
 | Render one source or a manifest selection | `quartoRender()`, `quartoRenderManifest()` |
 | Inspect render provenance | `quartoRenderStamp()` |
 | Associate, publish or configure Netlify sites | `netlifyRegister()`, `netlifyDeploy()`, `netlifyDomain()`, `netlifyUnbind()` |
+| The same for a manifest selection | `netlifyRegisterManifest()`, `netlifyDeployManifest()`, `netlifyDomainManifest()` |
 
 Scaffolds use `buildPlot()` for supported graphics. The scaffold or scientific producer
 owns data selection and calculation; NGR owns the representation. Existing map

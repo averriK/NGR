@@ -73,6 +73,36 @@ class CliTest(unittest.TestCase):
                     self.assertEqual(DATA.stderr, "")
         self.assertEqual(list(self.Root.iterdir()), [])
 
+    def testHelpNeedsNoLibraryAndAnOlderLibraryIsNamed(self):
+        with tempfile.TemporaryDirectory(dir=NGR_TEST_ROOT) as DIR:
+            Library = Path(DIR) / "library"
+            Library.mkdir()
+            Profile = Path(DIR) / "empty"
+            Profile.write_text("")
+            Environment = dict(os.environ, R_LIBS=str(Library), R_LIBS_USER=str(Library), R_LIBS_SITE=str(Library),
+                               R_PROFILE_USER=str(Profile), R_ENVIRON_USER=str(Profile))
+            for Args in (("--help",), ("pull", "--help"), ("render", "--help"), ("deploy", "--help"), ("--version",)):
+                with self.subTest(args=Args):
+                    DATA = self.runCli(*Args, env=Environment)
+                    self.assertEqual(DATA.returncode, 0, DATA.stdout + DATA.stderr)
+            # A system library may still hold an older NGR; either way the command names the cause.
+            self.assertRegex(self.runCli("--version", env=Environment).stdout, r"NGR is not installed|NGR \d")
+            DATA = self.runCli("status", env=Environment)
+            self.assertEqual(DATA.returncode, 1, DATA.stdout + DATA.stderr)
+            self.assertRegex(DATA.stderr, r"is not installed|is required; found")
+            Package = Path(DIR) / "NGR"
+            Package.mkdir()
+            (Package / "DESCRIPTION").write_text("Package: NGR\nVersion: 0.0.1\nTitle: Older Library\n"
+                                                 "Description: Stands for an installed older library.\nLicense: MIT\n")
+            (Package / "NAMESPACE").write_text("")
+            subprocess.run(["Rscript", "-e", "install.packages(commandArgs(TRUE)[1], lib = commandArgs(TRUE)[2], repos = NULL, type = 'source')",
+                            Package.as_posix(), Library.as_posix()], check=True, capture_output=True, env=Environment)
+            DATA = self.runCli("status", env=Environment)
+            self.assertEqual(DATA.returncode, 1, DATA.stdout + DATA.stderr)
+            self.assertIn("is required; found 0.0.1", DATA.stderr)
+            self.assertEqual(self.runCli("--help", env=Environment).returncode, 0)
+        self.assertEqual(list(self.Root.iterdir()), [])
+
 
 if __name__ == "__main__":
     unittest.main()
