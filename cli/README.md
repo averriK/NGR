@@ -93,8 +93,8 @@ same source to give it a different ownership; here every master is updated by
 `pull` except `book.qmd`, which the project owns after the first incorporation.
 Any other repeated destination within a source is rejected.
 
-`artifacts` can seed an empty project artifact list using the existing QRT
-schema; an existing nonempty list remains project-owned. Source authors supply
+`artifacts` can seed an empty project artifact list; an existing nonempty list
+remains project-owned. Source authors supply
 the family, paths and optional publication identities. NGR does not infer a
 hosting domain from the book's name. The SHA candidate supplies 21 artifact
 seeds without provider destinations; define those before deploying.
@@ -156,7 +156,7 @@ producer scripts. Netlify operations use `netlifyRegister()`, `netlifyDeploy()`,
 `netlifyDomain()` and `netlifyUnbind()` from the package. Publication uploads
 existing directories with `--no-build`; dry runs do not contact the provider.
 Preflight precedes batch mutations; a later failure can retain earlier completed
-effects. The CLI never invokes QRT or PSHA.
+effects.
 
 ## Focused checks
 

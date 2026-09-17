@@ -50,6 +50,9 @@ class ProvenanceTest(unittest.TestCase):
                 Reference = Path(DIR) / "reference"
                 shutil.copytree(Root, Reference)
                 (Reference / "manifest.json").rename(Reference / "qrt.manifest.json")
+                # Each tool stamps through its own filters; their stamp variables differ.
+                subprocess.run([NGR_REFERENCE_BIN, "init", "--force", "lua"], cwd=Reference,
+                               check=True, capture_output=True)
                 Binaries.append((NGR_REFERENCE_BIN, Reference, "qrt.manifest.json"))
             Cases = (
                 ("clean", {"book": Source}, r"Rev\.abcdef0$"),

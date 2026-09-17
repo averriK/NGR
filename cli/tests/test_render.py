@@ -74,6 +74,9 @@ class RenderTest(unittest.TestCase):
             (Reference / "manifest.json").rename(Reference / "qrt.manifest.json")
             Cases = [(NGR_TEST_BIN, Candidate, "manifest.json")]
             if NGR_REFERENCE_BIN:
+                # Each tool stamps through its own filters; their stamp variables differ.
+                subprocess.run([NGR_REFERENCE_BIN, "init", "--force", "lua"], cwd=Reference,
+                               check=True, capture_output=True)
                 Cases.append((NGR_REFERENCE_BIN, Reference, "qrt.manifest.json"))
             for Binary, Project, Name in Cases:
                 Before = {x: hashlib.sha256((Project / x).read_bytes()).hexdigest() for x in Inputs}

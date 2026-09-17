@@ -1,7 +1,7 @@
 -- Quarto constructs footer divs before Lua filters run. Append the render
 -- stamp to those existing divs, preserving their links and formatting.
 function Pandoc(doc)
-  local stamp = pandoc.system.environment()["QRT_RENDER_STAMP"] or ""
+  local stamp = pandoc.system.environment()["NGR_RENDER_STAMP"] or ""
   if stamp == "" then return nil end
 
   return doc:walk({

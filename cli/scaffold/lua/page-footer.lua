@@ -28,7 +28,7 @@ function Meta(meta)
     if year == "" then year = os.date("%Y") end
     meta_text = "SRK Consulting © " .. year
   end
-  local stamp = pandoc.system.environment()["QRT_RENDER_STAMP"] or ""
+  local stamp = pandoc.system.environment()["NGR_RENDER_STAMP"] or ""
   if stamp ~= "" then meta_text = meta_text .. " · " .. stamp end
 end
 

@@ -61,32 +61,32 @@ quartoRender <- function(input, profile, root = getwd(), output = NULL,
   }
 
   Directory <- getwd()
-  Stamp <- Sys.getenv("QRT_RENDER_STAMP", unset = NA_character_)
+  Stamp <- Sys.getenv("NGR_RENDER_STAMP", unset = NA_character_)
   setwd(Root)
   on.exit({
     setwd(Directory)
-    if (is.na(Stamp)) Sys.unsetenv("QRT_RENDER_STAMP")
-    if (!is.na(Stamp)) Sys.setenv(QRT_RENDER_STAMP = Stamp)
+    if (is.na(Stamp)) Sys.unsetenv("NGR_RENDER_STAMP")
+    if (!is.na(Stamp)) Sys.setenv(NGR_RENDER_STAMP = Stamp)
   }, add = TRUE)
   DATA <- list()
   if (file.exists(manifest)) DATA <- jsonlite::fromJSON(manifest, simplifyVector = FALSE)
-  Sys.setenv(QRT_RENDER_STAMP = quartoRenderStamp(DATA, root = Root))
+  Sys.setenv(NGR_RENDER_STAMP = quartoRenderStamp(DATA, root = Root))
   Stage <- tempfile("ngr-render-")
   if (!dir.create(Stage)) stop("Cannot create render directory: ", Stage, call. = FALSE)
   on.exit(fs::dir_delete(Stage), add = TRUE)
   for (FILE in list.files(Root, all.files = TRUE, no.. = TRUE)) {
-    if (FILE %in% c("html", "docx", ".quarto", "_freeze", "_qrt-output", ".git",
+    if (FILE %in% c("html", "docx", ".quarto", "_freeze", "_ngr-output", ".git",
                     "_quarto.yml", ".quartoignore") || grepl("^_quarto-.*\\.yml$", FILE)) next
     .copyRenderPath(from = file.path(Root, FILE), to = file.path(Stage, FILE))
   }
-  writeLines(c("html/", "docx/", ".quarto/", "_freeze/", "_qrt-output/"),
+  writeLines(c("html/", "docx/", ".quarto/", "_freeze/", "_ngr-output/"),
              file.path(Stage, ".quartoignore"))
   setwd(Stage)
   Frontmatter <- list()
   if (profile %in% c("book", "docx")) Frontmatter <- quartoReadFrontmatter(input)
   Book <- profile == "book" || (profile == "docx" && quartoHasBookManifest(Frontmatter))
   Config <- yaml::read_yaml("yml/_quarto.yml")
-  Command <- c("render", "--profile", profile, "--output-dir", "_qrt-output")
+  Command <- c("render", "--profile", profile, "--output-dir", "_ngr-output")
   if (Book) {
     Config <- quartoMergeBookManifest(base = Config, manifest = Frontmatter)
     if (profile == "docx") {
@@ -125,7 +125,7 @@ quartoRender <- function(input, profile, root = getwd(), output = NULL,
     }
     Config <- quartoSetProjectRender(base = Config, render = input)
     Command <- c("render", input, "--profile", profile, "--to", profile,
-                 "--output-dir", "_qrt-output")
+                 "--output-dir", "_ngr-output")
   }
   quartoWriteYaml(Config, path = "_quarto.yml")
   if (!(Book && profile == "docx")) {
@@ -133,12 +133,12 @@ quartoRender <- function(input, profile, root = getwd(), output = NULL,
   }
   message("[render] ", profile, if (Book && profile == "docx") " book", " -> ", output, "/")
   .runRenderCommand("quarto", args = c(Command, args))
-  FILES <- list.files("_qrt-output", all.files = TRUE, no.. = TRUE, full.names = TRUE)
+  FILES <- list.files("_ngr-output", all.files = TRUE, no.. = TRUE, full.names = TRUE)
   if (!any(file_test("-f", FILES) & !fs::is_link(FILES))) {
     stop("Staged output has no file at its root; keeping existing ", output, "/", call. = FALSE)
   }
   if (profile == "docx") {
-    FILES <- list.files("_qrt-output", pattern = "\\.docx$", recursive = TRUE, full.names = TRUE)
+    FILES <- list.files("_ngr-output", pattern = "\\.docx$", recursive = TRUE, full.names = TRUE)
     if (!length(FILES)) stop("DOCX output not found in staged output.", call. = FALSE)
     for (FILE in FILES) {
       .runRenderCommand(if (.Platform$OS.type == "windows") "python" else "python3", args = c(
@@ -153,10 +153,10 @@ quartoRender <- function(input, profile, root = getwd(), output = NULL,
   if (!dir.exists(Destination) && !dir.create(Destination, recursive = TRUE)) {
     stop("Cannot create output directory: ", Destination, call. = FALSE)
   }
-  for (FILE in list.files("_qrt-output", all.files = TRUE, no.. = TRUE)) {
-    .copyRenderPath(from = file.path("_qrt-output", FILE), to = file.path(Destination, FILE))
+  for (FILE in list.files("_ngr-output", all.files = TRUE, no.. = TRUE)) {
+    .copyRenderPath(from = file.path("_ngr-output", FILE), to = file.path(Destination, FILE))
   }
-  FILES <- list.files("_qrt-output", all.files = TRUE, recursive = TRUE)
+  FILES <- list.files("_ngr-output", all.files = TRUE, recursive = TRUE)
   invisible(file.path(Destination, FILES))
 }
 
