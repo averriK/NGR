@@ -1,9 +1,11 @@
 # NGR: entrega local y pendientes
 
 2026-09-17. Resume la implementación y las comprobaciones locales; la sustitución
-completa de QRT/PSHA aún no está aceptada. No hubo instalación personal, commit,
-push ni publicación remota. La falta de `ngr` en el PATH personal corresponde
-al destino aislado elegido, no a un fallo observado del ejecutable.
+completa de QRT/PSHA aún no está aceptada. El commit
+`b7e09a1da81ee1689c65357e2cf90dba81a46433` fue publicado en `origin/main`;
+pkgdown terminó correctamente (run 35276897162). Las guías CLI y scaffolds
+responden HTTP 200 con el contenido nuevo. La instalación personal de sistema
+no se ha ejecutado; su entrada es `sudo bash install/install.sh`.
 
 ## Entrega utilizable
 
@@ -63,7 +65,9 @@ El baseline falla las tres condiciones nuevas de naming (`baseline.log`).
 Las referencias QRT/PSHA instaladas y el scaffold PSHA original permanecen
 idénticos. AR-M2V4D original no fue migrado; las pruebas usan copias.
 La aceptación completa de los 37 masters y un segundo scaffold real sigue
-pendiente de sus entradas. No se ejecutaron efectos remotos ni un nuevo check CRAN.
+pendiente. Las entradas de dinámica y la segunda fuente ya se localizaron;
+no constituyen una consulta pendiente al propietario. Esta tanda de naming
+no ejecutó efectos remotos ni un nuevo check CRAN.
 
 Para ejecutar el candidato local desde un proyecto preparado:
 
@@ -157,8 +161,8 @@ convierten ese ejemplo concreto en ejecutado.
 | Comparados, RevealJS (10) | `sha`, `sha.es`, `sdc`, `sdc.es`, `toc.en`, `toc.es`, `gmdp.en`, `gmdp.es`, `srs`, `srs.es` |
 | Comparados, DOCX (4) | `transmittal.en`, `transmittal.es`, `proposal`, `proposal.es` |
 | Comparados, SRS RevealJS (11) | `srs.ai`, `srs.at`, `srs.cav`, `srs.cav5`, `srs.dt`, `srs.ipsa`, `srs.its`, `srs.psa`, `srs.psv`, `srs.sd`, `srs.vt` |
-| Faltan tablas de dinámica/Newmark (8) | `gmdp.dn.en/es`, `gmdp.kh.en/es`, `gmdp.kmax.en/es`, `gmdp.ts.en/es` |
-| Informes completos detenidos por esas entradas (4) | `book.en`, `book.es`, `docx.en`, `docx.es` |
+| Pendientes con entradas localizadas en AR-S2L1W (8) | `gmdp.dn.en/es`, `gmdp.kh.en/es`, `gmdp.kmax.en/es`, `gmdp.ts.en/es` |
+| Informes completos pendientes de comparación (4) | `book.en`, `book.es`, `docx.en`, `docx.es` |
 
 La cobertura se resolvió desde masters y sus bloques efectivos. Un hub SRS
 con enlaces no acredita las once presentaciones científicas. Los DOCX probados
@@ -207,15 +211,27 @@ realizar commit/push ahora. No hay que volver a pedir esos permisos/selectores.
 - La instalación de sistema sigue pendiente de que el propietario ejecute la
   instrucción entregada al terminar. Las bibliotecas y prefijos SoT son objetos
   de comparación; no una instalación personal alternativa.
-- Commit/push autorizado; verificar el resultado de Actions y Pages de ese
-  commit. Los dos últimos pkgdown de main observados antes de publicar la
-  fusión habían terminado correctamente; los fallos visibles eran anteriores.
+- Commit/push realizado: `b7e09a1`, HEAD y origin/main iguales. El run
+  pkgdown 35276897162 terminó success; Pages sirve las nuevas guías CLI y
+  scaffolds con HTTP 200. Evidencia en actions-result.json y pages-result.json
+  de composition-20260917.
 - La prueba Netlify usará un draft de un sitio existente verificado, sin
   reemplazar producción ni cambiar dominios.
 
 No hace falta otra decisión sobre verbos, carpetas `cli/`/`lib/`, `main.R`,
 el motor de recursos R, fix_docx o retirada de QRT/PSHA. Sus contratos ya están
 cerrados; QRT/PSHA permanecen instalados sin mantenimiento.
+
+### CLI actual instalada y composición
+
+`composition-20260917/install.log` registra instalación por la entrada común
+de la CLI actual, con 395 archivos distribuidos, en su `prefix/`; carga la
+biblioteca aceptada de manifest-20260917. `installed-result.json` registra
+incorporación real de base+SHA, segundo pull por asociación y status --check,
+todos con salida 0 desde un proyecto temporal fuera del checkout. La fuente
+base se resolvió desde el runtime instalado. El proyecto temporal se retiró.
+Esto acepta ese recorrido instalado en macOS; no todos los builders ni una
+instalación personal con privilegios elevados.
 
 ## Trabajo que sigue siendo responsabilidad de esta tarea
 

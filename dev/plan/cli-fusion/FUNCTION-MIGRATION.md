@@ -247,7 +247,8 @@ la corrida CFD de AR-M2V4D permitió comparar las once presentaciones SRS,
 con 77 widgets idénticos y equivalencia CSS de IPSA comprobada en navegador.
 Evidencia en srs-20260917/result.json y REVIEW.md. Los builders SRS todavía
 permanecen en el scaffold; la comparación prepara su extracción, no la sustituye.
-Las tablas de dinámica/Newmark siguen ausentes; los hubs no sustituyen sus productos.
+Las tablas de dinámica/Newmark se localizaron en AR-S2L1W; su comparación
+sigue pendiente y los hubs no sustituyen sus productos.
 
 | Cadena leída | Reutilización real | Trabajo pendiente y frontera |
 | --- | --- | --- |
@@ -320,7 +321,8 @@ recibe selección RecordID/IMF, unidades, medias o targets científicos.
    por operación en macOS/Windows, con identidades en LOCAL-VALIDATION. HTML,
    libros, RevealJS, DOCX simple/compuesto y productos externos; excluir generación de
    mapas de la aceptación requerida. Publicación local simulada y publicación real
-   son aceptaciones distintas; la segunda espera destinos autorizados.
+   son aceptaciones distintas; la segunda usará un draft de un sitio existente
+   de AR-S2L1W, seleccionado conforme a la instrucción del propietario.
 5. **Migrar consumidores de builders por familia.** Comparar datos preparados,
    series, orden, etiquetas, unidades, estilos y widget; confirmar que la entrada
    no se modifica. Después renderizar por CLI instalada. No usar la selección
@@ -333,14 +335,16 @@ recibe selección RecordID/IMF, unidades, medias o targets científicos.
 
 La comparación completa de AR-M2V4D/sha ya pasó con MCETable real, conservada
 con sus entradas. La corrida CFD de gmsp ya está disponible y congelada para
-los once masters SRS en `srs-20260917`. Sigue abierta la consulta sobre
-Shear/Dn/kmax, que limita dinámica/Newmark y los informes completos.
+los once masters SRS en `srs-20260917`. Shear/Dn/kmax están disponibles en
+AR-S2L1W; no queda una consulta al propietario sobre esas entradas.
 
 El tar final, documentación, entrada común de instalación en macOS/Windows y
 check están identificados en [CLOSURE.md](CLOSURE.md). La NOTE restante es
-«New submission»; no hubo envío CRAN. No se declara la sustitución completa,
-publicación remota ni reinstalación personal.
+«New submission»; no hubo envío CRAN. No se declara la sustitución completa
+ni reinstalación personal. El commit b7e09a1 está en origin/main y su pkgdown
+terminó success; Pages sirve la guía nueva de scaffolds.
 
-Este plan no modifica la suite común `install/`, instalaciones personales, código científico,
-Git o servicios remotos. Las extracciones futuras de `lib/` se coordinan con
+Las extracciones no modifican instalaciones personales ni código científico.
+La publicación Git/Pages fue autorizada posteriormente por el propietario.
+Las extracciones futuras de `lib/` se coordinan con
 el orquestador sobre una identidad de paquete fija por comparación.
