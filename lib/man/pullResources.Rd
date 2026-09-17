@@ -16,7 +16,9 @@ pullResources(
 \arguments{
 \item{from}{Character vector of source manifest paths, or \code{NULL} to use
 existing project associations. Relative paths resolve from the R working
-directory. Incompatible with a nonempty \code{source}.}
+directory. A source is identified by its \code{id}: a manifest whose \code{id} is
+already associated re-points that association to the new location, with a
+message. Incompatible with a nonempty \code{source}.}
 
 \item{source}{Registered source identities, or \code{NULL} for all associations.}
 

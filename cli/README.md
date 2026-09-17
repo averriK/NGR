@@ -44,6 +44,10 @@ source (`--from` is repeatable); `ngr` names the installed presentation base.
 Later invocations use the registered associations, optionally narrowed by
 repeatable `--source`. Positional paths are destination files or directory
 prefixes. A partial initial incorporation stays partial on later default pulls.
+A source is identified by its `id`, not by its location: naming a registered
+source again with `--from` re-points it to that manifest and hydrates from
+there, reporting the change. When a recorded location no longer exists, the
+error names the source; pass `--from` with its current manifest.
 Unknown sources/paths fail. `--source` and `--from` cannot be combined.
 
 Missing files are created; identical files are retained. Differing managed files

@@ -12,9 +12,10 @@ compareResources(
 )
 }
 \arguments{
-\item{from}{Character vector of source manifest paths, or \code{NULL} to use
-existing project associations. Relative paths resolve from the R working
-directory. Incompatible with a nonempty \code{source}.}
+\item{from}{Character vector of source manifest paths to compare against
+instead of the recorded locations, or \code{NULL} to use existing project
+associations. Associations are read, never re-pointed. Incompatible with a
+nonempty \code{source}.}
 
 \item{source}{Registered source identities, or \code{NULL} for all associations.}
 

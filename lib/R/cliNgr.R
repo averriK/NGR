@@ -13,7 +13,8 @@ NULL
         "  ngr render --manifest <file> [--dry-run] [--only <aliases>] [--except <aliases>]\n",
         "  ngr deploy --help\n  ngr --version\n\n",
         "The first pull names its sources; --from ngr selects the installed base.\n",
-        "Later pulls use manifest.json. Seeds stay local.\n",
+        "Later pulls use manifest.json; --from re-points a registered source.\n",
+        "Seeds stay local.\n",
         "--force replaces managed files; incompatible sources always fail.\n", sep = "")
     return(0L)
   }

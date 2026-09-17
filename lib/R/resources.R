@@ -175,6 +175,10 @@
       if (is.null(Entry$manifest) || !nzchar(Entry$manifest)) {
         stop("Source ", Name, " has legacy provenance but no association; use --from its source manifest", call. = FALSE)
       }
+      if (!file.exists(Entry$manifest)) {
+        stop("Source ", Name, " is registered at ", Entry$manifest,
+             ", which does not exist here; use --from its source manifest", call. = FALSE)
+      }
       Source <- .readResourceSource(Entry$manifest)
       if (!identical(Source$id, Name)) stop("Source identity changed: ", Name, call. = FALSE)
       Sources[[Name]] <- Source
@@ -225,7 +229,7 @@
     if (is.null(Entry)) Entry <- list(files = stats::setNames(list(), character()),
                                     claims = stats::setNames(list(), character()))
     if (!is.null(Entry$manifest) && !identical(Entry$manifest, Source$manifest)) {
-      stop("Source ", Name, " already associated; refusing implicit retarget", call. = FALSE)
+      message("[pull] source ", Name, " now at ", Source$manifest, " (was ", Entry$manifest, ")")
     }
     Paths <- paths
     if (!length(Paths) && !length(from)) Paths <- unlist(Entry$selection, use.names = FALSE)
@@ -391,7 +395,9 @@
 #'
 #' @param from Character vector of source manifest paths, or `NULL` to use
 #'   existing project associations. Relative paths resolve from the R working
-#'   directory. Incompatible with a nonempty `source`.
+#'   directory. A source is identified by its `id`: a manifest whose `id` is
+#'   already associated re-points that association to the new location, with a
+#'   message. Incompatible with a nonempty `source`.
 #' @param source Registered source identities, or `NULL` for all associations.
 #' @param paths Destination files or directory prefixes. Empty selection uses
 #'   the enrolled selection, or the complete source when `from` is supplied.
@@ -425,6 +431,10 @@ pullResources <- function(from = NULL, source = NULL, paths = character(),
 #'
 #' Reads sources, local files and per-file receipts without writing them.
 #' @inheritParams pullResources
+#' @param from Character vector of source manifest paths to compare against
+#'   instead of the recorded locations, or `NULL` to use existing project
+#'   associations. Associations are read, never re-pointed. Incompatible with a
+#'   nonempty `source`.
 #' @return A list with `files` (source, state, path and modified columns) and
 #'   `changed`, which is true for differences, missing/retired files or edits
 #'   against a receipt. Customized seeds alone do not set `changed`.
