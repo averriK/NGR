@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "id": "sha",
+  "resources": [
+    {
+      "from": "_master",
+      "to": "_master",
+      "ownership": "managed"
+    },
+    {
+      "from": "_master/book.es.qmd",
+      "to": "_master/book.es.qmd",
+      "ownership": "seed"
+    },
+    {
+      "from": "_master/book.en.qmd",
+      "to": "_master/book.en.qmd",
+      "ownership": "seed"
+    },
+    {
+      "from": "_master/docx.es.qmd",
+      "to": "_master/docx.es.qmd",
+      "ownership": "seed"
+    },
+    {
+      "from": "_master/docx.en.qmd",
+      "to": "_master/docx.en.qmd",
+      "ownership": "seed"
+    },
+    {
+      "from": "index.qmd",
+      "to": "index.qmd",
+      "ownership": "managed"
+    },
+    {
+      "from": "_fig",
+      "to": "_fig",
+      "ownership": "managed"
+    },
+    {
+      "from": "_tbl",
+      "to": "_tbl",
+      "ownership": "managed"
+    },
+    {
+      "from": "_revealjs",
+      "to": "_revealjs",
+      "ownership": "managed"
+    },
+    {
+      "from": "_chapters",
+      "to": "_chapters",
+      "ownership": "managed"
+    },
+    {
+      "from": "_results",
+      "to": "_results",
+      "ownership": "managed"
+    },
+    {
+      "from": "_book",
+      "to": "_book",
+      "ownership": "managed"
+    },
+    {
+      "from": "_docx",
+      "to": "_docx",
+      "ownership": "managed"
+    },
+    {
+      "from": "_scope",
+      "to": "_scope",
+      "ownership": "managed"
+    },
+    {
+      "from": "_captions",
+      "to": "_captions",
+      "ownership": "managed"
+    },
+    {
+      "from": "scripts",
+      "to": "scripts",
+      "ownership": "managed"
+    },
+    {
+      "from": "mapper",
+      "to": "mapper",
+      "ownership": "managed"
+    },
+    {
+      "from": "bib",
+      "to": "bib",
+      "ownership": "managed"
+    },
+    {
+      "from": "_local",
+      "to": "_local",
+      "ownership": "seed"
+    },
+    {
+      "from": "params.yml",
+      "to": "params.yml",
+      "ownership": "seed"
+    }
+  ],
+  "artifacts": [
+    {
+      "alias": "toc",
+      "kind": "quarto",
+      "renderSource": "_master/toc.en.qmd",
+      "profile": "revealjs",
+      "path": "html/toc.en",
+      "required": true
+    },
+    {
+      "alias": "report",
+      "kind": "quarto",
+      "renderSource": "_master/book.en.qmd",
+      "profile": "book",
+      "path": "html/book.en",
+      "required": false
+    },
+    {
+      "alias": "gmdp",
+      "kind": "quarto",
+      "renderSource": "_master/gmdp.en.qmd",
+      "profile": "revealjs",
+      "path": "html/gmdp.en",
+      "required": false
+    },
+    {
+      "alias": "ts",
+      "kind": "quarto",
+      "renderSource": "_master/gmdp.ts.en.qmd",
+      "profile": "revealjs",
+      "path": "html/gmdp.ts.en",
+      "required": true
+    },
+    {
+      "alias": "dn",
+      "kind": "quarto",
+      "renderSource": "_master/gmdp.dn.en.qmd",
+      "profile": "revealjs",
+      "path": "html/gmdp.dn.en",
+      "required": true
+    },
+    {
+      "alias": "kmax",
+      "kind": "quarto",
+      "renderSource": "_master/gmdp.kmax.en.qmd",
+      "profile": "revealjs",
+      "path": "html/gmdp.kmax.en",
+      "required": true
+    },
+    {
+      "alias": "kh",
+      "kind": "quarto",
+      "renderSource": "_master/gmdp.kh.en.qmd",
+      "profile": "revealjs",
+      "path": "html/gmdp.kh.en",
+      "required": true
+    },
+    {
+      "alias": "sdc",
+      "kind": "quarto",
+      "renderSource": "_master/sdc.qmd",
+      "profile": "revealjs",
+      "path": "html/sdc",
+      "required": false
+    },
+    {
+      "alias": "sha",
+      "kind": "quarto",
+      "renderSource": "_master/sha.qmd",
+      "profile": "revealjs",
+      "path": "html/sha",
+      "required": false
+    },
+    {
+      "alias": "srs",
+      "kind": "quarto",
+      "renderSource": "_master/srs.qmd",
+      "profile": "revealjs",
+      "path": "html/srs",
+      "required": true
+    },
+    {
+      "alias": "at",
+      "kind": "quarto",
+      "renderSource": "_master/srs.at.qmd",
+      "profile": "revealjs",
+      "path": "html/srs.at",
+      "required": false
+    },
+    {
+      "alias": "vt",
+      "kind": "quarto",
+      "renderSource": "_master/srs.vt.qmd",
+      "profile": "revealjs",
+      "path": "html/srs.vt",
+      "required": false
+    },
+    {
+      "alias": "dt",
+      "kind": "quarto",
+      "renderSource": "_master/srs.dt.qmd",
+      "profile": "revealjs",
+      "path": "html/srs.dt",
+      "required": false
+    },
+    {
+      "alias": "ai",
+      "kind": "quarto",
+      "renderSource": "_master/srs.ai.qmd",
+      "profile": "revealjs",
+      "path": "html/srs.ai",
+      "required": false
+    },
+    {
+      "alias": "cav",
+      "kind": "quarto",
+      "renderSource": "_master/srs.cav.qmd",
+      "profile": "revealjs",
+      "path": "html/srs.cav",
+      "required": false
+    },
+    {
+      "alias": "cav5",
+      "kind": "quarto",
+      "renderSource": "_master/srs.cav5.qmd",
+      "profile": "revealjs",
+      "path": "html/srs.cav5",
+      "required": false
+    },
+    {
+      "alias": "psa",
+      "kind": "quarto",
+      "renderSource": "_master/srs.psa.qmd",
+      "profile": "revealjs",
+      "path": "html/srs.psa",
+      "required": false
+    },
+    {
+      "alias": "psv",
+      "kind": "quarto",
+      "renderSource": "_master/srs.psv.qmd",
+      "profile": "revealjs",
+      "path": "html/srs.psv",
+      "required": false
+    },
+    {
+      "alias": "sd",
+      "kind": "quarto",
+      "renderSource": "_master/srs.sd.qmd",
+      "profile": "revealjs",
+      "path": "html/srs.sd",
+      "required": false
+    },
+    {
+      "alias": "its",
+      "kind": "quarto",
+      "renderSource": "_master/srs.its.qmd",
+      "profile": "revealjs",
+      "path": "html/srs.its",
+      "required": false
+    },
+    {
+      "alias": "ipsa",
+      "kind": "quarto",
+      "renderSource": "_master/srs.ipsa.qmd",
+      "profile": "revealjs",
+      "path": "html/srs.ipsa",
+      "required": false
+    }
+  ],
+  "checks": [
+    [
+      "Rscript",
+      "scripts/setup/checkParameters.R"
+    ]
+  ]
+}
