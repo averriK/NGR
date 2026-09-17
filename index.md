@@ -191,9 +191,6 @@ exported API. The principal families are:
 - [`buildSectionResultantsPlot()`](https://averriK.github.io/NGR/reference/buildSectionResultantsPlot.md)
   — responsive circular-section diagrams for any prepared subset of `N`,
   `M`, and `Q` layers.
-- [`buildSpectrumPlot()`](https://averriK.github.io/NGR/reference/buildSpectrumPlot.md)
-  — acceleration spectra from prepared series, without scientific
-  selection or calculation.
 
 ### Tables and reporting
 

@@ -94,13 +94,12 @@ with its consumer. Moving every script unchanged into a package would
 preserve hidden dependencies on project globals. Renaming colliding
 scripts would leave duplicated implementations.
 
-**Migration is incomplete.** The SHA candidate’s UHS/MCE blocks already
-call
-[`NGR::buildSpectrumPlot()`](https://averriK.github.io/NGR/reference/buildSpectrumPlot.md)
-with prepared series. Its old `scripts/fig/UHS.R` has been removed from
-that candidate. Other figure builders and table scripts still ship with
-SHA. Resource composition tests and successful renders do not establish
-their extraction.
+**Builder migration is pending.** SHA retains its figure and table
+scripts, including `scripts/fig/UHS.R`, which calls the existing
+[`buildPlot()`](https://averriK.github.io/NGR/reference/buildPlot.md)
+API. Resource composition tests and successful renders do not establish
+a new builder architecture. Any extraction must first justify its
+responsibility and benefit against direct use of the existing NGR APIs.
 
 Two themes can also have incompatible setup scripts or parameter
 schemas. The engine detects conflicting paths; it cannot reconcile their

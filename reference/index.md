@@ -18,8 +18,6 @@
   : Build a heatmap plot (Highcharts)
 - [`buildSectionResultantsPlot()`](https://averriK.github.io/NGR/reference/buildSectionResultantsPlot.md)
   : Build circular-section resultant diagrams
-- [`buildSpectrumPlot()`](https://averriK.github.io/NGR/reference/buildSpectrumPlot.md)
-  : Build an acceleration response spectrum plot
 
 ## Tables and report composition
 

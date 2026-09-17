@@ -205,12 +205,12 @@ scaffold-specific selection can remain with its consumer. Moving every
 script unchanged into a package would preserve hidden dependencies on
 project globals. Renaming colliding scripts would leave duplicated
 implementations.</p>
-<p><strong>Migration is incomplete.</strong> The SHA candidate’s UHS/MCE
-blocks already call <code><a href="../reference/buildSpectrumPlot.html">NGR::buildSpectrumPlot()</a></code> with prepared
-series. Its old <code>scripts/fig/UHS.R</code> has been removed from
-that candidate. Other figure builders and table scripts still ship with
-SHA. Resource composition tests and successful renders do not establish
-their extraction.</p>
+<p><strong>Builder migration is pending.</strong> SHA retains its figure
+and table scripts, including <code>scripts/fig/UHS.R</code>, which calls
+the existing <code><a href="../reference/buildPlot.html">buildPlot()</a></code> API. Resource composition tests
+and successful renders do not establish a new builder architecture. Any
+extraction must first justify its responsibility and benefit against
+direct use of the existing NGR APIs.</p>
 <p>Two themes can also have incompatible setup scripts or parameter
 schemas. The engine detects conflicting paths; it cannot reconcile their
 R semantics. A combined report requires compatible consumers and a

@@ -170,13 +170,11 @@ R consumers can call these operations without the CLI:
 | Associate, publish or configure Netlify sites | [`netlifyRegister()`](https://averriK.github.io/NGR/reference/netlifyRegister.md), [`netlifyDeploy()`](https://averriK.github.io/NGR/reference/netlifyDeploy.md), [`netlifyDomain()`](https://averriK.github.io/NGR/reference/netlifyDomain.md), [`netlifyUnbind()`](https://averriK.github.io/NGR/reference/netlifyUnbind.md) |
 
 Scaffolds use
-[`buildSpectrumPlot()`](https://averriK.github.io/NGR/reference/buildSpectrumPlot.md)
-for prepared acceleration spectra and
 [`buildPlot()`](https://averriK.github.io/NGR/reference/buildPlot.md)
-for other supported graphics. The scaffold or scientific producer owns
-data selection and calculation; NGR owns the representation. Existing
-map HTML is an input to reports. Rendering never starts a map producer
-or OpenQuake.
+for supported graphics. The scaffold or scientific producer owns data
+selection and calculation; NGR owns the representation. Existing map
+HTML is an input to reports. Rendering never starts a map producer or
+OpenQuake.
 
 Run `ngr --help`, `ngr pull --help`, `ngr render --help` or
 `ngr deploy --help` for command arguments. Local verification does not

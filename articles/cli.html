@@ -238,11 +238,10 @@ dependencies or load R code from the source checkout.</p>
 </tr>
 </tbody>
 </table>
-<p>Scaffolds use <code><a href="../reference/buildSpectrumPlot.html">buildSpectrumPlot()</a></code> for prepared
-acceleration spectra and <code><a href="../reference/buildPlot.html">buildPlot()</a></code> for other supported
-graphics. The scaffold or scientific producer owns data selection and
-calculation; NGR owns the representation. Existing map HTML is an input
-to reports. Rendering never starts a map producer or OpenQuake.</p>
+<p>Scaffolds use <code><a href="../reference/buildPlot.html">buildPlot()</a></code> for supported graphics. The
+scaffold or scientific producer owns data selection and calculation; NGR
+owns the representation. Existing map HTML is an input to reports.
+Rendering never starts a map producer or OpenQuake.</p>
 <p>Run <code>ngr --help</code>, <code>ngr pull --help</code>,
 <code>ngr render --help</code> or <code>ngr deploy --help</code> for
 command arguments. Local verification does not certify a remote

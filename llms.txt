@@ -191,9 +191,6 @@ exported API. The principal families are:
 - [`buildSectionResultantsPlot()`](https://averriK.github.io/NGR/reference/buildSectionResultantsPlot.md)
   — responsive circular-section diagrams for any prepared subset of `N`,
   `M`, and `Q` layers.
-- [`buildSpectrumPlot()`](https://averriK.github.io/NGR/reference/buildSpectrumPlot.md)
-  — acceleration spectra from prepared series, without scientific
-  selection or calculation.
 
 ### Tables and reporting
 
@@ -332,8 +329,6 @@ MIT License - see [LICENSE](https://averrik.github.io/NGR/LICENSE.html)
   : Build a heatmap plot (Highcharts)
 - [`buildSectionResultantsPlot()`](https://averriK.github.io/NGR/reference/buildSectionResultantsPlot.md)
   : Build circular-section resultant diagrams
-- [`buildSpectrumPlot()`](https://averriK.github.io/NGR/reference/buildSpectrumPlot.md)
-  : Build an acceleration response spectrum plot
 
 ## Tables and report composition
 
