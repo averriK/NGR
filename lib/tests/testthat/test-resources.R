@@ -156,3 +156,29 @@ test_that("a file entry overrides the ownership given by its directory entry", {
                        Fixture$manifest, auto_unbox = TRUE)
   expect_error(.readResourceSource(Fixture$manifest), "Duplicate destination")
 })
+
+test_that("artifact seeds resolve {project_id} once the project declares its own id", {
+  Fixture <- resourceFixture()
+  on.exit(unlink(Fixture$root, recursive = TRUE), add = TRUE)
+  writeLines(c("params:", "  project_id: \"PROJECT_ID\""), file.path(Fixture$source, "params.yml"))
+  jsonlite::write_json(list(schemaVersion = 1L, id = "fixture", resources = list(
+    list(from = "first.txt", to = "nested/first.txt", ownership = "managed"),
+    list(from = "params.yml", to = "params.yml", ownership = "seed")
+  ), artifacts = list(list(alias = "toc", kind = "static", path = "html/toc", required = TRUE,
+                           siteSlug = "{project_id}-toc", domain = "{project_id}-toc.example.org"))),
+    Fixture$manifest, auto_unbox = TRUE)
+  Manifest <- file.path(Fixture$project, "manifest.json")
+  expect_message(pullResources(from = Fixture$manifest, root = Fixture$project), "project_id")
+  expect_identical(jsonlite::fromJSON(Manifest, simplifyVector = FALSE)$artifacts, list())
+  expect_message(pullResources(root = Fixture$project), "project_id")
+  expect_identical(jsonlite::fromJSON(Manifest, simplifyVector = FALSE)$artifacts, list())
+  writeLines(c("params:", "  project_id: \"AR-TEST0\""), file.path(Fixture$project, "params.yml"))
+  pullResources(root = Fixture$project)
+  Artifact <- jsonlite::fromJSON(Manifest, simplifyVector = FALSE)$artifacts[[1L]]
+  expect_identical(Artifact$siteSlug, "artest0-toc")
+  expect_identical(Artifact$domain, "artest0-toc.example.org")
+  expect_identical(Artifact$path, "html/toc")
+  writeLines(c("params:", "  project_id: \"OTHER\""), file.path(Fixture$project, "params.yml"))
+  pullResources(root = Fixture$project)
+  expect_identical(jsonlite::fromJSON(Manifest, simplifyVector = FALSE)$artifacts[[1L]]$siteSlug, "artest0-toc")
+})

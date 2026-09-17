@@ -228,6 +228,32 @@
   invisible(NULL)
 }
 
+.readProjectId <- function(path) {
+  if (!file_test("-f", path)) return("")
+  Id <- yaml::read_yaml(path)$params$project_id
+  if (!is.character(Id) || length(Id) != 1L || is.na(Id)) return("")
+  gsub("[^a-z0-9]", "", chartr("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz", Id))
+}
+
+# Artifact seeds may name the project through {project_id}: the lowercase
+# alphanumeric form of params.project_id in the project's params.yml. An id
+# still equal to the one a source ships in its params.yml seed is a placeholder,
+# so nothing is seeded until the project declares its own.
+.seedArtifacts <- function(artifacts, root, sources) {
+  if (!any(grepl("{project_id}", unlist(artifacts), fixed = TRUE))) return(artifacts)
+  Id <- .readProjectId(file.path(root, "params.yml"))
+  Placeholders <- vapply(sources, function(x) {
+    if (is.null(x$files[["params.yml"]])) return("")
+    .readProjectId(x$files[["params.yml"]]$path)
+  }, character(1L))
+  if (!nzchar(Id) || Id %in% Placeholders) {
+    message("[pull] artifacts not seeded: set params.project_id in params.yml and pull again")
+    return(list())
+  }
+  rapply(artifacts, function(x) gsub("{project_id}", Id, x, fixed = TRUE),
+         classes = "character", how = "replace")
+}
+
 .planResources <- function(root, project, sources, paths, from, force) {
   Actions <- list()
   Artifacts <- list()
@@ -291,7 +317,9 @@
       Artifacts[[Alias]] <- Artifact
     }
   }
-  if (!length(project$artifacts)) project$artifacts <- unname(Artifacts)
+  if (!length(project$artifacts)) {
+    project$artifacts <- .seedArtifacts(unname(Artifacts), root = root, sources = sources)
+  }
   for (Name in names(project$scaffolds)) {
     Entry <- project$scaffolds[[Name]]
     if (Name %in% names(sources) || "claims" %in% names(Entry)) next

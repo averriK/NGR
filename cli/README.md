@@ -94,10 +94,15 @@ same source to give it a different ownership; here every master is updated by
 Any other repeated destination within a source is rejected.
 
 `artifacts` can seed an empty project artifact list; an existing nonempty list
-remains project-owned. Source authors supply
-the family, paths and optional publication identities. NGR does not infer a
-hosting domain from the book's name. The SHA candidate supplies 21 artifact
-seeds without provider destinations; define those before deploying.
+remains project-owned. Source authors supply the family, paths and optional
+publication identities. String values may contain `{project_id}`, which is
+replaced by the lowercase alphanumeric form of `params.project_id` from the
+project's `params.yml` (`AR-SABP0` becomes `arsabp0`). While that id is missing,
+or still equal to the one the source ships in its own `params.yml` seed, no
+artifact is seeded and `pull` says so; set the id and pull again. The SHA
+scaffold declares its 21 artifacts with `{project_id}-<alias>` site names and
+`{project_id}-<alias>.srk.ar` domains. The hosting domain belongs to the
+scaffold; NGR itself names none.
 
 Each scaffold declares its resources in its own `manifest.json`. The project's
 `manifest.json` records its composition and is read by TOC, transmittal and

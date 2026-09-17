@@ -74,6 +74,12 @@ have identical content and ownership. Conflicts are rejected before any copying,
 including claims from sources not selected by the current command. `--force`
 does not choose a winner between incompatible sources.
 
+A source may also seed the project's artifact list. Its string values can name
+the project through `{project_id}`, the lowercase alphanumeric form of
+`params.project_id` in the project's `params.yml`. Nothing is seeded while that
+id is missing or still the placeholder shipped by the source; set it and run
+`ngr pull` again.
+
 The project's `manifest.json` records artifacts, source associations and per-file
 provenance. The source manifest is not copied over it. NGR does not create a
 second resource database in `.ngr/`.
