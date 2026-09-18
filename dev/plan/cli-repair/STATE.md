@@ -97,6 +97,8 @@ NEXT-CLOSED {"evidence":"Reverificación verde post-handoff en 438a375: install/
 
 - Sondeo 2026-09-18 07:52 -03 (35.ª corrida, sin adopción): idéntico al 34.º — kit cerrado y quieto desde las 02:11:31; STATE.md de gmsp sin cambios (md5 e9681064…, Next = a13-first-sudo-run); recibo de gmsp en /usr/local sigue siendo esquema 2 del 2026-09-17 23:59: la corrida sudo del propietario no ocurrió. Condición del Next no cumplida; install/ de NGR congelado; automatización habilitada.
 
+- Sondeo 2026-09-18 08:01 -03 (36.ª corrida, sin adopción): idéntico al 35.º — kit cerrado y quieto desde las 02:11:31; STATE.md de gmsp sin cambios (md5 e9681064…, Next = a13-first-sudo-run); recibo de gmsp en /usr/local sigue siendo esquema 2 del 2026-09-17 23:59: la corrida sudo del propietario no ocurrió. Condición del Next no cumplida; install/ de NGR congelado; automatización habilitada.
+
 ## Effects
 - origin/main = c16267e (plan y estado) tras d8c9159 (R6), 8a08f43 (R5), 277ec75/4ca8110 (R4), acd0d00 (R8), a5e9788 (R2), 3f27df4 (R1); workflows pkgdown success. reports/sha modificado fuera de git: manifest.json (masters, plantillas de destinos), cover.R y transmittal.R (NGR_RENDER_STAMP).
 - Candidato R7 descartado el 2026-09-18 con el «ok» del propietario al plan («tira mi candidato»): install/install.sh y cli/tests/test_install.py restaurados desde HEAD (install.sh md5 8cb2fcbc…, kit congelado), install/uninstall.sh e install/cli/ensurePackage.R borrados; índice vacío. Ajenos, no tocar: dev/plan/cli-fusion/STATE.md, dev/docs/.
