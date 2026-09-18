@@ -1,0 +1,7 @@
+NGR 0.4.0 at /Users/averrik/Library/R/arm64/4.6/library/NGR
+[doctor] sha: Rscript scripts/setup/checkParameters.R
+Error: params.latitude missing
+params.longitude missing
+params.mapper section missing
+Execution halted
+ngr: Source check failed: sha (exit 1)
