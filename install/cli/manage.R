@@ -22,6 +22,14 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
   }
   Runtime <- Requirements$runtime
   if (!length(Runtime)) Runtime <- Command
+  if (length(Runtime) != 1L || !grepl("^[A-Za-z0-9_-]+$", Runtime) ||
+      !grepl("^[A-Za-z0-9_-]+$", Command)) stop("Invalid command or runtime name")
+  .relativePaths <- function(paths) {
+    is.character(paths) && !anyNA(paths) && all(nzchar(paths)) &&
+      !any(grepl("[:\\\\\r\n]", paths)) &&
+      !any(vapply(strsplit(paths, "/", fixed = TRUE),
+                  function(x) any(x %in% c("", ".", "..")), logical(1L)))
+  }
   Package <- unname(read.dcf(file.path(root, "lib", "DESCRIPTION"),
                              fields = "Package")[1L, 1L])
   Manifest <- jsonlite::read_json(file.path(root, "install", "manifest.json"),
@@ -36,7 +44,7 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
   Parts <- strsplit(Files, "/", fixed = TRUE)
   Invalid <- vapply(Parts, function(x) any(x %in% c("", "..")), logical(1L)) |
     startsWith(Files, "/") | grepl("^[A-Za-z]:", Files) | grepl("\\", Files, fixed = TRUE)
-  if (any(Invalid)) {
+  if (any(Invalid) || !.relativePaths(Files)) {
     stop("Manifest paths must be relative to cli/, without absolute drives, \\\\ or ..: ",
          paste(Files[Invalid], collapse = ", "), call. = FALSE)
   }
@@ -46,7 +54,7 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
   }
   Sources <- file.path(root, "cli", Files)
   if (action != "uninstall") {
-    if (!all(file.exists(Sources))) {
+    if (!all(file.exists(Sources)) || any(dir.exists(Sources))) {
       stop("Missing CLI source: ", paste(Sources[!file.exists(Sources)], collapse = ", "),
            call. = FALSE)
     }
@@ -79,16 +87,20 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
                         file.path("libexec", Runtime, Files))
   Extra <- file.path("libexec", Runtime, "BUILD_INFO")
   if (length(Requirements$buildInfo)) {
+    if (!.relativePaths(Requirements$buildInfo)) stop("Invalid buildInfo path")
     Extra <- c(Extra, file.path("libexec", Runtime, Requirements$buildInfo))
   }
   Targets <- c(Destination, Extra)
+  if (anyDuplicated(Targets)) stop("Manifest repeats a generated target")
+  if (file.path("libexec", Runtime, "install.json") %in% Targets) {
+    stop("The manifest cannot replace the installation receipt")
+  }
   if (!dir.exists(prefix)) {
     if (action == "uninstall") stop("PREFIX does not exist: ", prefix, call. = FALSE)
-    if (action != "check" && !dir.create(prefix, recursive = TRUE)) {
-      stop("Cannot create PREFIX: ", prefix)
-    }
   }
-  prefix <- normalizePath(prefix, winslash = "/", mustWork = action != "check")
+  Link <- Sys.readlink(prefix)
+  if (!is.na(Link) && nzchar(Link)) stop("Managed prefix is a symlink: ", prefix)
+  prefix <- normalizePath(prefix, winslash = "/", mustWork = FALSE)
   File <- file.path(prefix, "libexec", Runtime, "install.json")
   for (Path in c(file.path(prefix, c("bin", "libexec", file.path("libexec", Runtime))),
                  File)) {
@@ -113,21 +125,38 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
         !is.character(Owned) || anyNA(Owned) ||
         (!identical(Record$schema, 4L) && !identical(unname(Record$file), unname(Owned))) ||
         !is.character(Record$md5) || length(Record$md5) != length(Owned) ||
-        anyNA(Record$md5)) {
+        anyNA(Record$md5) || any(!grepl("^[a-f0-9]{32}$", Record$md5)) ||
+        !.relativePaths(Owned) || anyDuplicated(Owned) ||
+        any(!(Owned %in% paste0(Launcher, c("", ".cmd", ".ps1")) |
+              startsWith(Owned, paste0("libexec/", Runtime, "/")))) ||
+        file.path("libexec", Runtime, "install.json") %in% Owned) {
       stop("Invalid installation receipt: ", File, call. = FALSE)
     }
+    Created <- unlist(Record$created, use.names = FALSE)
+    if (length(Created) && (!.relativePaths(setdiff(Created, ".")) ||
+        any(!(Created %in% c(".", "bin", "libexec", file.path("libexec", Runtime)) |
+              startsWith(Created, paste0("libexec/", Runtime, "/")))))) {
+      stop("Invalid created directories in receipt: ", File, call. = FALSE)
+    }
   }
-  Paths <- file.path(prefix, Targets)
+  Paths <- file.path(prefix, union(Targets, Owned))
   if (action == "uninstall") Paths <- file.path(prefix, Owned)
   Paths <- c(Paths, File)
+  Ancestors <- Paths
+  for (Path in Paths) {
+    while (startsWith(Path, paste0(prefix, "/"))) {
+      Path <- dirname(Path)
+      Ancestors <- c(Ancestors, Path)
+    }
+  }
+  Ancestors <- unique(Ancestors)
   if (Windows) {
     Status <- system2("powershell.exe", args = c("-NoProfile", "-NonInteractive",
       "-ExecutionPolicy", "Bypass", "-File", shQuote(file.path(source, "checkPaths.ps1")),
-      shQuote(unique(c(file.path(prefix, c("bin", "libexec", file.path("libexec", Runtime))),
-                      file.path(prefix, Owned), Paths)))))
+      shQuote(Ancestors)))
     if (Status != 0L) stop("Cannot validate managed Windows paths", call. = FALSE)
   }
-  for (Path in Paths) {
+  for (Path in Ancestors) {
     Link <- Sys.readlink(Path)
     if (!is.na(Link) && nzchar(Link)) stop("Managed path is a symlink: ", Path)
   }
@@ -159,18 +188,6 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
         stop("Installation parent is not a writable directory: ", DIR, call. = FALSE)
       }
     }
-    # The canonical kit lives outside the products; repo copies are byte-identical.
-    Canonical <- path.expand("~/github/agents/install")
-    if (dir.exists(Canonical)) {
-      Repo <- file.path(root, "install", Kit)
-      Canon <- file.path(Canonical, Kit)
-      if (!all(file.exists(Repo)) || !all(file.exists(Canon)) ||
-          !identical(unname(tools::md5sum(Repo)), unname(tools::md5sum(Canon)))) {
-        stop("install/ differs from the canonical kit at ", Canonical, call. = FALSE)
-      }
-    } else {
-      message("Canonical kit not found at ", Canonical, "; kit drift not checked")
-    }
     message("CLI destination available: ", prefix)
     return(invisible(NULL))
   }
@@ -188,10 +205,11 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
   for (DIR in Dirs) {
     if (!dir.exists(DIR) && !dir.create(DIR, recursive = TRUE)) stop("Cannot create ", DIR)
   }
-  CreatedRel <- vapply(Created, function(x) {
+  CreatedRel <- vapply(Created[Created == prefix | startsWith(Created, paste0(prefix, "/"))], function(x) {
     if (identical(x, prefix)) return(".")
     substring(x, nchar(prefix) + 2L)
   }, character(1L))
+  CreatedRel <- unique(c(unlist(Record$created, use.names = FALSE), CreatedRel))
 
   Recovery <- tempfile(".install-", tmpdir = prefix)
   if (!dir.create(Recovery)) stop("Cannot prepare recovery directory", call. = FALSE)
@@ -214,6 +232,11 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
       if (!Restored) warning("Restore UNKNOWN; recovery retained at ", Recovery)
     }
     if (Restored) unlink(Recovery, recursive = TRUE)
+    if (!Complete && Restored && !Windows) {
+      for (DIR in Created[order(nchar(Created), decreasing = TRUE)]) {
+        system2("rmdir", shQuote(DIR), stdout = FALSE, stderr = FALSE)
+      }
+    }
   }, add = TRUE)
   if (any(Exists) && !all(file.copy(Paths[Exists], Backup[Exists], copy.mode = TRUE))) {
     stop("Cannot preserve managed files before update", call. = FALSE)
@@ -264,9 +287,20 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
                               md5 = unname(tools::md5sum(Prepared[seq_along(Targets)])),
                               created = CreatedRel),
                          Prepared[length(Paths)], auto_unbox = TRUE, pretty = TRUE)
-    for (i in seq_along(Paths)) {
+    for (i in seq_along(Targets)) {
       if (!file.rename(Prepared[i], Paths[i])) stop("Cannot replace ", Paths[i])
       Changed[i] <- TRUE
+    }
+    for (i in which(Paths %in% file.path(prefix, setdiff(Owned, Targets)))) {
+      if (unlink(Paths[i]) != 0L) stop("Cannot retire ", Paths[i])
+      Changed[i] <- TRUE
+    }
+    if (!file.rename(Prepared[length(Paths)], File)) stop("Cannot replace ", File)
+    Changed[length(Paths)] <- TRUE
+    CommandPath <- file.path(prefix, paste0(Launcher, if (Windows) ".cmd" else ""))
+    for (Option in c("--version", Requirements$verify)) {
+      Status <- system2(CommandPath, shQuote(Option))
+      if (Status != 0L) stop("Installed CLI verification failed (", Status, "): ", CommandPath)
     }
   }
   if (action == "uninstall") {
@@ -276,16 +310,21 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
     }
   }
   Complete <- TRUE
+  unlink(Recovery, recursive = TRUE)
   if (action == "uninstall") {
     Dirs <- character()
     if (identical(Record$schema, 4L)) {
       Dirs <- file.path(prefix, Record$created[order(nchar(Record$created),
                                                      decreasing = TRUE)])
+      Dirs[Dirs == file.path(prefix, ".")] <- prefix
     }
     if (!identical(Record$schema, 4L)) Dirs <- file.path(prefix, "libexec", Runtime)
     for (DIR in Dirs) {
-      if (dir.exists(DIR) && suppressWarnings(unlink(DIR) != 0L)) {
-        message("Kept ", DIR, ": not empty")
+      if (dir.exists(DIR)) {
+        Status <- if (Windows) system2("cmd.exe", c("/c", "rmdir", shQuote(DIR)),
+                                       stdout = FALSE, stderr = FALSE) else
+          system2("rmdir", shQuote(DIR), stdout = FALSE, stderr = FALSE)
+        if (Status != 0L) message("Kept ", DIR, ": not empty")
       }
     }
   }
