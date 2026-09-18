@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 # Family installer for macOS and Linux: detects R (R is never installed by
-# this script), makes sure the product R package is installed in the selected
-# library at the source version, and installs the command and its launchers
+# this script), preserves a compatible installed R package and installs
+# the command and its launchers
 # under the prefix through the receipt-keeping writer install/cli/manage.R.
 #
 # Usage:
 #   sudo bash install/install.sh [--yes] [--check] [--prefix DIR]
+#                                [--library DIR] [--dependency FILE ...]
 #                                [--tarball FILE | --build] [--component all|lib|cli]
 #
 # The prefix defaults to /usr/local, which needs sudo. The R library is always
-# the invoking user's default R library (R_LIBS_USER), resolved by R itself;
-# it is never an argument. R work always runs as the invoking user, never as
+# the invoking user's default R library (R_LIBS_USER), unless --library is set.
+# R work always runs as the invoking user, never as
 # root; only the prefix files are written as root. Without --tarball the
-# package is built from lib/ (with manual and vignettes when pandoc is
-# available). Nothing is written to a log file.
+# missing package is built from lib/. Nothing is written to a log file.
 set -euo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
@@ -21,6 +21,7 @@ PREFIX=/usr/local
 LIBRARY=""
 TARBALL=""
 BUILD=0
+DEPENDENCIES=()
 COMPONENT=all
 YES=0
 CHECK=0
@@ -41,6 +42,8 @@ while [[ $# -gt 0 ]]; do
     --check) CHECK=1; shift ;;
     --build) BUILD=1; shift ;;
     --prefix) [[ $# -ge 2 ]] || fail "--prefix needs a directory"; PREFIX="$2"; shift 2 ;;
+    --library) [[ $# -ge 2 ]] || fail "--library needs a directory"; LIBRARY="$2"; shift 2 ;;
+    --dependency) [[ $# -ge 2 ]] || fail "--dependency needs an archive"; DEPENDENCIES+=("$2"); shift 2 ;;
     --tarball) [[ $# -ge 2 ]] || fail "--tarball needs a file"; TARBALL="$2"; shift 2 ;;
     --component) [[ $# -ge 2 ]] || fail "--component needs all, lib or cli"; COMPONENT="$2"; shift 2 ;;
     -h|--help) show_usage; exit 0 ;;
@@ -51,6 +54,9 @@ case "$COMPONENT" in all|lib|cli) ;; *) fail "Unknown component: $COMPONENT" ;; 
 [[ "$PREFIX" == /* ]] || PREFIX="$PWD/$PREFIX"
 [[ -z "$TARBALL" || "$TARBALL" == /* ]] || TARBALL="$PWD/$TARBALL"
 if [[ -n "$TARBALL" && "$BUILD" == 1 ]]; then fail "Select exactly one of --tarball or --build"; fi
+if [[ "$COMPONENT" == cli && ( -n "$TARBALL" || "$BUILD" == 1 || "${#DEPENDENCIES[@]}" -gt 0 ) ]]; then
+  fail "--component cli cannot install R archives"
+fi
 
 # ---------------------------------------------------------------- stage 1
 stage 1 "Requirements"
@@ -59,7 +65,13 @@ if [[ "$(id -u)" == 0 ]]; then
   [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != root ]] \
     || fail "Run this installer with sudo from your own account: R work must not run as root."
   USER_NAME="$SUDO_USER"
-  as_user() { sudo -n -H -u "$USER_NAME" -- env PATH="$PATH" "$@"; }
+  [[ "${SUDO_UID:-}" =~ ^[0-9]+$ && "$SUDO_UID" != 0 && "$(id -u "$USER_NAME")" == "$SUDO_UID" ]] \
+    || fail "SUDO_USER does not match the invoking SUDO_UID"
+  r_environment=("PATH=$PATH")
+  for name in R_LIBS R_LIBS_USER R_LIBS_SITE; do
+    if value="$(printenv "$name")"; then r_environment+=("$name=$value"); fi
+  done
+  as_user() { sudo -n -H -u "$USER_NAME" -- env "${r_environment[@]}" "$@"; }
   ok "Running as root for $PREFIX; R work runs as $USER_NAME"
 else
   USER_NAME="$(id -un)"
@@ -85,12 +97,8 @@ if as_user bash -c 'command -v git' >/dev/null 2>&1; then
 else
   warn "git not found; the receipt records the source as unknown"
 fi
-if as_user bash -c 'command -v pandoc' >/dev/null 2>&1; then
-  ok "pandoc found; package manual and vignettes will be built"
-  documents=TRUE
-else
-  warn "pandoc not found; the package builds without manual or vignettes"
-  documents=FALSE
+if ! as_user bash -c 'command -v pandoc' >/dev/null 2>&1; then
+  warn "pandoc not found; documentation builds remain a separate maintenance operation"
 fi
 
 PACKAGE=""
@@ -125,6 +133,7 @@ if [[ "$COMPONENT" != lib && -z "$COMMAND" ]]; then
 fi
 # TOOLS and OPTIONAL are space-separated requirement lists; word splitting is
 # the declared intent here.
+if [[ "$COMPONENT" != lib ]]; then
 for tool in $TOOLS; do
   as_user bash -c "command -v \"$tool\"" >/dev/null 2>&1 \
     || fail "Required executable unavailable: $tool"
@@ -134,6 +143,7 @@ for tool in $OPTIONAL; do
     warn "Optional tool not found: $tool"
   fi
 done
+fi
 
 if [[ -z "$LIBRARY" ]]; then
   LIBRARY="$(as_user "$rscript_path" --vanilla -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))')"
@@ -147,7 +157,7 @@ printf '\n%s installation\n' "$PACKAGE"
 printf 'Source:  %s\nPrefix:  %s\nLibrary: %s\nR user:  %s\n\n' \
   "$ROOT_DIR" "$PREFIX" "$LIBRARY" "$USER_NAME"
 
-if [[ -n "$COMMAND" ]]; then
+if [[ "$COMPONENT" != lib && -n "$COMMAND" ]]; then
   previous="$(as_user bash -c "command -v \"$COMMAND\"" || true)"
   if [[ -n "$previous" && "$previous" != "$PREFIX/bin/$COMMAND" ]]; then
     warn "a previous $COMMAND is first on PATH: $previous"
@@ -162,9 +172,23 @@ fi
 # ---------------------------------------------------------------- stage 2
 stage 2 "R package"
 
+# Destination conflicts are checked before building or modifying the R library.
+if [[ "$COMPONENT" != lib ]]; then
+  check_action=check
+  if [[ "$(id -u)" == 0 ]]; then check_action=inspect; fi
+  as_user env R_LIBS="$r_libs" "$rscript_path" --vanilla "$ROOT_DIR/install/cli/manage.R" "$check_action" "$PREFIX"
+fi
+if [[ "$CHECK" == 1 ]]; then
+  ok "Check passed; nothing was installed"
+  exit 0
+fi
+
 installed_version=""
 if [[ -n "$LIBRARY" ]]; then
-  installed_version="$(as_user "$rscript_path" --vanilla -e "cat(tryCatch(as.character(utils::packageVersion('$PACKAGE', lib.loc = '$LIBRARY')), error = function(e) ''))")"
+  installed_version="$(as_user "$rscript_path" --vanilla -e '
+Args <- commandArgs(TRUE)
+if (dir.exists(file.path(Args[2L], Args[1L]))) cat(as.character(utils::packageVersion(Args[1L], lib.loc = Args[2L])))
+' "$PACKAGE" "$LIBRARY")"
 fi
 if [[ -n "$installed_version" ]]; then
   info "Installed: $PACKAGE $installed_version in $LIBRARY"
@@ -172,14 +196,25 @@ else
   info "$PACKAGE is not installed in $LIBRARY"
 fi
 info "Source:    $PACKAGE $source_version"
+if [[ -n "$installed_version" && "$COMPONENT" == lib && -z "$TARBALL" && "$BUILD" == 0 ]]; then
+  [[ "${#DEPENDENCIES[@]}" == 0 ]] || fail "--dependency requires an explicit --build or --tarball"
+  as_user env R_LIBS="$r_libs" "$rscript_path" --vanilla -e \
+    'Args <- commandArgs(TRUE); invisible(loadNamespace(Args[1L], lib.loc = Args[2L]))' "$PACKAGE" "$LIBRARY"
+  ok "$PACKAGE $installed_version loads; library unchanged; CLI skipped"
+  exit 0
+fi
+if [[ "${#DEPENDENCIES[@]}" -gt 0 && -n "$installed_version" && -z "$TARBALL" && "$BUILD" == 0 ]]; then
+  fail "--dependency requires an explicit --build or --tarball when the product is installed"
+fi
 
 # The product installer (install/installProduct.R) owns every R-side check and
 # installation: artifact identity, dependencies, CLI tools and packages,
 # exports, library shadowing. This script sequences it and, under sudo, does
-# the privileged prefix writes itself through install/cli/manage.R.
+# the privileged prefix writes itself through install/cli/publish.sh.
 kit=("$rscript_path" --vanilla "$ROOT_DIR/install/installProduct.R")
 if [[ "$(id -u)" == 0 ]]; then kit+=(--system-cli); fi
 kit+=("$ROOT_DIR")
+for archive in "${DEPENDENCIES[@]+"${DEPENDENCIES[@]}"}"; do kit+=(--dependency "$archive"); done
 component_effective="$COMPONENT"
 if [[ "$COMPONENT" == cli ]]; then
   [[ -n "$installed_version" ]] || fail "--component cli needs $PACKAGE installed in $LIBRARY"
@@ -193,33 +228,15 @@ elif [[ -z "$installed_version" || -n "$TARBALL" || "$BUILD" == 1 ]]; then
     [[ -f "$TARBALL" && -f "$TARBALL.rds" ]] \
       || fail "Package archive and its .rds record are required: $TARBALL"
     kit+=(--tarball "$TARBALL")
-  elif [[ "$documents" == TRUE ]]; then
-    build_dir="$(as_user mktemp -d "${TMPDIR:-/tmp}/$PACKAGE-build.XXXXXX")"
-    info "Building $PACKAGE $source_version with manual and vignettes into $build_dir"
-    (cd "$ROOT_DIR/lib" && as_user "$rscript_path" --vanilla ../install/build.R "$build_dir")
-    TARBALL="$build_dir/${PACKAGE}_${source_version}.tar.gz"
-    [[ -f "$TARBALL" && -f "$TARBALL.rds" ]] || fail "Build did not produce $TARBALL and its .rds"
-    kit+=(--tarball "$TARBALL")
   else
     build_dir="$(as_user mktemp -d "${TMPDIR:-/tmp}/$PACKAGE-build.XXXXXX")"
-    info "Building $PACKAGE $source_version without manual or vignettes into $build_dir"
+    trap 'as_user rm -rf -- "$build_dir"' EXIT
+    info "Building $PACKAGE $source_version into $build_dir after dependency checks"
     kit+=(--build "$build_dir")
   fi
-elif [[ "$installed_version" == "$source_version" ]]; then
-  ok "$PACKAGE $installed_version is already installed at the source version; library unchanged"
-  component_effective=cli
 else
-  update_hint="bash install/install.sh --build"
-  if [[ "$(id -u)" != 0 && ! -w "$PREFIX" ]]; then update_hint="sudo $update_hint"; fi
-  if [[ -n "$MINIMUM" ]]; then
-    below_minimum="$(as_user "$rscript_path" --vanilla -e "cat(as.character(utils::compareVersion('$installed_version', '$MINIMUM') < 0))")"
-  else
-    below_minimum=FALSE
-  fi
-  if [[ "$below_minimum" == TRUE ]]; then
-    fail "Installed $PACKAGE $installed_version is older than the CLI minimum $MINIMUM. Update explicitly: $update_hint"
-  fi
-  fail "Installed $PACKAGE $installed_version differs from source $source_version. Update explicitly: $update_hint"
+  info "$PACKAGE $installed_version is present; checking CLI compatibility; library unchanged"
+  component_effective=cli
 fi
 kit+=(--component "$component_effective" --library "$LIBRARY")
 if [[ "$component_effective" != lib ]]; then kit+=(--prefix "$PREFIX"); fi
@@ -236,19 +253,10 @@ if [[ "$component_effective" != lib && "$(id -u)" != 0 ]]; then
   [[ -w "$parent" ]] || fail "$PREFIX is not writable by $USER_NAME; run: sudo bash install/install.sh"
 fi
 
-if [[ "$CHECK" == 1 ]]; then
-  if [[ "$component_effective" != lib ]]; then
-    info "Checking CLI destination and kit through the manager"
-    env R_LIBS="$r_libs" "$rscript_path" --vanilla "$ROOT_DIR/install/cli/manage.R" check "$PREFIX"
-  fi
-  ok "Check passed; nothing was installed"
-  exit 0
-fi
-
 info "Product installer as $USER_NAME: $(printf '%q ' "${kit[@]:3}")"
 as_user "${kit[@]}"
 if [[ "$component_effective" != cli ]]; then
-  installed_version="$(as_user "$rscript_path" --vanilla -e "cat(as.character(utils::packageVersion('$PACKAGE', lib.loc = '$LIBRARY')))")"
+  installed_version="$(as_user "$rscript_path" --vanilla -e 'Args <- commandArgs(TRUE); cat(as.character(utils::packageVersion(Args[1L], lib.loc = Args[2L])))' "$PACKAGE" "$LIBRARY")"
   ok "$PACKAGE $installed_version installed in $LIBRARY"
 fi
 
@@ -259,9 +267,14 @@ if [[ "$component_effective" == lib ]]; then
   ok "CLI stage skipped (--component lib)"
 else
   if [[ "$(id -u)" == 0 ]]; then
-    info "Writing the CLI under $PREFIX as root through the manager"
-    env R_LIBS="$r_libs" "$rscript_path" --vanilla "$ROOT_DIR/install/cli/manage.R" check "$PREFIX"
-    env R_LIBS="$r_libs" "$rscript_path" --vanilla "$ROOT_DIR/install/cli/manage.R" install "$PREFIX"
+    info "Preparing as $USER_NAME; Bash publishes under $PREFIX"
+    (
+      stage_dir="$(as_user mktemp -d "${TMPDIR:-/tmp}/$PACKAGE-cli.XXXXXX")"
+      trap 'as_user rm -rf -- "$stage_dir"' EXIT
+      as_user env R_LIBS="$r_libs" "$rscript_path" --vanilla "$ROOT_DIR/install/cli/manage.R" install "$PREFIX" "$stage_dir"
+      source "$ROOT_DIR/install/cli/publish.sh"
+      publish_cli "$stage_dir" "$PREFIX" "$COMMAND" "$RUNTIME" install "$VERIFY"
+    )
   else
     info "The product installer wrote the CLI under $PREFIX as $USER_NAME"
   fi
@@ -280,19 +293,10 @@ stage 4 "Verification"
 
 if [[ "$component_effective" == lib ]]; then
   as_user "$rscript_path" --vanilla -e \
-    "invisible(loadNamespace('$PACKAGE', lib.loc = '$LIBRARY')); cat('$PACKAGE', as.character(utils::packageVersion('$PACKAGE', lib.loc = '$LIBRARY')), 'loads from', find.package('$PACKAGE', lib.loc = '$LIBRARY'), '\n')"
+    'Args <- commandArgs(TRUE); invisible(loadNamespace(Args[1L], lib.loc = Args[2L])); message(Args[1L], " loads from ", find.package(Args[1L], lib.loc = Args[2L]))' "$PACKAGE" "$LIBRARY"
   ok "Package loads"
 else
-  version_text="$(as_user env R_LIBS="$r_libs" "$PREFIX/bin/$COMMAND" --version 2>&1)" \
-    || fail "$PREFIX/bin/$COMMAND --version failed: $version_text"
-  printf '%s\n' "$version_text" | sed 's/^/       /'
-  ok "$COMMAND answers from $PREFIX with $PACKAGE $installed_version"
-  if [[ -n "$VERIFY" ]]; then
-    verify_text="$(as_user env R_LIBS="$r_libs" "$PREFIX/bin/$COMMAND" "$VERIFY" 2>&1)" \
-      || fail "$PREFIX/bin/$COMMAND $VERIFY failed: $verify_text"
-    printf '%s\n' "$verify_text" | sed 's/^/       /'
-    ok "$COMMAND $VERIFY passed"
-  fi
+  ok "$COMMAND verification passed before committing the CLI transaction"
   case ":$PATH:" in
     *":$PREFIX/bin:"*) ok "$PREFIX/bin is on PATH" ;;
     *) warn "$PREFIX/bin is not on PATH; add: export PATH=\"$PREFIX/bin:\$PATH\"" ;;

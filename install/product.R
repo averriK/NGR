@@ -49,7 +49,7 @@
     "Count <- as.integer(Args[4L])",
     "for (Name in Args[4L + seq_len(Count)]) loadNamespace(Name)",
     "Missing <- setdiff(Args[-seq_len(4L + Count)], getNamespaceExports(Args[2L]))",
-    "if (length(Missing)) stop('Package lacks CLI exports: ', paste(Missing, collapse = ', '))",
+    "if (length(Missing)) stop('Package lacks CLI exports: ', paste(Missing, collapse = ', '), '. The version number does not establish compatibility. Rebuild explicitly with install/install.sh --build (Windows: install/install.ps1 -Build).')",
     "message('Verified installed package: ', Args[2L], ' ', Args[3L], ' at ', Path)"
   )
   .runInstaller(c(file.path(R.home("bin"), "Rscript"), "--vanilla", "-e",
@@ -106,7 +106,7 @@ installProduct <- function(root, args, system = FALSE) {
   if (is.null(Options$component)) Options$component <- "all"
   if (!(Options$component %in% c("all", "lib", "cli"))) stop("Unknown component", call. = FALSE)
   if (is.null(Options$library)) stop("--library is required", call. = FALSE)
-  Library <- .installationPath(Options$library)
+  Library <- .installationPath(Options$library, writable = Options$component != "cli")
   Libraries <- .libPaths()
   Environment <- Sys.getenv("R_LIBS", unset = NA_character_, names = TRUE)
   on.exit({
@@ -143,7 +143,8 @@ installProduct <- function(root, args, system = FALSE) {
     Missing <- Cli$tools[!nzchar(Sys.which(Cli$tools))]
     if (length(Missing)) stop("Required executable(s) unavailable: ", paste(Missing, collapse = ", "), call. = FALSE)
     if (system) {
-      message("CLI destination check and installation deferred to the elevated caller: ", Prefix)
+      .runInstaller(c(Rscript, "--vanilla", Manager, "inspect"), path = tempdir(), args = Prefix)
+      message("CLI publication belongs to the elevated Bash caller: ", Prefix)
     } else {
       .runInstaller(c(Rscript, "--vanilla", Manager, "check"), path = tempdir(), args = Prefix)
     }
@@ -183,7 +184,8 @@ installProduct <- function(root, args, system = FALSE) {
   }
   if (Options$component != "cli") {
     Tools <- c("digest", if (!is.null(Output)) "pkgbuild")
-    installRequirements(path = Package$path, library = Library, packages = Tools, dependencies = NA)
+    installRequirements(path = Package$path, library = Library, packages = Tools,
+                         dependencies = if (length(Options$dependency)) FALSE else NA)
   }
   if (!dir.exists(Library)) stop("R library does not exist: ", Library, call. = FALSE)
   .libPaths(unique(c(Library, Libraries)))
@@ -191,6 +193,9 @@ installProduct <- function(root, args, system = FALSE) {
   if (Options$component != "cli") {
     for (Artifact in head(Artifacts, length(Options$dependency))) {
       installPackage(file = Artifact$file, library = Library)
+    }
+    if (length(Options$dependency)) {
+      installRequirements(path = Package$path, library = Library, packages = character(), dependencies = NA)
     }
     if (!is.null(Output)) {
       FILE <- buildPackage(path = Package$path, output = Output, documents = FALSE)
@@ -233,7 +238,6 @@ installProduct <- function(root, args, system = FALSE) {
                            args = Prefix),
              error = function(e) stop(conditionMessage(e), "\nR package remains installed at ",
                                        file.path(Library, Package$package), call. = FALSE))
-    .runInstaller(file.path(Prefix, "bin", Cli$command), path = tempdir(), args = "--version")
   }
   message("R library for future CLI invocations: ", Library,
           "\nKeep it in the invoking shell's R_LIBS/R_LIBS_USER; no shell profile was changed.")

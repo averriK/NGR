@@ -11,6 +11,12 @@ if (!requireNamespace("jsonlite", quietly = TRUE)) stop("jsonlite is required")
 Files <- list.files(file.path(Args[1L], "cli"), recursive = TRUE,
                     include.dirs = FALSE, no.. = TRUE, all.files = FALSE)
 Files <- Files[Files != "README.md" & !startsWith(Files, "tests/")]
+Requirements <- source(file.path(Args[1L], "install/requirements.R"), local = TRUE)$value
+if (isTRUE(Requirements$launchers)) {
+  Launchers <- paste0(Requirements$command, c("", ".cmd", ".ps1"))
+  Files <- c(Files[!startsWith(Files, "bin/") & !Files %in% Launchers],
+             file.path("bin", list.files(file.path(Args[1L], "install/launchers"))))
+}
 Files <- sort(Files, method = "radix")
 jsonlite::write_json(list(manifest_version = 1L, files = Files),
                      file.path(Args[1L], "install", "manifest.json"),

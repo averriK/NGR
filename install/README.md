@@ -23,7 +23,9 @@ Preserve executable behavior, callers and tests while migrating paths.
 
 `lib/inst/` may contain resources needed by the installed R package. It must
 not contain repository installation, development or release tooling. Neither
-`install/` nor `dev/` is copied into the installed R package or CLI runtime.
+`install/` nor `dev/` enters the R package. The CLI receipt owns a minimal
+removal bundle under its runtime; it contains no package implementation or
+release tooling.
 
 ## Product and component installation
 
@@ -118,6 +120,15 @@ sources remain private; public help links use Pages.
 
 ## NGR migration status
 
-The entries and helpers are implemented in `install/`. Local macOS and Windows
-results and their limits are recorded in `dev/plan/cli-fusion/CLOSURE.md`.
-Scaffold builder migration and complete project acceptance remain in progress.
+The canonical kit preserves the scaffold payload declared by
+`manifest.json`. It generates `scaffold/BUILD_INFO` when the source Git commit
+is known; without Git provenance the record is absent and NGR identifies the
+resources as an unknown, dirty revision.
+Windows path validation passes the complete path list through a temporary
+UTF-8 file, so the number of scaffold files does not enlarge the command line.
+
+The installed-interface check pulls only the declared `bib/apa.csl` resource
+into a temporary project and verifies status and bytes. It does not render,
+contact Netlify or publish. Existing scaffold/release acceptance is separate.
+
+See [USAGE.md](USAGE.md) for the common installation and removal contract.

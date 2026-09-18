@@ -1,5 +1,6 @@
+param([Parameter(Mandatory = $true)][string]$PathList)
 $ErrorActionPreference = 'Stop'
-foreach ($path in $args) {
+foreach ($path in Get-Content -LiteralPath $PathList -Encoding UTF8) {
     try {
         $item = Get-Item -LiteralPath $path -Force
     } catch [System.Management.Automation.ItemNotFoundException] {
