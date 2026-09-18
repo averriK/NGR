@@ -28,14 +28,10 @@
   Path
 }
 
-.runInstaller <- function(command, path, args = character(), system = FALSE) {
+.runInstaller <- function(command, path, args = character()) {
   WD <- getwd()
   on.exit(setwd(WD), add = TRUE)
   setwd(path)
-  if (system) {
-    command <- c("sudo", "-n", "--", "env", paste0("PATH=", Sys.getenv("PATH")),
-                 paste0("R_LIBS=", paste(.libPaths(), collapse = .Platform$path.sep)), command)
-  }
   Status <- system2(command[1L], args = shQuote(c(command[-1L], args)))
   if (Status != 0L) stop("Installer command failed (", Status, "): ",
                          paste(command, collapse = " "), call. = FALSE)
@@ -65,15 +61,17 @@ installProduct <- function(root, args, system = FALSE) {
   if (!length(args) || identical(args, "--help")) {
     writeLines(c(
       "Install the selected R package and available CLI from this repository.",
-      "Usage: bash install/install.sh --library DIR [--prefix DIR] (--tarball FILE | --build DIR)",
-      "       bash install/install.sh --component cli --library DIR --prefix DIR",
+      "Internal kit entry point; users invoke install/install.sh or install/install.ps1.",
+      "Usage: Rscript install/installProduct.R [--system-cli] ROOT",
+      "       [--component all|lib|cli] --library DIR [--prefix DIR]",
+      "       [--tarball FILE | --build DIR] [--dependency FILE ...]",
       "Options:",
       "  --component all|lib|cli  Default: all available components",
-      "  --library DIR          Explicit writable R library",
-      "  --prefix DIR           CLI prefix; required when installing a CLI",
-      "  --tarball FILE         Selected package archive and adjacent .rds record",
-      "  --build DIR            Build from lib/ into this directory, without manual/vignettes",
-      "  --dependency FILE      Additional recorded package archive; repeat in dependency order",
+      "  --library DIR           Target R library, resolved by the caller",
+      "  --prefix DIR            CLI prefix; required when installing a CLI",
+      "  --tarball FILE          Selected package archive and adjacent .rds record",
+      "  --build DIR             Build from lib/ into this directory, without manual/vignettes",
+      "  --dependency FILE       Additional recorded package archive; repeat in dependency order",
       "CLI conflict checks run before R installation. Existing CLI replacement follows its manager.",
       "R and external tools must be available. No Git, publishing or legacy-tool removal."
     ))
@@ -82,6 +80,9 @@ installProduct <- function(root, args, system = FALSE) {
   if (.Platform$OS.type != "windows" && identical(Sys.info()[["effective_user"]], "root")) {
     stop("R installation must run as the invoking user; use install/install.sh", call. = FALSE)
   }
+  # system: an elevated shell (install/install.sh under sudo) runs the manager
+  # and the launcher itself after this unprivileged pass; nothing here may
+  # call sudo, whose credentials do not survive the drop to the invoking user.
   if (system && .Platform$OS.type == "windows") {
     stop("Unix CLI elevation is not a Windows installation mode", call. = FALSE)
   }
@@ -133,13 +134,19 @@ installProduct <- function(root, args, system = FALSE) {
   if (Options$component != "cli" && (is.null(Options$build) == is.null(Options$tarball))) {
     stop("Select exactly one of --tarball or --build", call. = FALSE)
   }
+  Manager <- file.path(root, "install", "cli", "manage.R")
+  Rscript <- file.path(R.home("bin"), "Rscript")
   Prefix <- NULL
   if (!is.null(Cli)) {
     Prefix <- .installationPath(Options$prefix, writable = !system)
-    Missing <- unique(c(Cli$check[1L], Cli$install[1L], Cli$tools, if (system) "sudo"))
-    Missing <- Missing[!nzchar(Sys.which(Missing))]
+    if (!file.exists(Manager)) stop("Missing CLI manager: ", Manager, call. = FALSE)
+    Missing <- Cli$tools[!nzchar(Sys.which(Cli$tools))]
     if (length(Missing)) stop("Required executable(s) unavailable: ", paste(Missing, collapse = ", "), call. = FALSE)
-    .runInstaller(Cli$check, path = file.path(root, "install/cli"), args = Prefix, system = system)
+    if (system) {
+      message("CLI destination check and installation deferred to the elevated caller: ", Prefix)
+    } else {
+      .runInstaller(c(Rscript, "--vanilla", Manager, "check"), path = tempdir(), args = Prefix)
+    }
   }
   Output <- NULL
   if (!is.null(Options$build)) {
@@ -195,6 +202,12 @@ installProduct <- function(root, args, system = FALSE) {
     message("Selected artifact SHA-256: ", Artifact$sha256)
   }
   if (Options$component == "cli") Version <- .packageInfo(file.path(Library, Package$package))$version
+  if (!is.null(Cli) && length(Cli$minimum) &&
+      utils::compareVersion(Version, Cli$minimum) < 0) {
+    stop("The CLI requires ", Package$package, " >= ", Cli$minimum,
+         "; the selected library has ", Version,
+         ". Update with: sudo bash install/install.sh --build", call. = FALSE)
+  }
   Packages <- character()
   if (!is.null(Cli) && length(Cli$packages)) {
     Packages <- names(Cli$packages)
@@ -215,8 +228,9 @@ installProduct <- function(root, args, system = FALSE) {
   }
   .verifyInstallation(package = Package$package, library = Library, version = Version,
                        packages = Packages, exports = Cli$exports)
-  if (!is.null(Cli)) {
-    tryCatch(.runInstaller(Cli$install, path = file.path(root, "install/cli"), args = Prefix, system = system),
+  if (!is.null(Cli) && !system) {
+    tryCatch(.runInstaller(c(Rscript, "--vanilla", Manager, "install"), path = tempdir(),
+                           args = Prefix),
              error = function(e) stop(conditionMessage(e), "\nR package remains installed at ",
                                        file.path(Library, Package$package), call. = FALSE))
     .runInstaller(file.path(Prefix, "bin", Cli$command), path = tempdir(), args = "--version")

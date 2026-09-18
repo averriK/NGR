@@ -11,8 +11,8 @@ Modified or foreign runtime files block replacement or removal.
 Requirements depend on the operation. All commands use `cli/main.R` and the
 installed NGR package. The macOS launcher uses Bash; Windows uses `ngr.cmd`
 from CMD and `ngr.ps1` from PowerShell. Both are installed in the same bin directory.
-The installer needs
-Python >=3.8; DOCX correction needs Python >=3.9. On Windows, staging a project
+DOCX correction needs Python >=3.9 (optional; the installer warns when absent).
+On Windows, staging a project
 with symbolic links also uses Python's standard `os.symlink` operation to preserve
 file/directory links, including dangling links. Rendering needs Quarto and
 its selected engine. Manifest operations use the R package's JSON reader. Publication
@@ -150,18 +150,18 @@ See `ngr render --help` and `ngr deploy --help` for exact arguments.
 The single `cli/main.R` interprets the arguments, prints results and sets the
 exit status; every operation is an exported function of the installed NGR
 package, loaded through normal R library resolution. `--help` and `--version`
-need no library. `cli/VERSION` declares the minimum NGR version: a command that
+need no library. `cli/main.R` declares the minimum NGR version (`MINVERSION`,
+repeated in `install/requirements.R` and `cli/VERSION`): a command that
 needs the library names a missing or older one instead of failing inside it,
-and `ngr --version` reports the CLI, its recorded revision and the library it
-finds. `pull`, `status` and source checks use `NGR::pullResources()`,
+and `ngr --version` reports the CLI version, the package, the library, the
+payload and the recorded build. `pull`, `status` and source checks use `NGR::pullResources()`,
 `NGR::compareResources()` and `NGR::checkResources()`. These APIs also work
 from R without the CLI. `NGR::quartoRender()` owns staging, YAML composition,
 publication provenance, Quarto execution, DOCX repair and output delivery.
 The unchanged Python repair script is distributed inside the R package and
-resolved through `system.file()`. `install/cli/checkRuntime.R` reads the
-`install/requirements.R` contract and `cli/VERSION`, and checks the installed
-version and exports before replacing the CLI; an older package must be updated
-separately.
+resolved through `system.file()`. The canonical family kit in `install/`
+checks the installed version and the declared exports before replacing the
+CLI; an older package must be updated separately.
 `NGR::quartoRenderManifest()` owns batch selection, preflight and execution.
 Static and legacy map entries represent external products; NGR never runs their
 producer scripts. Netlify operations use `netlifyRegister()`, `netlifyDeploy()`,

@@ -1,10 +1,11 @@
 list(
-  command = if (.Platform$OS.type == "windows") "ngr.cmd" else "ngr",
-  packages = character(),
-  tools = c(if (.Platform$OS.type != "windows") "bash", "quarto"),
-  check = c(if (.Platform$OS.type == "windows") "python" else "python3", "install.py", "--check", "--prefix"),
-  install = c(if (.Platform$OS.type == "windows") "python" else "python3", "install.py", "--prefix"),
+  command = "ngr",
+  minimum = "0.4.0",
   exports = c("pullResources", "compareResources", "checkResources", "quartoRender",
               "quartoRenderManifest", "netlifyRegister", "netlifyDeploy", "netlifyDomain", "netlifyUnbind",
-              "netlifyRegisterManifest", "netlifyDeployManifest", "netlifyDomainManifest")
+              "netlifyRegisterManifest", "netlifyDeployManifest", "netlifyDomainManifest"),
+  packages = character(),
+  tools = "quarto",
+  optional = "python3",
+  buildInfo = "scaffold/BUILD_INFO"
 )

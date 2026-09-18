@@ -1,5 +1,6 @@
 local({
   source("../install/package.R", local = TRUE)
-  Args <- .entryArguments("NGR", "output")
+  Package <- .packageInfo(".")
+  Args <- .entryArguments(Package$package, "output")
   buildPackage(path = ".", output = Args[["output"]])
 })

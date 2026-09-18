@@ -3,39 +3,49 @@
 # arguments, prints results and sets the exit status; every operation is an
 # exported NGR function.
 
+# First NGR library version whose exports this CLI calls; install/requirements.R
+# declares the same minimum (the kit test compares both) and cli/VERSION line 2
+# repeats it for install/cli/checkRuntime.R.
+MINVERSION <- "0.4.0"
+
 .failUsage <- function(...) stop(errorCondition(paste0(...), class = "ngrUsageError"))
 
 .splitAliases <- function(value) Filter(nzchar, strsplit(value, ",", fixed = TRUE)[[1L]])
 
-.requiredLibrary <- function(runtime) {
-  AUX <- grep("^requires NGR >= ", readLines(file.path(runtime, "VERSION")), value = TRUE)
-  if (length(AUX) != 1L) stop("VERSION does not declare the required NGR version", call. = FALSE)
-  sub("^requires NGR >= ", "", AUX)
-}
-
-.loadLibrary <- function(runtime) {
-  Required <- .requiredLibrary(runtime)
+.loadLibrary <- function() {
   if (!suppressPackageStartupMessages(requireNamespace("NGR", quietly = TRUE))) {
-    stop("the NGR R package >= ", Required, " is not installed in the active R library", call. = FALSE)
+    stop("the NGR R package >= ", MINVERSION, " is not installed in the active R library", call. = FALSE)
   }
-  if (utils::packageVersion("NGR") < Required) {
-    stop("NGR >= ", Required, " is required; found ", utils::packageVersion("NGR"), " at ",
+  if (utils::packageVersion("NGR") < MINVERSION) {
+    stop("NGR >= ", MINVERSION, " is required; found ", utils::packageVersion("NGR"), " at ",
          find.package("NGR"), call. = FALSE)
   }
   invisible(NULL)
 }
 
 .showVersion <- function(runtime) {
-  cat(readLines(file.path(runtime, "VERSION")), sep = "\n")
-  FILE <- file.path(runtime, "scaffold/BUILD_INFO")
-  if (file.exists(FILE)) {
-    cat(sub("^git_describe=", "revision ", grep("^git_describe=", readLines(FILE), value = TRUE)), sep = "\n")
-  }
+  # Contract D7: the CLI's own version first (cli/VERSION line 1), then the
+  # package, its library, this payload and the recorded build.
+  cat(readLines(file.path(runtime, "VERSION"), n = 1L), "\n", sep = "")
   if (suppressPackageStartupMessages(requireNamespace("NGR", quietly = TRUE))) {
-    cat("NGR ", as.character(utils::packageVersion("NGR")), " at ", find.package("NGR"), "\n", sep = "")
+    cat("package: NGR ", as.character(utils::packageVersion("NGR")), "\n", sep = "")
+    cat("library: ", find.package("NGR"), "\n", sep = "")
   } else {
-    cat("NGR is not installed in the active R library\n")
+    cat("package: NGR is not installed in the active R library\n")
   }
+  File <- sub("^--file=", "", grep("^--file=", commandArgs(), value = TRUE)[[1L]])
+  File <- gsub("~+~", " ", File, fixed = TRUE)
+  # Lexical cleanup only (never resolve symlinks): the verifier compares the
+  # as-installed spelling, and tempfile() paths can carry a double slash.
+  File <- gsub("/{2,}", "/", File)
+  cat("cli: ", File, "\n", sep = "")
+  Build <- "unknown"
+  Info <- file.path(runtime, "BUILD_INFO")
+  if (file.exists(Info)) {
+    Line <- grep("^git_describe=", readLines(Info, warn = FALSE), value = TRUE)
+    if (length(Line)) Build <- sub("^git_describe=", "", Line[[1L]])
+  }
+  cat("build: ", Build, "\n", sep = "")
   0L
 }
 
@@ -112,7 +122,7 @@
     cat("\n")
     return(0L)
   }
-  .loadLibrary(runtime)
+  .loadLibrary()
   Values$from[Values$from == "ngr"] <- file.path(runtime, "scaffold/manifest.json")
   if (Command == "pull") {
     Result <- NGR::pullResources(from = Values$from, source = Values$source, paths = Values$paths,
@@ -180,7 +190,7 @@
   if (!is.null(Values$manifest)) {
     if (!is.null(Input) || !is.null(Values$profile)) stop("--manifest cannot be combined with input/--profile.", call. = FALSE)
     if (length(Extra)) stop("Unsupported arguments with --manifest: ", paste(Extra, collapse = " "), call. = FALSE)
-    .loadLibrary(runtime)
+    .loadLibrary()
     NGR::quartoRenderManifest(Values$manifest, only = .splitAliases(Values$only),
                               except = .splitAliases(Values$except), dryRun = DryRun)
     return(0L)
@@ -188,7 +198,7 @@
   if (DryRun || nzchar(Values$only) || nzchar(Values$except)) {
     stop("--dry-run/--only/--except require --manifest.", call. = FALSE)
   }
-  .loadLibrary(runtime)
+  .loadLibrary()
   NGR::quartoRender(input = Input, profile = Values$profile, args = Extra)
   0L
 }
@@ -245,7 +255,7 @@
     Expected <- 2L
     if (Action == "unbind") Expected <- 1L
     if (length(Positional) != Expected) stop("Missing or extra deploy arguments; see ngr deploy --help.", call. = FALSE)
-    .loadLibrary(runtime)
+    .loadLibrary()
     if (Action == "unbind") NGR::netlifyUnbind(Positional[[1L]])
     if (Action == "init") NGR::netlifyRegister(Positional[[1L]], site = Positional[[2L]], create = Flags$create, account = Values$account)
     if (Action == "upload") NGR::netlifyDeploy(Positional[[1L]], path = Positional[[2L]], prod = Flags$prod)
@@ -253,7 +263,7 @@
     return(0L)
   }
   if (length(Positional)) stop("--manifest cannot be combined with positional arguments.", call. = FALSE)
-  .loadLibrary(runtime)
+  .loadLibrary()
   Only <- .splitAliases(Values$only)
   Except <- .splitAliases(Values$except)
   if (Action == "init") {
@@ -292,6 +302,8 @@ Status <- tryCatch({
   if (!is.na(Path)) Sys.setenv(PATH = Path)
   Sys.unsetenv("NGR_COMMAND_PATH")
   File <- sub("^--file=", "", grep("^--file=", commandArgs(), value = TRUE)[[1L]])
+  # R encodes spaces as ~+~ in --file= on Unix; decode before resolving.
+  File <- gsub("~+~", " ", File, fixed = TRUE)
   .runCommand(commandArgs(trailingOnly = TRUE),
               runtime = dirname(normalizePath(File, winslash = "/", mustWork = TRUE)))
 }, error = function(e) {

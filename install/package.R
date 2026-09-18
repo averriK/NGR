@@ -65,6 +65,8 @@ installRequirements <- function(path, library, packages, dependencies) {
     stop("Restart R before preparing pak >= 0.11.1", call. = FALSE)
   }
   if (!length(find.package("pak", quiet = TRUE)) || utils::packageVersion("pak") < "0.11.1") {
+    # Bootstrap with network access; the installer announces it, never silent.
+    message("[INFO] pak is not available; bootstrapping pak from CRAN into ", library)
     utils::install.packages("pak", lib = library, repos = "https://cloud.r-project.org")
   }
   if (utils::packageVersion("pak") < "0.11.1") {

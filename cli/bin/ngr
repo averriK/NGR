@@ -7,6 +7,13 @@ while [[ -h "$source_path" ]]; do
   source_path="$(readlink "$source_path")"
   [[ "$source_path" == /* ]] || source_path="$script_dir/$source_path"
 done
-runtime_dir="$(cd -P "$(dirname "$source_path")/.." && pwd)"
+bin_dir="$(cd -P "$(dirname "$source_path")" && pwd)"
+# Installed layout: bin/ngr with the payload in libexec/ngr; dev checkout:
+# cli/bin/ngr with main.R beside bin/.
+if [[ -f "$bin_dir/../libexec/ngr/main.R" ]]; then
+  runtime_dir="$(cd -P "$bin_dir/../libexec/ngr" && pwd)"
+else
+  runtime_dir="$(cd -P "$bin_dir/.." && pwd)"
+fi
 export NGR_COMMAND_PATH="$PATH"
 exec Rscript "$runtime_dir/main.R" "$@"
