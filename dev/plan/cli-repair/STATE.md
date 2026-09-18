@@ -18,17 +18,20 @@ Etapa 1 del propietario: que `ngr` reemplace a qrt y psha, reproduciendo sus flu
 NEXT-CLOSED {"evidence":"R1: commit 3f27df4 en origin/main; prueba nueva falla en la línea base con «refusing implicit retarget»; escenario por CLI de ubicación alternativa; workflow pkgdown success.","id":"cli-repair-r1-arbitrary-location-20260917"}
 NEXT-CLOSED {"evidence":"R2: commit a5e9788 en origin/main; claims de _master 33 managed y 4 seed como psha; status --check detecta sha.qmd editado y pull --force lo restaura conservando book.en.qmd. R3 cerrado sin código con el procedimiento de tres pasos verificado. Línea base del manifest del scaffold en dev/SoT/cli-repair/r2-master-ownership/.","id":"cli-repair-r2-master-ownership-20260917"}
 NEXT-CLOSED {"evidence":"R8: commit acd0d00 en origin/main; NGR_RENDER_STAMP y _ngr-output; con librería base y filtro renombrado el oráculo testPublicStampParityAndFailures falla y con el candidato pasa; cover.R y transmittal.R de reports/sha renombrados con líneas base en dev/SoT/cli-repair/r8-qrt-residue/. La adaptación de test_render.py dejaba la referencia en DRAFT con árbol limpio; corregida en 4ca8110.","id":"cli-repair-r8-qrt-residue-20260917"}
+NEXT-CLOSED {"evidence":"R5: commit 8a08f43; BUILD_INFO escrito por el instalador y leído por .recordedRevision; con CLI instalado en prefijo temporal el pie pasa de Rev.— · DRAFT a Rev.d7a7262; reinstalación idempotente y desinstalación completa.","id":"cli-repair-r5-revision-identity-20260917"}
+NEXT-CLOSED {"evidence":"R6: commit d8c9159; parser en cli/main.R llamando solo exports; netlifyRegisterManifest/DeployManifest/DomainManifest exportadas con pruebas propias; versión 0.4.0 y cli/VERSION con requisito; con la librería personal 0.3.11 --help y --version funcionan y status dice «NGR >= 0.4.0 is required; found 0.3.11»; suite del paquete 70 pruebas y cli/tests 36 con qrt de referencia, 0 fallos.","id":"cli-repair-r6-parser-main-20260917"}
 NEXT-CLOSED {"evidence":"R4: commit 277ec75 en origin/main; prueba nueva falla en la línea base; por CLI el primer pull no siembra y avisa, con el id de marcador tampoco, y con project_id AR-TEST0 los 21 artefactos sembrados son idénticos a los de psha init; deploy init --manifest --dry-run resuelve artest0-toc. Manifest del scaffold con plantillas, sha256 5284807730862778; línea base en dev/SoT/cli-repair/r4-artifact-destinations/.","id":"cli-repair-r4-artifact-destinations-20260917"}
 
 ## Effects
-- origin/main = 4ca8110. reports/sha modificado fuera de git: manifest.json (masters y plantillas de destinos), scripts/setup/cover.R y transmittal.R (nombre de la variable del sello).
-- Sin instalación personal ni efectos en Netlify.
+- origin/main = d8c9159 (R6) tras 8a08f43 (R5), 277ec75/4ca8110 (R4), acd0d00 (R8), a5e9788 (R2), 3f27df4 (R1); workflows pkgdown success. reports/sha modificado fuera de git: manifest.json (masters, plantillas de destinos), cover.R y transmittal.R (NGR_RENDER_STAMP).
+- Aceptación real 2026-09-18: copia liviana de AR-S2L1W (scaffold + oq/data); deck sha renderizado por qrt+psha instalados y por ngr (librería 0.4.0 del árbol): 578 archivos, 529 widgets, 598 captions, bytes idénticos tras normalizar el sello y los ids de widgets; único texto distinto, el sello (qrt Rev.1bb0769 · DRAFT; ngr Rev.d8c9159 / — · DRAFT porque reports/ no es repo git). Copias y temporales borrados; scratch en 0 B.
+- Sin instalación personal de ngr ni de NGR 0.4.0; sin efectos en Netlify. Observado: dos NGR instalados en la máquina, 0.3.10 en la librería del sistema (root, 2026-08-18) y 0.3.11 en la personal.
 
 ## Blocker
 none
 
 ## Next
-NEXT-ID {"action":"R5 del plan: admitir bajo SoT la identidad de revisión para fuentes sin git: el instalador del CLI registra commit y estado del checkout junto al scaffold base y .resourceRevision la lee antes de recurrir a git; oráculo: desde un CLI instalado en un prefijo temporal el render de prueba muestra Rev.<7 hex> sin DRAFT cuando el checkout está limpio, donde la línea base muestra Rev.— · DRAFT; suites completas con qrt de referencia.","id":"cli-repair-r5-revision-identity-20260917"}
+NEXT-ID {"action":"R7 del plan (instalador): esperar la decisión del propietario sobre el kit install/ copiado en 7 repos (un solo dueño o copia propia de NGR) y, con ella, admitir bajo SoT: mensaje claro sin Rscript, modo asegurar (R presente, librería instalada o instalarla, launchers .sh/.cmd/.ps1), sin instalar en la librería de root; oráculo: install.sh sin R en PATH explica y sale 1; instalación completa en prefijo temporal deja ngr --version con revisión y librería 0.4.0.","id":"cli-repair-r7-installer-20260918"}
 
 ## Status
 ACTIVE

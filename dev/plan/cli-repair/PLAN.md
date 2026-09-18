@@ -109,6 +109,10 @@ prueba. Fallan R1–R5.
   sus pruebas y la documentación escrita por la fusión. Ningún proyecto real usa todavía `ngr`, así que el cambio de nombre no deja filtros viejos huérfanos.
 - Oráculo: el sello sigue llegando al pie de página del render de prueba; suites completas.
 
+## Aceptación real (2026-09-18)
+
+Deck `sha` de AR-S2L1W en copia liviana, renderizado por qrt+psha instalados y por `ngr`: 578 archivos, 529 widgets, 598 captions, bytes idénticos tras normalizar el sello y los ids de widgets. Único texto distinto: el sello de revisión (`—` para `reports/sha` porque no es repo git).
+
 ## Etapas (palabra del propietario)
 
 1. `ngr` reemplaza a qrt y a psha: R1–R8 de este plan.
@@ -116,7 +120,7 @@ prueba. Fallan R1–R5.
 
 ## Orden
 
-R1 (hecho, `3f27df4`) → R2 (integrado) → R8 → R4 → R5 → R6 → R7. Uno por vez; commit y push solo con autorización explícita.
+R1 `3f27df4` → R2 `a5e9788` → R8 `acd0d00` → R4 `277ec75` → R5 `8a08f43` → R6 `d8c9159` (hechos) → R7 (pendiente de la decisión de familia sobre `install/`). Commit y push por candidato aceptado, autorizados el 2026-09-17 («si, permiso permanente para commit y push. avanza»).
 
 ## Familia
 
