@@ -123,4 +123,4 @@ Ninguno para C1: el kit canónico quedó cerrado por el mantenedor (a13-kit-impl
 NEXT-ID {"action":"Cuando el propietario archive la corrida sudo de C2 en NGR: verificar /usr/local/bin/ngr --version (líneas D7 con versión propia del CLI), recibo esquema 4 en /usr/local/libexec/ngr/install.json, BUILD_INFO junto a libexec/ngr/scaffold/manifest.json, y un ngr pull --from ngr en un proyecto scratch; registrar el resultado.","id":"cli-repair-c2-verify-usr-local-20260918"}
 
 ## Status
-ACTIVE — C1/R7 hecho (5878651); a la espera de C2, corrida sudo del propietario en NGR.
+ACTIVE — C1/R7 hecho (5878651, 6c33c1c); a la espera de C2, corrida sudo del propietario en NGR, que además espera el cierre de la revisión del instalador (oráculo del kit fallando en el árbol sin commitear del revisor; ver NOTICE-SUPERVISOR-INSTALLER-20260918.md). Relevo completo para el revisor: HANDOFF-SUPERVISOR-20260918.md (misma carpeta).
