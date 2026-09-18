@@ -5,7 +5,6 @@ release checks, submission and publication.
 
 ```sh
 sudo bash install/install.sh
-sudo bash install/install.sh --build
 sudo bash install/install.sh --component cli
 bash install/install.sh --component lib --library "/path/to/R/library"
 bash install/install.sh --check --prefix "/writable/test/prefix"
@@ -22,19 +21,19 @@ If absent, the diagnostic gives its installation command; `--check` never
 installs it. The selected library defaults to R's `R_LIBS_USER`;
 `--library` overrides it while retaining the existing library search chain.
 
-The default installs a missing package from `lib/`, or retains an installed
-package that satisfies the CLI's minimum version, loads and exports. An equal
-version string alone is insufficient. An incompatible existing package fails
-with an explicit rebuild instruction. `--build` replaces it from source;
-`--tarball FILE` selects an archive plus its adjacent `.rds` record.
+The default always builds and installs the package from this checkout's `lib/`
+together with its CLI, even if the installed version number is equal or newer.
+No minimum package version selects or retains an older installation. The
+installed package is checked for its selected artifact version, loading path
+and required CLI exports. `--tarball FILE` explicitly selects an archive plus
+its adjacent `.rds` record instead of building the checkout.
 Repeated `--dependency FILE` installs recorded private dependency artifacts
 in the supplied order before resolving the product's remaining dependencies.
-It requires a build/tarball when the product is already installed.
 
-`--component lib` does not write the CLI. `--component cli` installs no R
-packages and requires all CLI dependencies already visible. When a package is
-retained, the default also checks existing CLI dependencies without updating
-R packages. A non-default library must remain visible to subsequent commands
+`--component lib` always installs the selected package and does not write the
+CLI. `--component cli` is the explicit exception: it installs no R packages and
+requires the product and all CLI dependencies already visible. A non-default
+library must remain visible to subsequent commands
 through the user's normal R environment; no shell profile is edited.
 Source builds omit manuals and vignettes; `build.R` remains the separate
 documented maintenance operation.
@@ -43,12 +42,11 @@ On Windows, use native PowerShell without elevation:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File install\install.ps1
-powershell -ExecutionPolicy Bypass -File install\install.ps1 -Build
 powershell -ExecutionPolicy Bypass -File install\install.ps1 -Component cli -Library "C:\R library" -Prefix "C:\Tools\product" -NoPath
 ```
 
 Equivalent options are `-Yes`, `-Check`, `-Library`, `-Dependency`,
-`-Tarball`, `-Build`, `-Component` and `-Prefix`. The default prefix is
+`-Tarball`, `-Component` and `-Prefix`. The default prefix is
 `%LOCALAPPDATA%\Programs\<package>`. `-NoPath` prevents a user PATH change.
 Removal only removes a PATH entry that this installer recorded adding.
 
@@ -84,3 +82,7 @@ under `install/launchers/`; the manager copies them and records its chosen
 Rscript in `RSCRIPT`. Regenerate the payload manifest with
 `bash install/update-manifest.sh`. Do not edit package or CLI APIs to adapt
 an installer.
+
+The public wrappers no longer accept `--build`/`-Build`: source installation is
+the default. The internal R entry still receives `--build DIR` from the wrapper
+to locate its disposable build output; it is not a user mode or retention gate.

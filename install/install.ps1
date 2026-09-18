@@ -1,11 +1,11 @@
 #Requires -Version 5.1
 # Family installer for Windows: detects R (R is never installed by this
-# script), preserves a compatible package in the selected R library,
+# script), installs the checkout package in the selected R library,
 # and installs the command (CMD and PowerShell
 # launchers) under the prefix. Run in PowerShell from the repository:
 #
 #   powershell -ExecutionPolicy Bypass -File install\install.ps1 [-Yes] [-Prefix DIR]
-#       [-Tarball FILE | -Build] [-Component all|lib|cli] [-NoPath]
+#       [-Tarball FILE] [-Component all|lib|cli] [-NoPath]
 #
 # The prefix defaults to %LOCALAPPDATA%\Programs\<product>, which needs no
 # elevation; its bin directory is added to the user PATH unless -NoPath.
@@ -19,7 +19,6 @@ param(
     [string[]]$Dependency = @(),
     [switch]$Check,
     [string]$Tarball = '',
-    [switch]$Build,
     [ValidateSet('all', 'lib', 'cli')][string]$Component = 'all',
     [switch]$NoPath
 )
@@ -94,7 +93,7 @@ File <- file.path(Args[1L], ''install/requirements.R'')
 if (file.exists(File)) {
   Cli <- source(File, local = TRUE)$value
   Field <- function(x) if (length(x)) x else ''''
-  cat(Field(Cli$command), Field(Cli$runtime), Field(Cli$minimum),
+  cat(Field(Cli$command), Field(Cli$runtime),
       paste(Cli$tools, collapse = '' ''), paste(Cli$optional, collapse = '' ''),
       Field(Cli$verify), sep = ''\n'')
 }' $Root) | ForEach-Object { $_ }
@@ -102,10 +101,9 @@ $PackageName = $facts[0]
 $sourceVersion = $facts[1]
 $Command = $facts[2]
 $Runtime = $facts[3]; if (-not $Runtime) { $Runtime = $Command }
-$Minimum = $facts[4]
-$Tools = $facts[5]
-$Optional = $facts[6]
-$Verify = $facts[7]
+$Tools = $facts[4]
+$Optional = $facts[5]
+$Verify = $facts[6]
 if (-not $PackageName -or -not $sourceVersion) { Stop-Install 'lib\DESCRIPTION must identify Package and Version' }
 if ($Component -ne 'lib' -and -not $Command) { Stop-Install 'This product has no implemented CLI (install\requirements.R); use -Component lib' }
 if ($Component -ne 'lib' -and $Tools) {
@@ -124,8 +122,7 @@ Write-Ok "R library: $Library"
 if (-not $Prefix) { $Prefix = Join-Path $env:LOCALAPPDATA "Programs\$PackageName" }
 if ($Prefix -notmatch '^[A-Za-z]:[\\/]|^\\\\') { $Prefix = Join-Path (Get-Location).Path $Prefix }
 if ($Tarball -and $Tarball -notmatch '^[A-Za-z]:[\\/]|^\\\\') { $Tarball = Join-Path (Get-Location).Path $Tarball }
-if ($Tarball -and $Build) { Stop-Install 'Select exactly one of -Tarball or -Build' }
-if ($Component -eq 'cli' -and ($Tarball -or $Build -or $Dependency.Count)) { Stop-Install '-Component cli cannot install R archives' }
+if ($Component -eq 'cli' -and ($Tarball -or $Dependency.Count)) { Stop-Install '-Component cli cannot install R archives' }
 
 Write-Host ''
 Write-Host "$PackageName installation"
@@ -154,24 +151,16 @@ $installedVersion = (& $Rscript --vanilla -e 'Args <- commandArgs(TRUE); if (dir
 if ($LASTEXITCODE -ne 0) { Stop-Install 'Cannot read the installed package metadata' }
 if ($installedVersion) { Write-Info "Installed: $PackageName $installedVersion in $Library" } else { Write-Info "$PackageName is not installed in $Library" }
 Write-Info "Source:    $PackageName $sourceVersion"
-if ($installedVersion -and $Component -eq 'lib' -and -not $Tarball -and -not $Build) {
-    if ($Dependency.Count) { Stop-Install '-Dependency requires an explicit -Build or -Tarball' }
-    Invoke-Logged $Rscript @('--vanilla', '-e', 'Args <- commandArgs(TRUE); invisible(loadNamespace(Args[1L], lib.loc = Args[2L]))', $PackageName, $Library)
-    Write-Ok "$PackageName $installedVersion loads; library unchanged; CLI skipped"
-    exit 0
-}
-if ($Dependency.Count -and $installedVersion -and -not $Tarball -and -not $Build) { Stop-Install '-Dependency requires an explicit -Build or -Tarball' }
 
 # The product installer (install\installProduct.R) owns every check and
 # installation: artifact identity, dependencies, CLI tools and packages,
 # exports, library shadowing. This script sequences it.
 $kit = @('--vanilla', (Join-Path $Root 'install\installProduct.R'), $Root)
 foreach ($archive in $Dependency) { $kit += @('--dependency', $archive) }
-$componentEffective = $Component
 if ($Component -eq 'cli') {
     if (-not $installedVersion) { Stop-Install "-Component cli needs $PackageName installed in $Library" }
     Write-Ok 'Library stage skipped (-Component cli)'
-} elseif (-not $installedVersion -or $Tarball -or $Build) {
+} else {
     if ($installedVersion) { Confirm-Step "Replace $PackageName $installedVersion in $Library with the selected package?" }
     if ($Tarball) {
         if (-not (Test-Path -LiteralPath $Tarball) -or -not (Test-Path -LiteralPath "$Tarball.rds")) { Stop-Install "Package archive and its .rds record are required: $Tarball" }
@@ -181,15 +170,12 @@ if ($Component -eq 'cli') {
         Write-Info "Building $PackageName $sourceVersion without manual or vignettes into $buildDir"
         $kit += @('--build', $buildDir)
     }
-} else {
-    Write-Info "$PackageName $installedVersion is present; checking CLI compatibility; library unchanged"
-    $componentEffective = 'cli'
 }
-$kit += @('--component', $componentEffective, '--library', $Library)
-if ($componentEffective -ne 'lib') { $kit += @('--prefix', $Prefix) }
+$kit += @('--component', $Component, '--library', $Library)
+if ($Component -ne 'lib') { $kit += @('--prefix', $Prefix) }
 $runtimeDir = Join-Path $Prefix "libexec\$Runtime"
 $receipt = Join-Path $runtimeDir 'install.json'
-if ($componentEffective -ne 'lib' -and (Test-Path -LiteralPath $receipt)) {
+if ($Component -ne 'lib' -and (Test-Path -LiteralPath $receipt)) {
     Write-Info "Existing $PackageName CLI recorded at $receipt; it will be replaced through its receipt"
     Confirm-Step "Replace the $Command CLI under $Prefix?"
 }
@@ -197,7 +183,7 @@ Write-Info 'Product installer: checks, dependencies, package and CLI'
 try { Invoke-Logged $Rscript $kit } finally {
     if ($buildDir -and (Test-Path -LiteralPath $buildDir)) { Remove-Item -LiteralPath $buildDir -Recurse -Force }
 }
-if ($componentEffective -ne 'cli') {
+if ($Component -ne 'cli') {
     $installedVersion = (& $Rscript --vanilla -e 'Args <- commandArgs(TRUE); cat(as.character(utils::packageVersion(Args[1L], lib.loc = Args[2L])))' $PackageName $Library) -join ''
     if ($LASTEXITCODE -ne 0) { Stop-Install 'Cannot read the installed package metadata' }
     Write-Ok "$PackageName $installedVersion installed in $Library"
@@ -205,7 +191,7 @@ if ($componentEffective -ne 'cli') {
 
 # ------------------------------------------------------------------ stage 3
 Write-Stage 3 'Command-line interface'
-if ($componentEffective -eq 'lib') {
+if ($Component -eq 'lib') {
     Write-Ok 'CLI stage skipped (-Component lib)'
 } else {
     $listed = & $Rscript --vanilla -e 'R <- jsonlite::read_json(commandArgs(TRUE)[1L], simplifyVector = TRUE); cat(file.path(commandArgs(TRUE)[2L], R$file), sep = ''\n'')' "$receipt" "$Prefix/"
@@ -218,7 +204,7 @@ if ($componentEffective -eq 'lib') {
 
 # ------------------------------------------------------------------ stage 4
 Write-Stage 4 'Verification'
-if ($componentEffective -eq 'lib') {
+if ($Component -eq 'lib') {
     Invoke-Logged $Rscript @('--vanilla', '-e', 'Args <- commandArgs(TRUE); invisible(loadNamespace(Args[1L], lib.loc = Args[2L])); message(Args[1L], '' loads from '', find.package(Args[1L], lib.loc = Args[2L]))', $PackageName, $Library)
     Write-Ok 'Package loads'
 } else {
@@ -250,7 +236,7 @@ if ($componentEffective -eq 'lib') {
 # ------------------------------------------------------------------ stage 5
 Write-Stage 5 'Summary'
 Write-Ok "$PackageName $installedVersion in $Library"
-if ($componentEffective -ne 'lib') {
+if ($Component -ne 'lib') {
     Write-Ok "$(Join-Path $Prefix "bin\$Command.cmd"), receipt $receipt"
     Write-Host ''
     Write-Host "Usage: $Command --help, $Command --version"

@@ -49,7 +49,7 @@
     "Count <- as.integer(Args[4L])",
     "for (Name in Args[4L + seq_len(Count)]) loadNamespace(Name)",
     "Missing <- setdiff(Args[-seq_len(4L + Count)], getNamespaceExports(Args[2L]))",
-    "if (length(Missing)) stop('Package lacks CLI exports: ', paste(Missing, collapse = ', '), '. The version number does not establish compatibility. Rebuild explicitly with install/install.sh --build (Windows: install/install.ps1 -Build).')",
+    "if (length(Missing)) stop('Package lacks CLI exports: ', paste(Missing, collapse = ', '), '. Install the complete product from its checkout with install/install.sh (Windows: install/install.ps1).')",
     "message('Verified installed package: ', Args[2L], ' ', Args[3L], ' at ', Path)"
   )
   .runInstaller(c(file.path(R.home("bin"), "Rscript"), "--vanilla", "-e",
@@ -207,12 +207,6 @@ installProduct <- function(root, args, system = FALSE) {
     message("Selected artifact SHA-256: ", Artifact$sha256)
   }
   if (Options$component == "cli") Version <- .packageInfo(file.path(Library, Package$package))$version
-  if (!is.null(Cli) && length(Cli$minimum) &&
-      utils::compareVersion(Version, Cli$minimum) < 0) {
-    stop("The CLI requires ", Package$package, " >= ", Cli$minimum,
-         "; the selected library has ", Version,
-         ". Update with: sudo bash install/install.sh --build", call. = FALSE)
-  }
   Packages <- character()
   if (!is.null(Cli) && length(Cli$packages)) {
     Packages <- names(Cli$packages)

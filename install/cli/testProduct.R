@@ -105,7 +105,7 @@ runChecks <- function(root, library) {
     stopifnot(identical(jsonlite::fromJSON(paste(OUT, collapse = "\n"))$data, "Installer á's title"))
     runCommand(Launcher, "bogus", status = 2L)
   }
-  runEntry("install", character())
+  runEntry("install", if (Windows) c("-Component", "cli") else c("--component", "cli"))
   stopifnot(identical(Hash, tools::md5sum(Files)))
   Foreign <- file.path(Prefix, "libexec", Runtime, "foreign.txt")
   writeLines("keep", Foreign)

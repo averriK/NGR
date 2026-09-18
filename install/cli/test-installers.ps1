@@ -6,6 +6,8 @@ $Root = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).ProviderPa
 $Rscript = (Get-Command Rscript.exe -CommandType Application -ErrorAction Stop).Source
 & $Rscript --vanilla (Join-Path $PSScriptRoot 'testManager.R') $Root
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& $Rscript --vanilla (Join-Path $PSScriptRoot 'testWrapper.R') (Join-Path $Root 'install')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 if ($Library) {
     & $Rscript --vanilla (Join-Path $PSScriptRoot 'testProduct.R') $Root $Library
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

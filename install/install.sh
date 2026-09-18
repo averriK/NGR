@@ -1,26 +1,25 @@
 #!/usr/bin/env bash
 # Family installer for macOS and Linux: detects R (R is never installed by
-# this script), preserves a compatible installed R package and installs
+# this script), installs the checkout R package and installs
 # the command and its launchers
 # under the prefix through the receipt-keeping writer install/cli/manage.R.
 #
 # Usage:
 #   sudo bash install/install.sh [--yes] [--check] [--prefix DIR]
 #                                [--library DIR] [--dependency FILE ...]
-#                                [--tarball FILE | --build] [--component all|lib|cli]
+#                                [--tarball FILE] [--component all|lib|cli]
 #
 # The prefix defaults to /usr/local, which needs sudo. The R library is always
 # the invoking user's default R library (R_LIBS_USER), unless --library is set.
 # R work always runs as the invoking user, never as
 # root; only the prefix files are written as root. Without --tarball the
-# missing package is built from lib/. Nothing is written to a log file.
+# package is always built from lib/. Nothing is written to a log file.
 set -euo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 PREFIX=/usr/local
 LIBRARY=""
 TARBALL=""
-BUILD=0
 DEPENDENCIES=()
 COMPONENT=all
 YES=0
@@ -40,7 +39,6 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     -y|--yes) YES=1; shift ;;
     --check) CHECK=1; shift ;;
-    --build) BUILD=1; shift ;;
     --prefix) [[ $# -ge 2 ]] || fail "--prefix needs a directory"; PREFIX="$2"; shift 2 ;;
     --library) [[ $# -ge 2 ]] || fail "--library needs a directory"; LIBRARY="$2"; shift 2 ;;
     --dependency) [[ $# -ge 2 ]] || fail "--dependency needs an archive"; DEPENDENCIES+=("$2"); shift 2 ;;
@@ -53,8 +51,7 @@ done
 case "$COMPONENT" in all|lib|cli) ;; *) fail "Unknown component: $COMPONENT" ;; esac
 [[ "$PREFIX" == /* ]] || PREFIX="$PWD/$PREFIX"
 [[ -z "$TARBALL" || "$TARBALL" == /* ]] || TARBALL="$PWD/$TARBALL"
-if [[ -n "$TARBALL" && "$BUILD" == 1 ]]; then fail "Select exactly one of --tarball or --build"; fi
-if [[ "$COMPONENT" == cli && ( -n "$TARBALL" || "$BUILD" == 1 || "${#DEPENDENCIES[@]}" -gt 0 ) ]]; then
+if [[ "$COMPONENT" == cli && ( -n "$TARBALL" || "${#DEPENDENCIES[@]}" -gt 0 ) ]]; then
   fail "--component cli cannot install R archives"
 fi
 
@@ -104,7 +101,6 @@ fi
 PACKAGE=""
 COMMAND=""
 RUNTIME=""
-MINIMUM=""
 VERIFY=""
 facts="$(as_user "$rscript_path" --vanilla -e '
 Args <- commandArgs(TRUE)
@@ -114,7 +110,7 @@ File <- file.path(Args[1L], "install/requirements.R")
 if (file.exists(File)) {
   Cli <- source(File, local = TRUE)$value
   Field <- function(x) if (length(x)) x else ""
-  cat(Field(Cli$command), Field(Cli$runtime), Field(Cli$minimum),
+  cat(Field(Cli$command), Field(Cli$runtime),
       paste(Cli$tools, collapse = " "), paste(Cli$optional, collapse = " "),
       Field(Cli$verify), sep = "\n")
 }' "$ROOT_DIR")"
@@ -122,10 +118,9 @@ PACKAGE="$(sed -n 1p <<<"$facts")"
 source_version="$(sed -n 2p <<<"$facts")"
 COMMAND="$(sed -n 3p <<<"$facts")"
 RUNTIME="$(sed -n 4p <<<"$facts")"
-MINIMUM="$(sed -n 5p <<<"$facts")"
-TOOLS="$(sed -n 6p <<<"$facts")"
-OPTIONAL="$(sed -n 7p <<<"$facts")"
-VERIFY="$(sed -n 8p <<<"$facts")"
+TOOLS="$(sed -n 5p <<<"$facts")"
+OPTIONAL="$(sed -n 6p <<<"$facts")"
+VERIFY="$(sed -n 7p <<<"$facts")"
 [[ -n "$RUNTIME" ]] || RUNTIME="$COMMAND"
 [[ -n "$PACKAGE" && -n "$source_version" ]] || fail "lib/DESCRIPTION must identify Package and Version"
 if [[ "$COMPONENT" != lib && -z "$COMMAND" ]]; then
@@ -196,16 +191,6 @@ else
   info "$PACKAGE is not installed in $LIBRARY"
 fi
 info "Source:    $PACKAGE $source_version"
-if [[ -n "$installed_version" && "$COMPONENT" == lib && -z "$TARBALL" && "$BUILD" == 0 ]]; then
-  [[ "${#DEPENDENCIES[@]}" == 0 ]] || fail "--dependency requires an explicit --build or --tarball"
-  as_user env R_LIBS="$r_libs" "$rscript_path" --vanilla -e \
-    'Args <- commandArgs(TRUE); invisible(loadNamespace(Args[1L], lib.loc = Args[2L]))' "$PACKAGE" "$LIBRARY"
-  ok "$PACKAGE $installed_version loads; library unchanged; CLI skipped"
-  exit 0
-fi
-if [[ "${#DEPENDENCIES[@]}" -gt 0 && -n "$installed_version" && -z "$TARBALL" && "$BUILD" == 0 ]]; then
-  fail "--dependency requires an explicit --build or --tarball when the product is installed"
-fi
 
 # The product installer (install/installProduct.R) owns every R-side check and
 # installation: artifact identity, dependencies, CLI tools and packages,
@@ -215,11 +200,10 @@ kit=("$rscript_path" --vanilla "$ROOT_DIR/install/installProduct.R")
 if [[ "$(id -u)" == 0 ]]; then kit+=(--system-cli); fi
 kit+=("$ROOT_DIR")
 for archive in "${DEPENDENCIES[@]+"${DEPENDENCIES[@]}"}"; do kit+=(--dependency "$archive"); done
-component_effective="$COMPONENT"
 if [[ "$COMPONENT" == cli ]]; then
   [[ -n "$installed_version" ]] || fail "--component cli needs $PACKAGE installed in $LIBRARY"
   ok "Library stage skipped (--component cli)"
-elif [[ -z "$installed_version" || -n "$TARBALL" || "$BUILD" == 1 ]]; then
+else
   if [[ -n "$installed_version" && "$YES" -ne 1 ]]; then
     read -r -p "Replace $PACKAGE $installed_version in $LIBRARY with the selected package? [y/N] " confirm
     case "$confirm" in [yY]) ;; *) printf 'Aborted by user.\n'; exit 0 ;; esac
@@ -234,20 +218,17 @@ elif [[ -z "$installed_version" || -n "$TARBALL" || "$BUILD" == 1 ]]; then
     info "Building $PACKAGE $source_version into $build_dir after dependency checks"
     kit+=(--build "$build_dir")
   fi
-else
-  info "$PACKAGE $installed_version is present; checking CLI compatibility; library unchanged"
-  component_effective=cli
 fi
-kit+=(--component "$component_effective" --library "$LIBRARY")
-if [[ "$component_effective" != lib ]]; then kit+=(--prefix "$PREFIX"); fi
+kit+=(--component "$COMPONENT" --library "$LIBRARY")
+if [[ "$COMPONENT" != lib ]]; then kit+=(--prefix "$PREFIX"); fi
 
 receipt="$PREFIX/libexec/$RUNTIME/install.json"
-if [[ "$component_effective" != lib && -f "$receipt" && "$YES" -ne 1 ]]; then
+if [[ "$COMPONENT" != lib && -f "$receipt" && "$YES" -ne 1 ]]; then
   info "Existing $PACKAGE CLI recorded at $receipt; it will be replaced through its receipt"
   read -r -p "Replace the $COMMAND CLI under $PREFIX? [y/N] " confirm
   case "$confirm" in [yY]) ;; *) printf 'Aborted by user.\n'; exit 0 ;; esac
 fi
-if [[ "$component_effective" != lib && "$(id -u)" != 0 ]]; then
+if [[ "$COMPONENT" != lib && "$(id -u)" != 0 ]]; then
   parent="$PREFIX"
   while [[ ! -e "$parent" && "$parent" != / ]]; do parent="${parent%/*}"; done
   [[ -w "$parent" ]] || fail "$PREFIX is not writable by $USER_NAME; run: sudo bash install/install.sh"
@@ -255,7 +236,7 @@ fi
 
 info "Product installer as $USER_NAME: $(printf '%q ' "${kit[@]:3}")"
 as_user "${kit[@]}"
-if [[ "$component_effective" != cli ]]; then
+if [[ "$COMPONENT" != cli ]]; then
   installed_version="$(as_user "$rscript_path" --vanilla -e 'Args <- commandArgs(TRUE); cat(as.character(utils::packageVersion(Args[1L], lib.loc = Args[2L])))' "$PACKAGE" "$LIBRARY")"
   ok "$PACKAGE $installed_version installed in $LIBRARY"
 fi
@@ -263,7 +244,7 @@ fi
 # ---------------------------------------------------------------- stage 3
 stage 3 "Command-line interface"
 
-if [[ "$component_effective" == lib ]]; then
+if [[ "$COMPONENT" == lib ]]; then
   ok "CLI stage skipped (--component lib)"
 else
   if [[ "$(id -u)" == 0 ]]; then
@@ -291,7 +272,7 @@ fi
 # ---------------------------------------------------------------- stage 4
 stage 4 "Verification"
 
-if [[ "$component_effective" == lib ]]; then
+if [[ "$COMPONENT" == lib ]]; then
   as_user "$rscript_path" --vanilla -e \
     'Args <- commandArgs(TRUE); invisible(loadNamespace(Args[1L], lib.loc = Args[2L])); message(Args[1L], " loads from ", find.package(Args[1L], lib.loc = Args[2L]))' "$PACKAGE" "$LIBRARY"
   ok "Package loads"
@@ -310,11 +291,11 @@ fi
 # ---------------------------------------------------------------- stage 5
 stage 5 "Summary"
 ok "$PACKAGE $installed_version in $LIBRARY"
-if [[ "$component_effective" != lib ]]; then
+if [[ "$COMPONENT" != lib ]]; then
   ok "$PREFIX/bin/$COMMAND, receipt $receipt"
 fi
 printf '\n'
-if [[ "$component_effective" != lib ]]; then
+if [[ "$COMPONENT" != lib ]]; then
   printf 'Usage: %s --help, %s --version\n' "$COMMAND" "$COMMAND"
   printf 'Remove the CLI: bash install/uninstall.sh [--prefix DIR]\n'
 fi

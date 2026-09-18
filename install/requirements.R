@@ -1,6 +1,5 @@
 list(
   command = "ngr",
-  minimum = "0.4.0",
   exports = c("pullResources", "compareResources", "checkResources", "quartoRender",
               "quartoRenderManifest", "netlifyRegister", "netlifyDeploy", "netlifyDomain", "netlifyUnbind",
               "netlifyRegisterManifest", "netlifyDeployManifest", "netlifyDomainManifest"),
