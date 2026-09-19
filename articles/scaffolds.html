@@ -243,15 +243,16 @@ master that composes them.</p>
 <p>A project created with the earlier tools keeps its artifacts and
 publication destinations in <code>qrt.manifest.json</code>, together
 with a <code>scaffolds</code> block of per-file receipts written by
-those tools. NGR does not read that file name. Work on a preserved copy
-first; the earlier tools stop recognizing the project once the file is
-renamed.</p>
+those tools. NGR does not read that file name and never writes to it.
+Work on a preserved copy first. The two manifests coexist during
+verification: the earlier tools keep operating the project until their
+file is removed in a later commit.</p>
 <ol style="list-style-type: decimal">
-<li>Rename <code>qrt.manifest.json</code> to
-<code>manifest.json</code>.</li>
-<li>Delete its <code>scaffolds</code> block. Those receipts describe
-copies made by the earlier tool; the next step records new ones for
-every file. Keep <code>artifacts</code> unchanged, including
+<li>Copy <code>qrt.manifest.json</code> to <code>manifest.json</code>,
+keeping the original in place.</li>
+<li>Delete the copy’s <code>scaffolds</code> block. Those receipts
+describe copies made by the earlier tool; the next step records new ones
+for every file. Keep <code>artifacts</code> unchanged, including
 <code>siteSlug</code> and <code>domain</code>.</li>
 <li>Incorporate the sources, allowing managed files to be replaced:</li>
 </ol>
@@ -263,8 +264,9 @@ source. Parameters, <code>_local/</code> and the four book and DOCX
 masters stay as the project has them. The scaffold’s manifest readers
 (<code>scripts/setup/toc.R</code>, <code>transmittal.R</code>,
 <code>utils.R</code>) arrive with <code>scripts/</code> and read
-<code>manifest.json</code>. Render the project’s masters before relying
-on the result.</p>
+<code>manifest.json</code>. Render the project’s masters and compare
+against the earlier tools’ output; once everything checks out, remove
+<code>qrt.manifest.json</code> in a separate commit of the project.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -134,13 +134,16 @@ master that composes them.
 A project created with the earlier tools keeps its artifacts and
 publication destinations in `qrt.manifest.json`, together with a
 `scaffolds` block of per-file receipts written by those tools. NGR does
-not read that file name. Work on a preserved copy first; the earlier
-tools stop recognizing the project once the file is renamed.
+not read that file name and never writes to it. Work on a preserved copy
+first. The two manifests coexist during verification: the earlier tools
+keep operating the project until their file is removed in a later
+commit.
 
-1.  Rename `qrt.manifest.json` to `manifest.json`.
-2.  Delete its `scaffolds` block. Those receipts describe copies made by
-    the earlier tool; the next step records new ones for every file.
-    Keep `artifacts` unchanged, including `siteSlug` and `domain`.
+1.  Copy `qrt.manifest.json` to `manifest.json`, keeping the original in
+    place.
+2.  Delete the copy’s `scaffolds` block. Those receipts describe copies
+    made by the earlier tool; the next step records new ones for every
+    file. Keep `artifacts` unchanged, including `siteSlug` and `domain`.
 3.  Incorporate the sources, allowing managed files to be replaced:
 
 ``` sh
@@ -153,5 +156,6 @@ Name destination folders after the manifests to enroll only part of a
 source. Parameters, `_local/` and the four book and DOCX masters stay as
 the project has them. The scaffold’s manifest readers
 (`scripts/setup/toc.R`, `transmittal.R`, `utils.R`) arrive with
-`scripts/` and read `manifest.json`. Render the project’s masters before
-relying on the result.
+`scripts/` and read `manifest.json`. Render the project’s masters and
+compare against the earlier tools’ output; once everything checks out,
+remove `qrt.manifest.json` in a separate commit of the project.
