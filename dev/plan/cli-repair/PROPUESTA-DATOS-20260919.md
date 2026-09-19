@@ -1,8 +1,9 @@
-# Propuesta v2: cómo el informe SHA encuentra datos y parámetros
+# Propuesta v3: cómo el informe SHA encuentra datos y parámetros
 
 2026-09-19, sesión NGR-V2. Revisión de la v1 con las respuestas de oqt-V2
 (`libraries/hazard/dev/migration/RESPUESTA-NGR-INTEGRACION-DATOS-20260919.md`,
-commit 651af80 en hazard). Sustituye el borrador `project.data.json` de
+commit 651af80 en hazard) y con su segundo intercambio del mismo día, que
+retira el modo legado. Sustituye el borrador `project.data.json` de
 `libraries/hazard/dev/PROJECT-DATA.md`. Pendiente de decisión del propietario.
 
 ## 0. Corrección de la v1
@@ -106,9 +107,10 @@ los períodos de retorno que construye; en newmark, la familia de demandas, y el
 propio CLI se detiene si no coincide con la del `UHSRock`—. El informe toma cada
 uno del contrato de su producto; nunca uno para todo.
 
-**`data.R` deja de cargarse cuando el proyecto tiene contratos.** Ninguna
-librería lo lee (0 `source()` en hazard y newmark) y el propietario lo declaró
-legado. En modo legado se sigue cargando, sin cambios.
+**`data.R` deja de cargarse.** Ninguna librería lo lee (0 `source()` en hazard
+y newmark) y el propietario lo declaró legado. Sin modo legado (§3.3) no queda
+ningún camino que lo cargue: los parámetros salen de los contratos y de
+`params.yml`.
 
 ## 5. Protección en `pull`
 
