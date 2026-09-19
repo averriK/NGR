@@ -11,6 +11,7 @@ Etapa 1 del propietario: que `ngr` reemplace a qrt y psha, reproduciendo sus flu
 - Propietario, conversión de proyectos: «LA CONVERSION DE PROPYECTOS ES un overkil. es nceario hacerlo ahora?» Sin verbo nuevo; procedimiento manual de tres pasos verificado y documentado.
 - Propietario, hoja de ruta: «etapa 1: ngr (CLI) reemplaza a qrt y a psha. etapa 2: ngr (cli) potencia al maximo el uso de los recursos que proporciona el ngr library, para que agentes usando skills guardados en skill/ puedan operar el CLI y generar plots complejos.»
 - Propietario, instalador 2026-09-18: «sudo bash install/install.sh. asi se instala en mac os, ASI ES DESDE HACE ANOS» y «ok» al plan de familia: kit canónico único en ~/github/agents/install/, contrato libraries/gmsp/dev/SoT/gmsp-v2-repair-20260917/INSTALLER-CONTRACT-20260918.md (D1–D8). `install/` es superficie del agente del instalador: desde aquí no se toca ni se escribe un instalador propio.
+- Propietario, oráculo 2026-09-18: «el oraculo de NGR es qrt. no lo ovlides». Toda verificación de comportamiento de `ngr` se hace contra qrt (y psha) instalados como referencia; NGR_REFERENCE_BIN=/usr/local/bin/qrt en cli/tests y oráculo manual en las pruebas con proyectos reales.
 - Rutas aplicables: code, sot, r, git; bash y python según archivo.
 
 ## Evidence and no-repeat
