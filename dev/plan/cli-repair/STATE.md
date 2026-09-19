@@ -59,10 +59,10 @@ NEXT-CLOSED {"evidence":"R9 ejecutado (aceptación del propietario «ejecuta R9�
 - Trampa de entorno registrada: invocar install/cli/testProduct.R a mano exige Rscript --vanilla; sin él, el PATH de ~/.Renviron (sin /usr/local/bin) rompe la detección de R del instalador. La entrada canónica bash install/cli/test-installers.sh [R_LIBRARY] ya usa --vanilla en los 4 escenarios.
 
 ## Blocker
-Las raíces nuevas no existen todavía en ningún proyecto (etapa 2 de hazard, tras su H12): las pruebas sobre los 7 proyectos migrados no pueden correrse hasta que exista al menos un proyecto con data/hazard y data/newmark poblados. La decisión de cómo se selecciona la generación es del propietario.
+Decisión del propietario sobre la propuesta de datos (PROPUESTA-DATOS-20260919.md). Además, las raíces nuevas no existen todavía en ningún proyecto (etapa 2 de hazard, tras su H12): las pruebas sobre los 7 proyectos migrados no pueden correrse hasta que exista al menos un proyecto con data/hazard y data/newmark poblados. La decisión de cómo se selecciona la generación es del propietario.
 
 ## Next
-NEXT-ID {"action":"Coexistencia de datos (entrega NGR/SHA de PROJECT-DATA.md): acordar con el propietario cómo el informe selecciona la generación (mapa project.data.json ya aceptado técnicamente por NGR el 2026-09-16, o parámetro propio del scaffold), implementarlo en el scaffold sha (global.R .loadOQ y setup.R data.R) bajo plan SoT con línea base congelada, y agregar `data` a las raíces protegidas de pull en lib/R/resources.R:89-92 con su prueba. Oráculo: mismos datos en layout legado y nuevo producen tablas y productos idénticos, y una ruta declarada ausente falla nombrándola en vez de devolver NULL. Recién después re-correr T1-T9 sobre los 7 proyectos migrados.","id":"cli-repair-data-coexistence-20260919"}
+NEXT-ID {"action":"Propuesta de coexistencia de datos en dev/plan/cli-repair/PROPUESTA-DATOS-20260919.md: esperar la decisión del propietario (leer path.data de hazard.json y newmark.json en vez de un archivo nuevo; qué pasa con los controles de reporte que hoy viven en oq/data/data.R). Con su ok: plan SoT con línea base congelada del scaffold sha, implementar en global.R y setup.R, proteger las raíces declaradas y los contratos en lib/R/resources.R:89-92, y recién después re-correr T1-T9 sobre los 7 proyectos migrados.","id":"cli-repair-data-coexistence-20260919"}
 
 ## Status
 BLOCKED
