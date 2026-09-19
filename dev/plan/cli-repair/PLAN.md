@@ -128,6 +128,9 @@ prueba. Fallan R1–R5.
   pruebas nuevas de convivencia en `lib/tests/testthat/` y `cli/tests/` (proyecto con ambos archivos: operaciones ngr verdes
   y `qrt.manifest.json` byte-idéntico), `cli/README.md`, `lib/vignettes/scaffolds.Rmd` y `cli.Rmd` (receta con `cp` y
   retiro diferido).
+- Ejecutado (2026-09-18): guardas retiradas en 15d4fbf; suites verdes (testthat 407 PASS; cli/tests 31 OK) y
+  verificación real en copia de AR-S2L1W — ngr (status/doctor/render/deploy) y qrt/psha (dry-run/status) verdes en el
+  mismo árbol con `qrt.manifest.json` byte-idéntico. Evidencia en `dev/SoT/cli-repair/r9-coexistence/`.
 
 ## Aceptación real (2026-09-18)
 
