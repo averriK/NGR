@@ -95,7 +95,7 @@ For the current SHA scaffold:
 | `scripts/` | Scaffold consumers and remaining builders; see migration status below |
 | `bib/` | Scientific bibliography from the scaffold; CSL formatting from NGR |
 | `_local/`, `params.yml` | Project-owned seeds and customizations |
-| `oq/`, `gmsp/` | Project data, excluded from resource-source destinations |
+| `oq/`, `gmsp/`, `data/`, `run/` | Project data and producer records, excluded from resource-source destinations, together with `manifest.json`, `hazard.json` and `newmark.json` |
 | `html/`, `docx/` | Rendered output, separate from scaffold source folders |
 
 Updating never deletes project extras or files retired from a source. An obsolete

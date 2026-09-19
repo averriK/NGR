@@ -86,8 +86,12 @@ NULL
         stop("Duplicate destination in source: ", Name, call. = FALSE)
       }
       if (!is.null(Peer) && !Single) next
+      # Project-owned roots and declarations: the scientific data of both
+      # generations, the producers' run records, and the contracts that name
+      # them. A scaffold supplies documents, never a producer's input or output.
       if (stringi::stri_trans_casefold(strsplit(Name, "/", fixed = TRUE)[[1L]][1L]) %in%
-          c(".git", ".ngr", "oq", "gmsp", "manifest.json", "qrt.manifest.json")) {
+          c(".git", ".ngr", "oq", "gmsp", "data", "run",
+            "manifest.json", "qrt.manifest.json", "hazard.json", "newmark.json")) {
         stop("Project-owned destination cannot be supplied: ", Name, call. = FALSE)
       }
       Files[[Name]] <- list(path = FILE, sha256 = digest::digest(file = FILE, algo = "sha256"),

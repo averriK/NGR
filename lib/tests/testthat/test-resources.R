@@ -201,3 +201,18 @@ test_that("a source outside Git takes its revision from the record beside its ma
   writeLines("git_commit=not-a-commit", Record)
   expect_error(.resourceRevision(Fixture$manifest), "BUILD_INFO")
 })
+
+test_that("a source cannot supply a destination the project owns", {
+  Fixture <- resourceFixture()
+  on.exit(unlink(Fixture$root, recursive = TRUE), add = TRUE)
+  Owned <- c("oq/data/UHSTable.Rds", "gmsp/match/target.json", "manifest.json",
+             "data/hazard/UHSTable.Rds", "data/newmark/DnTable.Rds",
+             "run/_remote/record.json", "hazard.json", "newmark.json")
+  for (Destination in Owned) {
+    jsonlite::write_json(list(schemaVersion = 1L, id = "fixture", resources = list(
+      list(from = "first.txt", to = Destination, ownership = "managed")
+    )), Fixture$manifest, auto_unbox = TRUE)
+    expect_error(pullResources(from = Fixture$manifest, root = Fixture$project, dryRun = TRUE),
+                 "Project-owned destination cannot be supplied", fixed = TRUE)
+  }
+})
