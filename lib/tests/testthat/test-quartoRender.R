@@ -1,4 +1,4 @@
-test_that("default rendering rejects an unmigrated project before producing output", {
+test_that("default rendering coexists with an unmigrated qrt.manifest.json", {
   Root <- tempfile("ngr-manifest-")
   dir.create(Root)
   on.exit(unlink(Root, recursive = TRUE), add = TRUE)
@@ -7,7 +7,7 @@ test_that("default rendering rejects an unmigrated project before producing outp
     if (Both) writeLines("{}", file.path(Root, "manifest.json"))
     Files <- list.files(Root, full.names = TRUE)
     Hashes <- tools::md5sum(Files)
-    expect_error(quartoRender("page.qmd", profile = "html", root = Root), "Migrate qrt.manifest.json")
+    expect_error(quartoRender("page.qmd", profile = "html", root = Root), "Render input not found")
     expect_identical(list.files(Root, full.names = TRUE), Files)
     expect_identical(tools::md5sum(Files), Hashes)
   }

@@ -79,19 +79,17 @@ class ResourcesTest(unittest.TestCase):
         self.assertNotIn("bib/references.bib", Manifest["scaffolds"]["ngr"]["claims"])
         self.runCli("status", "--check")
 
-    def testLegacyManifestBlocksBeforeWrites(self):
+    def testLegacyManifestCoexistsUnchanged(self):
         Source = self.makeSource("a", {"_fig/a.qmd": "a"})
         Content = json.dumps(dict(schemaVersion=2, artifacts=[], scaffolds={}))
         (self.Project / "qrt.manifest.json").write_text(Content)
         for Both in (False, True):
             if Both:
                 (self.Project / "manifest.json").write_text(Content)
-            Before = snapshot(self.Project)
             for Args in (("pull", "--from", Source, "--force"), ("status",), ("doctor",)):
                 with self.subTest(both=Both, args=Args):
-                    DATA = self.runCli(*Args, expected=1)
-                    self.assertIn("Migrate qrt.manifest.json", DATA.stderr)
-                    self.assertEqual(snapshot(self.Project), Before)
+                    self.runCli(*Args)
+            self.assertEqual((self.Project / "qrt.manifest.json").read_text(), Content)
 
     def testSourceCannotSupplyProjectManifest(self):
         Source = self.makeSource("a", {"data.json": "{}"})

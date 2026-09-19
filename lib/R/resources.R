@@ -113,9 +113,6 @@ NULL
 }
 
 .readResourceProject <- function(root) {
-  if (file.exists(file.path(root, "qrt.manifest.json"))) {
-    stop("Migrate qrt.manifest.json to manifest.json and update its source associations and consumers before continuing; do not keep both files.", call. = FALSE)
-  }
   Path <- .confinedResource(root, "manifest.json")
   if (!file.exists(Path)) {
     return(list(schemaVersion = 2L, artifacts = list(),

@@ -39,9 +39,6 @@ quartoRender <- function(input, profile, root = getwd(), output = NULL,
     stop("Quarto arguments must be a character vector without missing values.", call. = FALSE)
   }
   Root <- normalizePath(root, winslash = "/", mustWork = TRUE)
-  if (identical(manifest, "manifest.json") && file.exists(file.path(Root, "qrt.manifest.json"))) {
-    stop("Migrate qrt.manifest.json to manifest.json and update its consumers before rendering; do not keep both files.", call. = FALSE)
-  }
   if (.Platform$OS.type == "windows") input <- gsub("\\", "/", input, fixed = TRUE)
   if (grepl("^(/|[A-Za-z]:)", input)) {
     stop("Input must be project-relative: ", input, call. = FALSE)

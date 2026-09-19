@@ -124,17 +124,20 @@ Legacy provenance without a source association requires explicit `--from`.
 
 A project created with the earlier tools keeps its artifacts in
 `qrt.manifest.json`, with a `scaffolds` block of receipts written by those
-tools. NGR does not read that file name and does not rename it for you. On a
-preserved copy: rename the file to `manifest.json`, delete its `scaffolds`
-block, keep `artifacts` unchanged, then run
+tools. NGR does not read that file name and never writes to it; the two files
+stay side by side while the move is verified, and the earlier tools keep
+operating the project during that time. On a preserved copy: copy the file to
+`manifest.json` (do not rename it), delete the copy's `scaffolds` block, keep
+`artifacts` unchanged, then run
 
 ```sh
 ngr pull --from ngr --from /path/to/sha/manifest.json --force
 ```
 
 The pull records new receipts for every file, preserves project seeds and
-brings the scaffold's `manifest.json` readers with `scripts/`. The earlier tools
-stop recognizing the project after the rename. See the
+brings the scaffold's `manifest.json` readers with `scripts/`. Verify NGR and
+the earlier tools in the same tree; once everything checks out, remove
+`qrt.manifest.json` in a later commit of the project. See the
 [scaffold guide](https://averrik.github.io/NGR/articles/scaffolds.html#existing-psha-projects).
 
 ## Render and deploy

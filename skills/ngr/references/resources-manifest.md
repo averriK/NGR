@@ -57,8 +57,9 @@ condition, not a CLI defect; confirm against the project before attributing.
 
 The explicit artifact manifest owns the artifact set and publication choices.
 Resolve values from that contract; the same alias can refer to a differently
-named master and output. Render refuses to run when both `qrt.manifest.json`
-and `manifest.json` exist in the project: migrate and update consumers first.
+named master and output. `qrt.manifest.json` is foreign state: NGR never reads
+or writes it, and the two files may coexist while a migration is verified; the
+earlier file is removed in a later commit of the project.
 
 | Field or record | Role |
 | --- | --- |
