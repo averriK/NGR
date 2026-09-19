@@ -271,9 +271,33 @@ NULL
          classes = "character", how = "replace")
 }
 
+# The roots a producer contract declares for this project, by their first
+# segment. A scaffold supplies documents; a producer's inputs and outputs belong
+# to the project, whatever it decided to call them. Only declared paths are
+# protected: a contract that omits a key declares nothing there, and this engine
+# does not restate a producer's defaults.
+.declaredRoots <- function(root) {
+  OUT <- stats::setNames(character(), character())
+  for (Product in c("hazard", "newmark")) {
+    FILE <- file.path(root, paste0(Product, ".json"))
+    if (!file_test("-f", FILE)) next
+    DATA <- tryCatch(jsonlite::fromJSON(FILE, simplifyVector = TRUE), error = function(e) NULL)
+    if (!is.list(DATA$path) && !is.character(DATA$path)) next
+    for (Value in as.list(DATA$path)) {
+      if (!is.character(Value) || length(Value) != 1L || !nzchar(Value)) next
+      if (grepl("^(/|[A-Za-z]:)", Value)) next
+      Segment <- strsplit(Value, "/", fixed = TRUE)[[1L]][1L]
+      if (!nzchar(Segment) || Segment %in% c(".", "..")) next
+      OUT[[stringi::stri_trans_casefold(Segment)]] <- basename(FILE)
+    }
+  }
+  OUT
+}
+
 .planResources <- function(root, project, sources, paths, from, force) {
   Actions <- list()
   Artifacts <- list()
+  Declared <- .declaredRoots(root)
   for (Name in names(sources)) {
     Source <- sources[[Name]]
     Entry <- project$scaffolds[[Name]]
@@ -298,6 +322,10 @@ NULL
     for (Path in names(Source$files)) {
       if (!.selectedResource(Path, Paths)) next
       Resource <- Source$files[[Path]]
+      Owner <- Declared[stringi::stri_trans_casefold(strsplit(Path, "/", fixed = TRUE)[[1L]][1L])]
+      if (!is.na(Owner)) {
+        stop("Destination declared by ", Owner, " cannot be supplied: ", Path, call. = FALSE)
+      }
       Target <- .confinedResource(root, Path)
       if (file.exists(Target) && !file_test("-f", Target)) {
         stop("Destination is not a regular file: ", Path, call. = FALSE)

@@ -216,3 +216,26 @@ test_that("a source cannot supply a destination the project owns", {
                  "Project-owned destination cannot be supplied", fixed = TRUE)
   }
 })
+
+test_that("a project's contracts protect the roots they declare, whatever their names", {
+  Fixture <- resourceFixture()
+  on.exit(unlink(Fixture$root, recursive = TRUE), add = TRUE)
+  jsonlite::write_json(list(path = list(data = "tables/hazard", uhs = "per-site")),
+                       file.path(Fixture$project, "hazard.json"), auto_unbox = TRUE)
+  jsonlite::write_json(list(path = list(data = "tables/newmark")),
+                       file.path(Fixture$project, "newmark.json"), auto_unbox = TRUE)
+  for (Destination in c("tables/hazard/UHSTable.Rds", "tables/newmark/DnTable.Rds",
+                        "per-site/S2C1R/ANTPY/UHSRock.Rds", "TABLES/case.Rds")) {
+    jsonlite::write_json(list(schemaVersion = 1L, id = "fixture", resources = list(
+      list(from = "first.txt", to = Destination, ownership = "managed")
+    )), Fixture$manifest, auto_unbox = TRUE)
+    expect_error(pullResources(from = Fixture$manifest, root = Fixture$project, dryRun = TRUE),
+                 "cannot be supplied", fixed = TRUE)
+  }
+  # A key the contract does not declare is not protected by a restated default.
+  jsonlite::write_json(list(schemaVersion = 1L, id = "fixture", resources = list(
+    list(from = "first.txt", to = "mce/scenario.Rds", ownership = "managed")
+  )), Fixture$manifest, auto_unbox = TRUE)
+  Result <- pullResources(from = Fixture$manifest, root = Fixture$project, dryRun = TRUE)
+  expect_identical(Result$actions$action, "create")
+})
