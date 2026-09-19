@@ -1,91 +1,132 @@
-# Propuesta: cómo el informe encuentra los datos durante la coexistencia
+# Propuesta v2: cómo el informe SHA encuentra datos y parámetros
 
-2026-09-19, sesión NGR-V2. Sustituye el borrador `project.data.json` de
-`libraries/hazard/dev/PROJECT-DATA.md` §«Borrador concreto». Pendiente de
-decisión del propietario. Todo lo afirmado se verificó hoy con lectura directa.
+2026-09-19, sesión NGR-V2. Revisión de la v1 con las respuestas de oqt-V2
+(`libraries/hazard/dev/migration/RESPUESTA-NGR-INTEGRACION-DATOS-20260919.md`,
+commit 651af80 en hazard). Sustituye el borrador `project.data.json` de
+`libraries/hazard/dev/PROJECT-DATA.md`. Pendiente de decisión del propietario.
 
-## 1. `params.yml` no es un requisito de Quarto (demostración)
+## 0. Corrección de la v1
 
-| Comprobación | Resultado |
+**`IDm` sí está en `newmark.json`.** Lo afirmé ausente leyendo solo las primeras
+líneas del archivo; verificado hoy: `AR-S2C1R/newmark.json` trae
+`IDm = ["U1"…"U8"]`. oqt-V2 tenía razón. De los 10 parámetros que usa el
+informe, los únicos que ningún productor consume son `DaH.gmdp` y
+`siteID.gmdp`.
+
+Se mantiene de la v1, ahora con acuerdo explícito de oqt-V2 (P8): la ruta la
+declara el contrato del productor, no un archivo nuevo, y no se busca en otra
+ubicación. El nombre `project.data.json` queda descartado: viola el naming de la
+casa (una palabra en minúscula más su formato: `manifest.json`, `params.yml`,
+`hazard.json`, `newmark.json`) y sería un tercer declarante de una ruta que los
+productores ya declaran.
+
+Sigue en pie la demostración de la v1: **`params.yml` no es un requisito de
+Quarto** —ningún master declara `params:`, NGR nunca pasa `--execute-params` ni
+`metadata-files` (`lib/R/quartoRender.R:86,124`), el `_quarto.yml` base no lo
+nombra— sino configuración del proyecto que abren a mano `setup.R:49-51`,
+`checkParameters.R:1`, `transmittal.R:89,130`, `mapper/run.py:33` y NGR
+`resources.R:246,257`. Se conserva, y ahora recibe lo que no tiene otro dueño.
+
+## 1. Dónde está hoy clavado el legado (5 lugares, no 2)
+
+| Archivo | Qué fija |
 | --- | --- |
-| ¿Algún master declara `params:` en su frontmatter (mecanismo de Quarto)? | No: `grep '^params:' reports/sha/_master/*.qmd` → 0 |
-| ¿NGR pasa `--execute-params` o `metadata-files` a Quarto? | No: 0 coincidencias en `lib/R` y `cli/`. El comando es `c("render", "--profile", profile, "--output-dir", "_ngr-output")` (`lib/R/quartoRender.R:86`) o la forma directa (`:124`) |
-| ¿El `_quarto.yml` base lo menciona? | No: `cli/scaffold/yml/_quarto.yml` no nombra `params.yml` |
+| `reports/sha/scripts/setup/global.R:3` | `.loadOQ()` → `root/oq/data/<Tabla>.Rds`, 13 tablas, y `NULL` en silencio si falta |
+| `reports/sha/scripts/setup/setup.R:45` | `source(root/oq/data/data.R)` |
+| `reports/sha/_tbl/SSM.ARB.qmd:5` | `SSM_FILE <- file.path(root, "oq", "data", "SSMTable.Rds")` |
+| `reports/sha/_tbl/SSM.AUS.qmd:5` | ídem |
+| `reports/sha/_tbl/SSM.SAM.qmd:5` | ídem |
 
-Quarto nunca ve `params.yml`. Lo abren a mano cinco consumidores:
-`reports/sha/scripts/setup/setup.R:49-51`, `checkParameters.R:1`,
-`transmittal.R:89,130`, `mapper/run.py:33` (Python) y NGR
-`lib/R/resources.R:246,257` (`params.project_id`, que siembra los 21 artefactos).
+## 2. Tablas: quién las escribe y cuáles consume el informe
 
-**Conclusión:** `params.yml` es configuración del proyecto leída por R y Python,
-no una pieza del ecosistema Quarto. Se conserva tal cual — sigue siendo semilla
-(`manifest.json`: `params.yml` → `ownership: seed`) y sigue siendo la única
-fuente de `project_id`, consultor, sitios del reporte y sección `mapper`.
+oqt-V2 confirma el reparto y agrega productos que yo no había listado. Verifiqué
+cuáles llegan al informe:
 
-## 2. Qué está mal en `project.data.json`
-
-1. **Naming.** La casa nombra los archivos de la raíz con una palabra en
-   minúscula más su formato: `manifest.json`, `params.yml`, `hazard.json`,
-   `newmark.json`. El propietario ya rechazó el compuesto punteado
-   (`qrt.manifest.json` → `manifest.json`). `project.` es además redundante:
-   todo lo que está en la raíz pertenece al proyecto.
-2. **Es un tercer declarante de la misma ruta.** Los productores ya declaran
-   dónde escriben: `hazard process [CONFIG]` lee `hazard.json` con
-   `path.data` («Global tables and SSM leaves, default: `data`», ayuda del CLI;
-   `lib/R/processContract.R:41-80`), y `newmark.json` ya existe en AR-S2C1R con
-   `"path": {"data": "oq/data", "uhs": …, "calc": …}`. Un mapa aparte repite esa
-   decisión y puede quedar desincronizado, que es justo lo que PROJECT-DATA.md
-   quiere evitar («Una ubicación autorizada por producto»).
-
-## 3. Propuesta: el informe lee el contrato del productor
-
-Sin archivo nuevo y sin vocabulario nuevo.
-
-| Dato | Declarante | Clave |
+| Productor | Consumidas por el informe | Escritas pero no consumidas |
 | --- | --- | --- |
-| UHSTable, AEPTable, AEPSTable, MCETable, ScenarioTable, ScenarioGMPETable, GMPETable, ASCETable, DEQTable, RMwTable, SSMTable | `hazard.json` | `path.data` |
-| DnTable, kmaxTable, ShearTable | `newmark.json` | `path.data` |
-| Parámetros del informe (consultor, sitios, mapper, `project_id`) | `params.yml` | sin cambios |
+| hazard | `UHSTable`, `AEPTable`, `AEPSTable`, `MCETable`, `ScenarioTable`, `ScenarioGMPETable`, `GMPETable`, `ASCETable`, `DEQTable`, `RMwTable`, `SSMTable` | `SRMwTable` (solo aparece en un mensaje de `scripts/tbl/SSM.*.R:50`), `MCEBranchTable` (0 archivos) |
+| newmark | `DnTable`, `kmaxTable`, `ShearTable` | `DnPlotTable` (0 archivos) |
 
-Reglas:
+Nombres de archivo y esquemas **no cambian**: los dos CLI reproducen byte a byte
+los productos anteriores, y la consolidación de etapa 2 no está implementada ni
+decidida. Ningún trabajo de esquema para mí.
 
-1. **Resolución.** El informe resuelve cada tabla contra el `path.data` del
-   contrato de **su** productor, relativo a la raíz del proyecto. Nada de
-   nombres fijos: hoy conviven tres valores reales (`oq/data` en los proyectos,
-   `data` por defecto en el CLI hazard, `data/hazard` en la conversación del
-   propietario). El contrato es el que manda.
-2. **Sin contrato, contrato heredado.** Si `hazard.json`/`newmark.json` no
-   existen, el informe usa `oq/data` como hasta hoy. Es la regla 2 de
-   PROJECT-DATA.md, no una cadena de búsqueda: con contrato presente nunca se
-   mira la otra ubicación.
-3. **Selección de generación.** Durante la coexistencia, la generación que se
-   publica es la que declara el contrato en ese momento. Para renderizar la
-   vieja se apunta el contrato a `oq/data`; para la nueva, a su raíz. Una sola
-   decisión, en el archivo que además la produjo.
-4. **Fallo explícito.** Hoy `.loadOQ` (`reports/sha/scripts/setup/global.R:3`)
-   devuelve `NULL` en silencio si el archivo no está: con datos en dos lugares,
-   el informe publicaría números viejos sin avisar. Con contrato declarado, una
-   tabla requerida ausente falla nombrando contrato, clave y ruta.
-5. **Protección de `pull`.** `lib/R/resources.R:89-92` protege
-   `.git .ngr oq gmsp manifest.json qrt.manifest.json`. Se agrega la raíz que
-   declaren los contratos —y `hazard.json`/`newmark.json` como propiedad del
-   proyecto— para que ningún recurso del scaffold pueda invadirlas ni con
-   `--force`.
+**Hojas por sitio.** `DnTable`, `DnDraws`, `PGATable.csv` y `kmaxTable` por sitio
+se escriben en `<path.uhs>/<ID.gmdp>/<siteID>/`, junto al `UHSRock.Rds` de
+hazard: el árbol `uhs` es compartido por los dos productores. El informe no lo
+lee, pero `pull` tiene que protegerlo.
 
-## 4. Lo que esto no resuelve
+## 3. Resolución de rutas
 
-`setup.R:45` carga `oq/data/data.R`, que mezcla selección científica con
-controles del informe (PROJECT-DATA.md lo señala en su tabla de lecturas). Los
-contratos JSON se llevan la parte científica; la parte de reporte no tiene
-todavía dueño. **Decisión del propietario:** si esos controles pasan a
-`params.yml` (su lugar natural) o si `data.R` sobrevive como archivo del
-proyecto. Mientras no se decida, `data.R` se sigue cargando donde esté.
+1. **Por contrato del productor.** Las 11 tablas de hazard contra
+   `hazard.json` → `path.data`; las 3 de newmark contra `newmark.json` →
+   `path.data`; `SSMTable` con hazard, como el resto de sus tablas.
+2. **Sin default propio.** oqt-V2 propone que cada proyecto declare `path.*`
+   explícito en los dos contratos (el paso 1 de su migración ya lo hace). El
+   informe no copia el default `data` de hazard ni inventa otro: si la clave no
+   está, falla nombrando contrato y clave.
+3. **Proyecto sin contratos: modo legado.** Se resuelve como hoy (`oq/data`) y
+   se carga `data.R`. Es la regla 2 de PROJECT-DATA.md, no una cadena de
+   búsqueda: con contrato presente no se mira la otra ubicación nunca.
+4. **Resolución por productor, con procedencia visible.** Durante la transición
+   un proyecto puede tener `newmark.json` y todavía no `hazard.json` —es el caso
+   de AR-S2C1R hoy—. Cada familia de tablas se resuelve con su propio contrato o,
+   si no existe, en modo legado. Para que esa mezcla nunca sea silenciosa, el
+   informe registra de dónde salió cada familia (contrato, clave y raíz) y lo
+   deja en el transmittal.
+5. **Fallo explícito.** Una tabla requerida que no está en la raíz declarada
+   falla nombrando contrato, clave y ruta, en lugar del `NULL` de hoy.
 
-## 5. Trabajo que implica (bajo plan SoT, con línea base congelada)
+## 4. Parámetros
 
-- `reports/sha/scripts/setup/global.R`: resolver por contrato y fallar nombrando.
-- `reports/sha/scripts/setup/setup.R`: leer los contratos antes de `params.yml`.
-- `NGR/lib/R/resources.R`: proteger las raíces declaradas y los contratos.
-- Oráculo: los mismos datos en el layout viejo y en el nuevo producen tablas y
-  productos idénticos; una ruta declarada ausente falla en vez de devolver NULL;
-  `pull --force` no invade las raíces declaradas.
+Un dueño por clave, el contrato del productor que la consume (P5 de oqt-V2):
+
+| Origen | Claves que usa el informe |
+| --- | --- |
+| `newmark.json` | `ID.gmdp`, `IDm`, `TR.gmdp` (para las tablas de newmark), `Vref.gmdp`, `Da.gmdp`, `Hs`, `uscs`, `subduction` |
+| `hazard.json` | `TR.gmdp` (para las tablas de hazard), `uhsOQWeight`, `path.*` |
+| `params.yml` | `DaH.gmdp`, `siteID.gmdp`, y lo que ya tenía: `project_id`, consultor, sitios del reporte, sección `mapper` |
+
+`TR.gmdp` existe en los dos contratos con significados distintos —en hazard son
+los períodos de retorno que construye; en newmark, la familia de demandas, y el
+propio CLI se detiene si no coincide con la del `UHSRock`—. El informe toma cada
+uno del contrato de su producto; nunca uno para todo.
+
+**`data.R` deja de cargarse cuando el proyecto tiene contratos.** Ninguna
+librería lo lee (0 `source()` en hazard y newmark) y el propietario lo declaró
+legado. En modo legado se sigue cargando, sin cambios.
+
+## 5. Protección en `pull`
+
+Hoy `lib/R/resources.R:89-92` protege `.git .ngr oq gmsp manifest.json
+qrt.manifest.json`. Se agrega, sin default inventado:
+
+- `hazard.json` y `newmark.json`.
+- Cada raíz que esos contratos declaren, en particular `path.output` —las
+  salidas de OpenQuake, irrecuperables— y el `path.uhs` compartido.
+- `oq/sites`, `oq/calcs` y `run/` (incluido `run/_remote`, que identifica
+  cálculos en el servidor).
+
+Ningún recurso del scaffold puede escribir ahí, tampoco con `--force`.
+
+## 6. Prueba: ya no depende de la etapa 2
+
+No hay fecha para `data/hazard` y `data/newmark`, pero los dos CLI aceptan
+cualquier ruta del contrato, así que el layout nuevo se arma sobre una copia:
+copiar un proyecto, mover las tablas globales a `data/hazard` y `data/newmark`,
+ajustar el bloque `path` de los dos contratos y confirmar con
+`hazard process --dry-run` y `newmark process --steps dn,kmax --dry-run`.
+oqt-V2 ofrece generar esa copia con los CLI reales cuando cierre lo que tiene en
+curso; con una copia de un proyecto me alcanza.
+
+Oráculo: la misma información en el layout legado y en el nuevo produce tablas y
+productos idénticos; una ruta declarada ausente falla nombrando contrato, clave y
+ruta; `pull --force` no invade ninguna raíz declarada.
+
+## 7. Lo que decide el propietario
+
+1. ¿El informe lee sus parámetros científicos de los contratos de los
+   productores (§4), o quiere una declaración propia del informe?
+2. ¿`DaH.gmdp` y `siteID.gmdp` a `params.yml`, que es donde caen por descarte?
+3. ¿Mezclar generaciones entre productores (§3.4) es un estado aceptable
+   mientras dure la transición, con procedencia visible, o debe ser un error?
