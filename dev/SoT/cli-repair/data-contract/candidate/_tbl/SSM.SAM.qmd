@@ -1,0 +1,23 @@
+```{r}
+#| include: false
+root <- normalizePath(here::here())
+SSM_MODEL <- "SAM"
+SSM_FILE <- file.path(DataRoot$hazard, "SSMTable.Rds")
+if (!exists("CAP", inherits = FALSE)) CAP <- readCaption("tbl.SSM.SAM")
+```
+
+&nbsp;
+
+```{r}
+#| label: tbl-ssm-sam-inventory
+#| tbl-cap: !expr CAP
+source(file.path(root, "scripts", "tbl", "SSM.SAM.R"))
+TBL
+```
+
+&nbsp;
+
+```{r}
+#| include: false
+rm(list = intersect(c("CAP", "SSM_MODEL", "SSM_FILE"), ls()))
+```
