@@ -77,12 +77,22 @@ runChecks <- function(root, native) {
   runManager("install", Prefix)
   stopifnot(!file.exists(file.path(Prefix, "libexec/installerprobe/helpers/BUILD_INFO")))
   Created <- jsonlite::read_json(receiptPath(Prefix), simplifyVector = TRUE)$created
+  Occupied <- file.path(Work, "retirement foreign")
+  runManager("install", Occupied)
+  Foreign <- file.path(Occupied, "libexec/installerprobe/helpers/foreign.txt")
+  writeLines("keep", Foreign)
   unlink(file.path(Fixture, "cli/helpers/retired.R"))
   jsonlite::write_json(list(manifest_version = 1L, files = Files[-3L]), Manifest, auto_unbox = TRUE)
   runManager("install", Prefix)
   Record <- jsonlite::read_json(receiptPath(Prefix), simplifyVector = TRUE)
   stopifnot(!file.exists(file.path(Prefix, "libexec/installerprobe/helpers/retired.R")),
+            !dir.exists(file.path(Prefix, "libexec/installerprobe/helpers")),
             all(Created %in% Record$created))
+  runManager("install", Occupied)
+  stopifnot(file.exists(Foreign),
+            !file.exists(file.path(Occupied, "libexec/installerprobe/helpers/retired.R")))
+  runManager("uninstall", Occupied)
+  stopifnot(file.exists(Foreign))
   Hash <- tools::md5sum(file.path(Prefix, c(Record$file, "libexec/installerprobe/install.json")))
   writeLines(if (Windows) c("@echo off", "exit /b 42") else c("#!/bin/sh", "echo broken >&2", "exit 42"), Launcher)
   runManager("install", Prefix, success = FALSE)

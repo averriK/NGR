@@ -38,6 +38,13 @@ through the user's normal R environment; no shell profile is edited.
 Source builds omit manuals and vignettes; `build.R` remains the separate
 documented maintenance operation.
 
+Replacing any selected installed component asks once for the whole selected
+operation, before creating build output or changing dependencies, the package
+or the CLI. A new installation does not ask a replacement question. `n` or an
+empty answer cancels without changes; end of input fails with an explicit
+diagnostic. `--yes` skips the question only, and `--check` never asks or installs.
+The header identifies the source, optional archive, component and destinations.
+
 On Windows, use native PowerShell without elevation:
 
 ```powershell
@@ -55,6 +62,8 @@ Updates and removal validate receipt paths, hashes and symlink ancestors,
 preserve foreign files, and retain a backup until installed-command verification
 passes. A CLI failure restores CLI files; it does not roll back an already
 installed R package. Unknown legacy layouts are refused, never adopted by name.
+Updates retire files no longer in the payload and remove empty directories
+recorded as installer-created. Foreign files and nonempty directories remain.
 
 ```sh
 sudo bash install/uninstall.sh

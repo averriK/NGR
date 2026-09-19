@@ -32,10 +32,10 @@ runChecks <- function(root, library) {
     if (Status != status) stop(paste(OUT, collapse = "\n"))
     OUT
   }
-  runEntry <- function(name, args) {
+  runEntry <- function(name, args, status = 0L, libraryPath = library) {
     if (Windows) return(runCommand("powershell.exe", c("-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
-      file.path(root, "install", paste0(name, ".ps1")), "-Yes", "-NoPath", "-Library", library, "-Prefix", Prefix, args)))
-    runCommand("bash", c(file.path(root, "install", paste0(name, ".sh")), "--yes", "--library", library, "--prefix", Prefix, args))
+      file.path(root, "install", paste0(name, ".ps1")), "-Yes", "-NoPath", "-Library", libraryPath, "-Prefix", Prefix, args), status = status))
+    runCommand("bash", c(file.path(root, "install", paste0(name, ".sh")), "--yes", "--library", libraryPath, "--prefix", Prefix, args), status = status)
   }
   Files <- list.files(file.path(library, Package), recursive = TRUE, all.files = TRUE, full.names = TRUE)
   Hash <- tools::md5sum(Files)
@@ -78,11 +78,35 @@ runChecks <- function(root, library) {
                         unname(tools::md5sum(file.path(Roots[2L], "selection", Outputs)))))
   }
   if (Package == "hazard") {
+    stopifnot(all(c("initSpec", "runRemote") %in% Requirements$exports),
+              is.null(Requirements$buildInfo),
+              !dir.exists(file.path(Prefix, "libexec/hazard/runtime")))
     runCommand(Launcher, c("--init", "site", "installer"))
     stopifnot(identical(jsonlite::read_json("oq/sites/installer.json")$siteID, "installer"))
     runCommand(Launcher, c("--pack", "--help"))
     runCommand(Launcher, c("--run", "--help"))
     runCommand(Launcher, "--unknown", status = 1L)
+    # Incomplete libraries must fail before the currently working CLI is replaced.
+    Source <- file.path(Work, "incomplete")
+    Library <- file.path(Work, "library")
+    dir.create(file.path(Source, "R"), recursive = TRUE)
+    dir.create(Library)
+    writeLines(c("Package: hazard", paste0("Version: ", Record$package$version),
+      "Title: Installer Fixture", "Description: A fixture for missing CLI exports.",
+      "Author: Fixture", "Maintainer: Fixture <fixture@example.org>", "License: MIT"),
+      file.path(Source, "DESCRIPTION"))
+    CliHash <- tools::md5sum(file.path(Prefix, c(Record$file, "libexec/hazard/install.json")))
+    for (Missing in c("initSpec", "runRemote")) {
+      Exports <- setdiff(Requirements$exports, Missing)
+      writeLines(paste0("export(", Exports, ")"), file.path(Source, "NAMESPACE"))
+      writeLines(paste0(Exports, " <- function(...) invisible(NULL)"), file.path(Source, "R/probe.R"))
+      runCommand(file.path(R.home("bin"), if (Windows) "R.exe" else "R"),
+                 c("CMD", "INSTALL", "--no-docs", paste0("--library=", Library), Source))
+      OUT <- runEntry("install", if (Windows) c("-Component", "cli") else
+        c("--component", "cli"), status = 1L, libraryPath = Library)
+      stopifnot(any(grepl(paste0("Package lacks CLI exports: ", Missing), OUT, fixed = TRUE)),
+                identical(CliHash, tools::md5sum(names(CliHash))))
+    }
   }
   if (Package == "ssel") {
     Spec <- list(x = c("1", "x", NA_character_, "2.5"))

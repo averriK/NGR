@@ -48,13 +48,11 @@ publish_cli() (
     fi
     if [[ "$restored" == true ]]; then
       [[ -z "$recovery" ]] || rm -rf -- "$recovery"
-      if [[ "$complete" == false || "$ACTION" == uninstall ]]; then
-        for rel in "${created[@]+"${created[@]}"}"; do
-          target="$PREFIX/$rel"
-          [[ "$rel" != . ]] || target="$PREFIX"
-          rmdir -- "$target" 2>/dev/null || true
-        done
-      fi
+      for rel in "${created[@]+"${created[@]}"}"; do
+        target="$PREFIX/$rel"
+        [[ "$rel" != . ]] || target="$PREFIX"
+        rmdir -- "$target" 2>/dev/null || true
+      done
     else
       printf '[ERROR] Restore UNKNOWN; recovery retained at %s\n' "$recovery" >&2
     fi

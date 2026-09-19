@@ -376,21 +376,15 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
   }
   Complete <- TRUE
   unlink(Recovery, recursive = TRUE)
-  if (action == "uninstall") {
-    Dirs <- character()
-    if (identical(Record$schema, 4L)) {
-      Dirs <- file.path(prefix, Record$created[order(nchar(Record$created),
-                                                     decreasing = TRUE)])
-      Dirs[Dirs == file.path(prefix, ".")] <- prefix
-    }
-    if (!identical(Record$schema, 4L)) Dirs <- file.path(prefix, "libexec", Runtime)
-    for (DIR in Dirs) {
-      if (dir.exists(DIR)) {
-        Status <- if (Windows) system2("cmd.exe", c("/c", "rmdir", shQuote(DIR)),
-                                       stdout = FALSE, stderr = FALSE) else
-          system2("rmdir", shQuote(DIR), stdout = FALSE, stderr = FALSE)
-        if (Status != 0L) message("Kept ", DIR, ": not empty")
-      }
+  Dirs <- file.path(prefix, CreatedRel[order(nchar(CreatedRel), decreasing = TRUE)])
+  Dirs[Dirs == file.path(prefix, ".")] <- prefix
+  if (action == "uninstall" && !identical(Record$schema, 4L)) Dirs <- file.path(prefix, "libexec", Runtime)
+  for (DIR in Dirs) {
+    if (dir.exists(DIR)) {
+      Status <- if (Windows) system2("cmd.exe", c("/c", "rmdir", shQuote(DIR)),
+                                     stdout = FALSE, stderr = FALSE) else
+        system2("rmdir", shQuote(DIR), stdout = FALSE, stderr = FALSE)
+      if (Status != 0L && action == "uninstall") message("Kept ", DIR, ": not empty")
     }
   }
   message(if (action == "install") "Installed " else "Removed ", Paths[1L])

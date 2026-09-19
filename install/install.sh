@@ -151,6 +151,8 @@ r_libs="$LIBRARY${R_LIBS:+:$R_LIBS}"
 printf '\n%s installation\n' "$PACKAGE"
 printf 'Source:  %s\nPrefix:  %s\nLibrary: %s\nR user:  %s\n\n' \
   "$ROOT_DIR" "$PREFIX" "$LIBRARY" "$USER_NAME"
+printf 'Component: %s\n' "$COMPONENT"
+if [[ -n "$TARBALL" ]]; then printf 'Archive: %s\n' "$TARBALL"; fi
 
 if [[ "$COMPONENT" != lib && -n "$COMMAND" ]]; then
   previous="$(as_user bash -c "command -v \"$COMMAND\"" || true)"
@@ -192,6 +194,30 @@ else
 fi
 info "Source:    $PACKAGE $source_version"
 
+receipt="$PREFIX/libexec/$RUNTIME/install.json"
+replace=false
+if [[ "$COMPONENT" != cli && -n "$installed_version" ]]; then replace=true; fi
+if [[ "$COMPONENT" != lib && -f "$receipt" ]]; then
+  replace=true
+  info "Existing $PACKAGE CLI recorded at $receipt; it will be replaced through its receipt"
+fi
+if [[ "$COMPONENT" == cli && -z "$installed_version" ]]; then
+  fail "--component cli needs $PACKAGE installed in $LIBRARY"
+fi
+if [[ -n "$TARBALL" && ( ! -f "$TARBALL" || ! -f "$TARBALL.rds" ) ]]; then
+  fail "Package archive and its .rds record are required: $TARBALL"
+fi
+if [[ "$COMPONENT" != lib && "$(id -u)" != 0 ]]; then
+  parent="$PREFIX"
+  while [[ ! -e "$parent" && "$parent" != / ]]; do parent="${parent%/*}"; done
+  [[ -w "$parent" ]] || fail "$PREFIX is not writable by $USER_NAME; run: sudo bash install/install.sh"
+fi
+if [[ "$replace" == true && "$YES" -ne 1 ]]; then
+  printf 'Replace %s (component: %s) at the destinations shown above? [y/N] ' "$PACKAGE" "$COMPONENT" >&2
+  if ! IFS= read -r confirm; then fail "End of input while confirming replacement; nothing was installed. Use --yes for unattended installation."; fi
+  case "$confirm" in [yY]) ;; *) printf 'Aborted by user.\n'; exit 0 ;; esac
+fi
+
 # The product installer (install/installProduct.R) owns every R-side check and
 # installation: artifact identity, dependencies, CLI tools and packages,
 # exports, library shadowing. This script sequences it and, under sudo, does
@@ -201,16 +227,9 @@ if [[ "$(id -u)" == 0 ]]; then kit+=(--system-cli); fi
 kit+=("$ROOT_DIR")
 for archive in "${DEPENDENCIES[@]+"${DEPENDENCIES[@]}"}"; do kit+=(--dependency "$archive"); done
 if [[ "$COMPONENT" == cli ]]; then
-  [[ -n "$installed_version" ]] || fail "--component cli needs $PACKAGE installed in $LIBRARY"
   ok "Library stage skipped (--component cli)"
 else
-  if [[ -n "$installed_version" && "$YES" -ne 1 ]]; then
-    read -r -p "Replace $PACKAGE $installed_version in $LIBRARY with the selected package? [y/N] " confirm
-    case "$confirm" in [yY]) ;; *) printf 'Aborted by user.\n'; exit 0 ;; esac
-  fi
   if [[ -n "$TARBALL" ]]; then
-    [[ -f "$TARBALL" && -f "$TARBALL.rds" ]] \
-      || fail "Package archive and its .rds record are required: $TARBALL"
     kit+=(--tarball "$TARBALL")
   else
     build_dir="$(as_user mktemp -d "${TMPDIR:-/tmp}/$PACKAGE-build.XXXXXX")"
@@ -221,18 +240,6 @@ else
 fi
 kit+=(--component "$COMPONENT" --library "$LIBRARY")
 if [[ "$COMPONENT" != lib ]]; then kit+=(--prefix "$PREFIX"); fi
-
-receipt="$PREFIX/libexec/$RUNTIME/install.json"
-if [[ "$COMPONENT" != lib && -f "$receipt" && "$YES" -ne 1 ]]; then
-  info "Existing $PACKAGE CLI recorded at $receipt; it will be replaced through its receipt"
-  read -r -p "Replace the $COMMAND CLI under $PREFIX? [y/N] " confirm
-  case "$confirm" in [yY]) ;; *) printf 'Aborted by user.\n'; exit 0 ;; esac
-fi
-if [[ "$COMPONENT" != lib && "$(id -u)" != 0 ]]; then
-  parent="$PREFIX"
-  while [[ ! -e "$parent" && "$parent" != / ]]; do parent="${parent%/*}"; done
-  [[ -w "$parent" ]] || fail "$PREFIX is not writable by $USER_NAME; run: sudo bash install/install.sh"
-fi
 
 info "Product installer as $USER_NAME: $(printf '%q ' "${kit[@]:3}")"
 as_user "${kit[@]}"

@@ -52,7 +52,9 @@ function Invoke-Logged {
 function Confirm-Step {
     param([string]$Question)
     if ($Yes) { return }
-    $answer = Read-Host "$Question [y/N]"
+    Write-Host "$Question [y/N] " -NoNewline
+    $answer = [Console]::ReadLine()
+    if ($null -eq $answer) { Stop-Install 'End of input while confirming replacement; nothing was installed. Use -Yes for unattended installation.' }
     if ($answer -notmatch '^[yY]$') { Write-Host 'Aborted by user.'; exit 0 }
 }
 function Resolve-Rscript {
@@ -130,6 +132,8 @@ Write-Host "Source:  $Root"
 Write-Host "Prefix:  $Prefix"
 Write-Host "Library: $Library"
 Write-Host "R user:  $env:USERNAME"
+Write-Host "Component: $Component"
+if ($Tarball) { Write-Host "Archive: $Tarball" }
 Write-Host ''
 
 if ($Component -ne 'lib' -and $Command) {
@@ -152,18 +156,28 @@ if ($LASTEXITCODE -ne 0) { Stop-Install 'Cannot read the installed package metad
 if ($installedVersion) { Write-Info "Installed: $PackageName $installedVersion in $Library" } else { Write-Info "$PackageName is not installed in $Library" }
 Write-Info "Source:    $PackageName $sourceVersion"
 
+$runtimeDir = Join-Path $Prefix "libexec\$Runtime"
+$receipt = Join-Path $runtimeDir 'install.json'
+$replace = $Component -ne 'cli' -and [bool]$installedVersion
+if ($Component -ne 'lib' -and (Test-Path -LiteralPath $receipt)) {
+    $replace = $true
+    Write-Info "Existing $PackageName CLI recorded at $receipt; it will be replaced through its receipt"
+}
+if ($Component -eq 'cli' -and -not $installedVersion) { Stop-Install "-Component cli needs $PackageName installed in $Library" }
+if ($Tarball -and (-not (Test-Path -LiteralPath $Tarball) -or -not (Test-Path -LiteralPath "$Tarball.rds"))) {
+    Stop-Install "Package archive and its .rds record are required: $Tarball"
+}
+if ($replace) { Confirm-Step "Replace $PackageName (component: $Component) at the destinations shown above?" }
+
 # The product installer (install\installProduct.R) owns every check and
 # installation: artifact identity, dependencies, CLI tools and packages,
 # exports, library shadowing. This script sequences it.
 $kit = @('--vanilla', (Join-Path $Root 'install\installProduct.R'), $Root)
 foreach ($archive in $Dependency) { $kit += @('--dependency', $archive) }
 if ($Component -eq 'cli') {
-    if (-not $installedVersion) { Stop-Install "-Component cli needs $PackageName installed in $Library" }
     Write-Ok 'Library stage skipped (-Component cli)'
 } else {
-    if ($installedVersion) { Confirm-Step "Replace $PackageName $installedVersion in $Library with the selected package?" }
     if ($Tarball) {
-        if (-not (Test-Path -LiteralPath $Tarball) -or -not (Test-Path -LiteralPath "$Tarball.rds")) { Stop-Install "Package archive and its .rds record are required: $Tarball" }
         $kit += @('--tarball', $Tarball)
     } else {
         $buildDir = Join-Path ([System.IO.Path]::GetTempPath()) ("$PackageName-build-" + [guid]::NewGuid().ToString('N').Substring(0, 8))
@@ -173,12 +187,6 @@ if ($Component -eq 'cli') {
 }
 $kit += @('--component', $Component, '--library', $Library)
 if ($Component -ne 'lib') { $kit += @('--prefix', $Prefix) }
-$runtimeDir = Join-Path $Prefix "libexec\$Runtime"
-$receipt = Join-Path $runtimeDir 'install.json'
-if ($Component -ne 'lib' -and (Test-Path -LiteralPath $receipt)) {
-    Write-Info "Existing $PackageName CLI recorded at $receipt; it will be replaced through its receipt"
-    Confirm-Step "Replace the $Command CLI under $Prefix?"
-}
 Write-Info 'Product installer: checks, dependencies, package and CLI'
 try { Invoke-Logged $Rscript $kit } finally {
     if ($buildDir -and (Test-Path -LiteralPath $buildDir)) { Remove-Item -LiteralPath $buildDir -Recurse -Force }
