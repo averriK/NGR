@@ -109,6 +109,26 @@ prueba. Fallan R1–R5.
   sus pruebas y la documentación escrita por la fusión. Ningún proyecto real usa todavía `ngr`, así que el cambio de nombre no deja filtros viejos huérfanos.
 - Oráculo: el sello sigue llegando al pie de página del render de prueba; suites completas.
 
+### R9 — Convivencia de manifiestos durante la verificación
+- Defecto observado: la conversión R3 exige `mv qrt.manifest.json manifest.json`, y con el archivo viejo presente
+  `ngr pull/status/doctor` abortan (`lib/R/resources.R:116-117`) y `ngr render` también (`lib/R/quartoRender.R:42-44`),
+  ambos con «do not keep both files». Palabra del propietario (2026-09-18, textual): «nopodes hacer un mv qrt.manifest.json
+  manifest.json.... deben convnvir el viejo tool conel nuevo. sino como hacemos las pruebas SoT?» y «cuando pruebes que todo
+  fiuncionea, entonces si remueves lo viejo en el sigueinte comit delproyecto».
+- Oráculo viejo: qrt/psha siguen operando el proyecto con `qrt.manifest.json` intacto (T8); el estado final por proyecto
+  sigue siendo el manifiesto único de R3, alcanzado por un commit posterior con orden del propietario, no por `mv`.
+- Diferencia pedida: durante la verificación ambos archivos coexisten; ngr lee y escribe solo `manifest.json` y trata
+  `qrt.manifest.json` como estado ajeno (ya es no-reclamable: `resources.R:90`). Receta nueva por proyecto:
+  `cp qrt.manifest.json manifest.json` (no `mv`), borrar el bloque `scaffolds` de la copia,
+  `ngr pull --from ngr --from <reports>/sha/manifest.json --force`; verificar ngr y qrt/psha en el mismo árbol;
+  remover `qrt.manifest.json` en el commit siguiente solo cuando todo esté probado.
+- Estable: semillas, recibos, sello dual, dry-runs, el registro `.netlify/sites.env` compartido con los mismos valores (T6),
+  la exclusión de `qrt.manifest.json` de las rutas reclamables. Ninguna prueba existente fija los mensajes retirados.
+- Archivos: `lib/R/resources.R` (retirar la guarda 116-117), `lib/R/quartoRender.R` (retirar la guarda 42-44),
+  pruebas nuevas de convivencia en `lib/tests/testthat/` y `cli/tests/` (proyecto con ambos archivos: operaciones ngr verdes
+  y `qrt.manifest.json` byte-idéntico), `cli/README.md`, `lib/vignettes/scaffolds.Rmd` y `cli.Rmd` (receta con `cp` y
+  retiro diferido).
+
 ## Aceptación real (2026-09-18)
 
 Deck `sha` de AR-S2L1W en copia liviana, renderizado por qrt+psha instalados y por `ngr`: 578 archivos, 529 widgets, 598 captions, bytes idénticos tras normalizar el sello y los ids de widgets. Único texto distinto: el sello de revisión (`—` para `reports/sha` porque no es repo git).

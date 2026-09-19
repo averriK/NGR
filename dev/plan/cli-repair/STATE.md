@@ -57,7 +57,7 @@ NEXT-CLOSED {"evidence":"P1 verificado tras pasar reports a git (propietario: ~/
 none
 
 ## Next
-none — etapa cli-repair cerrada a espera del propietario. Sus pendientes en HANDOFF-PENDIENTES-20260918.md: P1 resuelto y verificado (reports en git, rama dev), P2 fósil 0.3.10 con sudo (ok del propietario), P3 conversión real de los 9 proyectos (ok del propietario; no es necesaria para seguir probando ngr — eso ya se hace en copias — sino para operar con ngr el proyecto real), P4–P9.
+NEXT-ID {"action":"Ejecutar R9 (convivencia de manifiestos durante la verificación) una vez aceptado por el propietario: retirar las guardas «do not keep both files» de lib/R/resources.R y lib/R/quartoRender.R, pruebas de convivencia en lib/tests y cli/tests, receta con cp y retiro diferido en cli/README.md y vignettes; luego re-verificar en copia real que ngr y qrt/psha operan el mismo árbol. Pendientes del propietario en HANDOFF-PENDIENTES-20260918.md: P2 (sudo), P3 por proyecto tras R9.","id":"cli-repair-r9-manifest-coexistence-20260918"}
 
 ## Status
 ACTIVE
