@@ -65,15 +65,29 @@ lee, pero `pull` tiene que protegerlo.
    explícito en los dos contratos (el paso 1 de su migración ya lo hace). El
    informe no copia el default `data` de hazard ni inventa otro: si la clave no
    está, falla nombrando contrato y clave.
-3. **Proyecto sin contratos: modo legado.** Se resuelve como hoy (`oq/data`) y
-   se carga `data.R`. Es la regla 2 de PROJECT-DATA.md, no una cadena de
-   búsqueda: con contrato presente no se mira la otra ubicación nunca.
-4. **Resolución por productor, con procedencia visible.** Durante la transición
-   un proyecto puede tener `newmark.json` y todavía no `hazard.json` —es el caso
-   de AR-S2C1R hoy—. Cada familia de tablas se resuelve con su propio contrato o,
-   si no existe, en modo legado. Para que esa mezcla nunca sea silenciosa, el
-   informe registra de dónde salió cada familia (contrato, clave y raíz) y lo
-   deja en el transmittal.
+3. **Sin modo legado.** Contrato ausente = error explícito que lo nombra; nunca
+   se vuelve a `oq/data` por omisión. Acordado con oqt-V2 el 2026-09-19 y
+   consistente con el propietario («no queremos hardcode que maneje legacy»): el
+   layout de hoy se declara, no se infiere, con un `hazard.json` que diga
+   `"path": {"data": "oq/data", "uhs": "oq/uhs", …}`. El paso 1 de
+   `libraries/hazard/dev/migration/PLAN.md` escribe los dos contratos por
+   proyecto.
+   **Condición de secuencia:** hoy ninguno de los 7 proyectos tiene
+   `hazard.json` y solo AR-S2C1R tiene `newmark.json`. Este cambio no puede
+   entrar antes de que existan los dos contratos en cada proyecto, o los 7
+   renders se detienen. Es coordinación con oqt-V2, no un obstáculo de diseño.
+4. **Procedencia registrada por familia.** Generaciones distintas entre
+   productores no son un error —son productores distintos, cada uno declara su
+   raíz—; el riesgo real es que las tablas de newmark se hayan calculado sobre
+   un `UHSRock`/`MCETable` de otra generación que la publicada. El informe
+   registra, por familia, el contrato, la raíz resuelta y el md5 y la fecha de
+   cada archivo leído, y deja eso en el transmittal.
+   **Los metadatos no alcanzan solos** (verificado hoy en AR-S2L1W y en las
+   tablas del CLI nuevo): `UHSTable`, `MCETable`, `DnTable`, `kmaxTable` y
+   `ShearTable` no traen atributo de procedencia; `SSMTable` sí
+   (`producer, oqt, written, units, keyRule, selection, engine, inputs`) y
+   `AEPSTable` del CLI nuevo también, con la clave `hazard` en lugar de `oqt`.
+   Se lee el atributo cuando está, con las dos claves, y nunca se depende de él.
 5. **Fallo explícito.** Una tabla requerida que no está en la raíz declarada
    falla nombrando contrato, clave y ruta, en lugar del `NULL` de hoy.
 
@@ -128,5 +142,10 @@ ruta; `pull --force` no invade ninguna raíz declarada.
 1. ¿El informe lee sus parámetros científicos de los contratos de los
    productores (§4), o quiere una declaración propia del informe?
 2. ¿`DaH.gmdp` y `siteID.gmdp` a `params.yml`, que es donde caen por descarte?
-3. ¿Mezclar generaciones entre productores (§3.4) es un estado aceptable
-   mientras dure la transición, con procedencia visible, o debe ser un error?
+3. Secuencia: este cambio deja de renderizar cualquier proyecto sin sus dos
+   contratos (§3.3). ¿Se escriben primero los 14 contratos de los 7 proyectos
+   —paso 1 de la migración, trabajo de oqt-V2— y recién entonces entra?
+
+Una regla dura que prohíba mezclar generaciones necesitaría un criterio de
+compatibilidad entre generaciones que hoy nadie definió; queda fuera de esta
+propuesta y es decisión suya si alguna vez hace falta.
