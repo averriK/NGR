@@ -121,10 +121,25 @@ que rara vez el cliente quiera cambiar; no debería ir a params.yml». Es
 coherente con lo que es: desplazamientos admisibles relativos en % de `Hs`, cuyo
 producto `DaH.gmdp × Hs` determina los niveles `Da` que newmark tiene que haber
 calculado —el propio mensaje del informe lo dice: «Declare it in DaH.gmdp and
-re-run … --steps dn,kmax» (`scripts/tbl/kh.R:47`, `kmax.R:47`)—. Hoy newmark no
-lo lee; queda pedido a oqt-V2 que lo acepte y lo preserve en el contrato, y que
-diga si además debería derivar `Da.gmdp` de `DaH.gmdp × Hs` en vez de recibir
-las dos listas.
+re-run … --steps dn,kmax» (`scripts/tbl/kh.R:47`, `kmax.R:47`)—.
+
+oqt-V2 verificó con el newmark instalado que la clave se puede poner hoy sin
+tocar código: `process --dry-run --steps dn,kmax` con `DaH.gmdp` en el contrato
+sale 0, porque las claves que no usa se ignoran, y el CLI nunca escribe el
+contrato. El informe ya puede leerla de ahí.
+
+**Derivar `Da` de `DaH × Hs` no afecta al informe.** oqt-V2 propone que el
+contrato declare una sola de las dos formas —relativa `DaH.gmdp`, de la que
+newmark deriva `Da`, o absoluta `Da.gmdp` en cm— y que declarar las dos sea un
+error; es un cambio en su librería de producción, que le pide al propietario en
+su sesión. Verificado por mí en AR-S2C1R:
+`sort(unique(signif(as.vector(outer(DaH.gmdp, Hs)), 6)))` reproduce exactamente
+los 73 valores de `Da.gmdp` de su `newmark.json` (`identical` TRUE).
+Del lado del informe no hace falta nada: `scripts/setup/global.R:92-99` ya
+deriva `Da.gmdp` de la tabla (`Da.data`, la columna `Da` de `kmaxTable`) cuando
+no está declarado, y cuando sí lo está lo usa como filtro, validando que cada
+nivel exista en la tabla. Lo único que cambia es el texto de ese error, que hoy
+dice «Update oq/data/data.R» y pasará a nombrar el contrato.
 
 **`siteID.gmdp` no necesita declararse.** `scripts/setup/global.R:43-44` ya lo
 deriva de los datos cuando no existe, y la selección explícita del informe vive
