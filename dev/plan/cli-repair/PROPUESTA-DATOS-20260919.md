@@ -101,23 +101,50 @@ lee, pero `pull` tiene que protegerlo.
 
 ## 4. Parámetros
 
-Un dueño por clave, el contrato del productor que la consume (P5 de oqt-V2):
+**Decisión del propietario 2026-09-19:** «si, no debería haber otro lugar. ni
+data.R ni nada por el estilo». Los parámetros científicos salen del contrato del
+productor que los consume, y no hay un segundo declarante.
 
 | Origen | Claves que usa el informe |
 | --- | --- |
-| `newmark.json` | `ID.gmdp`, `IDm`, `TR.gmdp` (para las tablas de newmark), `Vref.gmdp`, `Da.gmdp`, `Hs`, `uscs`, `subduction` |
-| `hazard.json` | `TR.gmdp` (para las tablas de hazard), `uhsOQWeight`, `path.*` |
-| `params.yml` | `DaH.gmdp`, `siteID.gmdp`, y lo que ya tenía: `project_id`, consultor, sitios del reporte, sección `mapper` |
+| `newmark.json` | `ID.gmdp`, `IDm`, `TR.gmdp` (tablas de newmark), `Vref.gmdp`, `Da.gmdp`, `Hs`, `uscs`, `subduction`, y **`DaH.gmdp`** (ver abajo) |
+| `hazard.json` | `TR.gmdp` (tablas de hazard), `uhsOQWeight`, `path.*` |
+| `params.yml` | sin cambios: identidad y forma del documento |
 
 `TR.gmdp` existe en los dos contratos con significados distintos —en hazard son
-los períodos de retorno que construye; en newmark, la familia de demandas, y el
-propio CLI se detiene si no coincide con la del `UHSRock`—. El informe toma cada
-uno del contrato de su producto; nunca uno para todo.
+los períodos de retorno que construye; en newmark, la familia de demandas, y su
+CLI se detiene si no coincide con la del `UHSRock`—. El informe toma cada uno del
+contrato de su producto; nunca uno para todo.
 
-**`data.R` deja de cargarse.** Ninguna librería lo lee (0 `source()` en hazard
-y newmark) y el propietario lo declaró legado. Sin modo legado (§3.3) no queda
-ningún camino que lo cargue: los parámetros salen de los contratos y de
-`params.yml`.
+**`DaH.gmdp` va a `newmark.json`.** Decisión del propietario: «es algo más duro
+que rara vez el cliente quiera cambiar; no debería ir a params.yml». Es
+coherente con lo que es: desplazamientos admisibles relativos en % de `Hs`, cuyo
+producto `DaH.gmdp × Hs` determina los niveles `Da` que newmark tiene que haber
+calculado —el propio mensaje del informe lo dice: «Declare it in DaH.gmdp and
+re-run … --steps dn,kmax» (`scripts/tbl/kh.R:47`, `kmax.R:47`)—. Hoy newmark no
+lo lee; queda pedido a oqt-V2 que lo acepte y lo preserve en el contrato, y que
+diga si además debería derivar `Da.gmdp` de `DaH.gmdp × Hs` en vez de recibir
+las dos listas.
+
+**`siteID.gmdp` no necesita declararse.** `scripts/setup/global.R:43-44` ya lo
+deriva de los datos cuando no existe, y la selección explícita del informe vive
+en `params$report$sites`, que hoy declara `siteID`, `label`, `siteID.storage` y
+`SRS` por sitio. No se agrega a ningún lado.
+
+**`data.R` deja de cargarse.** Ninguna librería lo lee y el propietario lo
+declaró legado. Sin modo legado (§3.3) no queda ningún camino que lo cargue.
+
+### Qué es `params.yml` y por qué no cambia
+
+Contiene el documento, no la ciencia (verificado en `AR-S2L1W/params.yml`):
+identidad y portada (`title`, `site`, `location`, `project_id`, `year`, `client`,
+`consultant`, `roles`, `signature`, `footer`, `URL`), selecciones de publicación
+(`report.sites` con sus etiquetas y SRS, `ext`, `ssm`) y la sección `mapper`
+(`radius_km`, `mw_min`, `mw_max`) que lee `mapper/run.py:33` en Python.
+Nada de eso lo consume un productor, y nada de la ciencia entra aquí.
+
+Su otro papel es estructural y ya existe: NGR lee `params.project_id`
+(`lib/R/resources.R:246,257`) para sembrar los 21 artefactos de publicación.
 
 ## 5. Protección en `pull`
 
@@ -148,9 +175,10 @@ ruta; `pull --force` no invade ninguna raíz declarada.
 
 ## 7. Lo que decide el propietario
 
-1. ¿El informe lee sus parámetros científicos de los contratos de los
-   productores (§4), o quiere una declaración propia del informe?
-2. ¿`DaH.gmdp` y `siteID.gmdp` a `params.yml`, que es donde caen por descarte?
+1. ~~Parámetros científicos desde los contratos~~ — **decidido: sí, sin otro
+   lugar** (§4).
+2. ~~`DaH.gmdp` y `siteID.gmdp` a `params.yml`~~ — **decidido: no**. `DaH.gmdp`
+   va a `newmark.json`; `siteID.gmdp` no se declara (§4).
 3. Secuencia: este cambio deja de renderizar cualquier proyecto sin sus dos
    contratos (§3.3). El paso 1 de la migración —escribir los 14 contratos de los
    7 proyectos— lo hace usted con su agente de migración; oqt-V2 solo verifica.
