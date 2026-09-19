@@ -83,12 +83,19 @@ lee, pero `pull` tiene que protegerlo.
    un `UHSRock`/`MCETable` de otra generación que la publicada. El informe
    registra, por familia, el contrato, la raíz resuelta y el md5 y la fecha de
    cada archivo leído, y deja eso en el transmittal.
-   **Los metadatos no alcanzan solos** (verificado hoy en AR-S2L1W y en las
-   tablas del CLI nuevo): `UHSTable`, `MCETable`, `DnTable`, `kmaxTable` y
-   `ShearTable` no traen atributo de procedencia; `SSMTable` sí
-   (`producer, oqt, written, units, keyRule, selection, engine, inputs`) y
-   `AEPSTable` del CLI nuevo también, con la clave `hazard` en lugar de `oqt`.
-   Se lee el atributo cuando está, con las dos claves, y nunca se depende de él.
+   **Los metadatos no alcanzan solos.** El atributo se llama siempre `oqt`
+   (`libraries/hazard/lib/R/tableIO.R:19-23`: `.writeTable` hace
+   `attr(DT, "oqt") <- meta`); lo que cambió es un campo interno, donde la
+   herramienta anterior guardaba su versión en `oqt`, hazard la guarda en
+   `hazard`. Verificado en AR-S2L1W y en las tablas del CLI nuevo:
+   `UHSTable`, `MCETable`, `DnTable`, `kmaxTable` y `ShearTable` no traen el
+   atributo; `SSMTable` sí (`producer, oqt, written, units, keyRule, selection,
+   engine, inputs`) y `AEPSTable` también (`producer, hazard, written, …`).
+   oqt-V2 precisa que solo 7 de las 16 escrituras de productos de `runProcess`
+   lo llevan, que newmark no escribe ninguno, y que escribirlo en todas cambiaría
+   los bytes de productos hoy idénticos a la referencia congelada: es un cambio
+   de formato que decide el propietario. El informe lo lee cuando está, como dato
+   adicional, y nunca depende de él.
 5. **Fallo explícito.** Una tabla requerida que no está en la raíz declarada
    falla nombrando contrato, clave y ruta, en lugar del `NULL` de hoy.
 
@@ -145,8 +152,9 @@ ruta; `pull --force` no invade ninguna raíz declarada.
    productores (§4), o quiere una declaración propia del informe?
 2. ¿`DaH.gmdp` y `siteID.gmdp` a `params.yml`, que es donde caen por descarte?
 3. Secuencia: este cambio deja de renderizar cualquier proyecto sin sus dos
-   contratos (§3.3). ¿Se escriben primero los 14 contratos de los 7 proyectos
-   —paso 1 de la migración, trabajo de oqt-V2— y recién entonces entra?
+   contratos (§3.3). El paso 1 de la migración —escribir los 14 contratos de los
+   7 proyectos— lo hace usted con su agente de migración; oqt-V2 solo verifica.
+   ¿Se escriben primero y recién entonces entra el cambio?
 
 Una regla dura que prohíba mezclar generaciones necesitaría un criterio de
 compatibilidad entre generaciones que hoy nadie definió; queda fuera de esta
