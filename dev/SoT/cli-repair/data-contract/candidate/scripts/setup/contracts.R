@@ -65,6 +65,18 @@ Contracts <- list(hazard = .readContract(root, "hazard"),
 DataRoot <- list(hazard = .contractRoot(Contracts$hazard, "data", root),
                  newmark = .contractRoot(Contracts$newmark, "data", root))
 
+# A declared root that holds no product of its producer is a misconfigured
+# project, not a project without results: it is the case that used to publish
+# empty chapters after the data moved. Which tables a producer wrote is its own
+# business — a project that never ran the gmpe step has no GMPETable and still
+# renders — so only the empty root fails.
+for (Product in names(DataRoot)) {
+  if (!length(list.files(DataRoot[[Product]], pattern = "[.]Rds$"))) {
+    stop(attr(Contracts[[Product]], "file", exact = TRUE), ": path.data resolves to ",
+         DataRoot[[Product]], ", which holds no ", Product, " product.", call. = FALSE)
+  }
+}
+
 # Provenance of every table this report reads: which contract declared it, the
 # resolved root, and the identity of the file. Table metadata is recorded when
 # the producer wrote it; most products carry none, so it is never relied upon.
@@ -87,16 +99,12 @@ Provenance <- data.table::data.table(
   invisible(NULL)
 }
 
-# A table the report requires. Its absence under the declared root is a failure,
-# never an empty chapter: the previous silent NULL published stale or blank
-# results when a project moved its data.
-.loadTable <- function(name, product, required = TRUE) {
+# One table of a producer. A table its project never produced stays absent, as
+# the blocks that consume it already expect; the misconfiguration that used to
+# hide behind that silence is caught above, when the whole root is empty.
+.loadTable <- function(name, product) {
   FILE <- file.path(DataRoot[[product]], paste0(name, ".Rds"))
-  if (!file.exists(FILE)) {
-    if (!required) return(NULL)
-    stop(attr(Contracts[[product]], "file", exact = TRUE), ": path.data resolves to ",
-         DataRoot[[product]], ", which does not contain ", name, ".Rds.", call. = FALSE)
-  }
+  if (!file.exists(FILE)) return(NULL)
   DT <- readRDS(FILE)
   .recordProvenance(product, name, FILE, DT)
   if ("p" %in% names(DT)) DT[p == "0.1", p := "0.10"]
