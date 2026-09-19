@@ -59,10 +59,10 @@ NEXT-CLOSED {"evidence":"R9 ejecutado (aceptación del propietario «ejecuta R9�
 - Trampa de entorno registrada: invocar install/cli/testProduct.R a mano exige Rscript --vanilla; sin él, el PATH de ~/.Renviron (sin /usr/local/bin) rompe la detección de R del instalador. La entrada canónica bash install/cli/test-installers.sh [R_LIBRARY] ya usa --vanilla en los 4 escenarios.
 
 ## Blocker
-Decisión del propietario sobre la propuesta de datos (PROPUESTA-DATOS-20260919.md). Además, las raíces nuevas no existen todavía en ningún proyecto (etapa 2 de hazard, tras su H12): las pruebas sobre los 7 proyectos migrados no pueden correrse hasta que exista al menos un proyecto con data/hazard y data/newmark poblados. La decisión de cómo se selecciona la generación es del propietario.
+Respuestas de oqt-V2 (hazard + newmark) al handoff de integración, y decisión del propietario sobre los parámetros hoy en oq/data/data.R. Además, las raíces nuevas no existen todavía en ningún proyecto (etapa 2 de hazard, tras su H12): las pruebas sobre los 7 proyectos migrados no pueden correrse hasta que exista al menos un proyecto con data/hazard y data/newmark poblados. La decisión de cómo se selecciona la generación es del propietario.
 
 ## Next
-NEXT-ID {"action":"Propuesta de coexistencia de datos en dev/plan/cli-repair/PROPUESTA-DATOS-20260919.md: esperar la decisión del propietario (leer path.data de hazard.json y newmark.json en vez de un archivo nuevo; qué pasa con los controles de reporte que hoy viven en oq/data/data.R). Con su ok: plan SoT con línea base congelada del scaffold sha, implementar en global.R y setup.R, proteger las raíces declaradas y los contratos en lib/R/resources.R:89-92, y recién después re-correr T1-T9 sobre los 7 proyectos migrados.","id":"cli-repair-data-coexistence-20260919"}
+NEXT-ID {"action":"Integración de tres partes (orden del propietario 2026-09-19: «es momento de integrarnos entre los tres»): esperar las respuestas de oqt-V2 a las 10 preguntas de dev/plan/cli-repair/HANDOFF-INTEGRACION-DATOS-20260919.md (reparto y esquema de las 14 tablas, quién declara path.data, dueño de los parámetros que hoy están en oq/data/data.R, qué decide la generación durante la coexistencia, primer proyecto con data/hazard y data/newmark poblados). Con esas respuestas, revisar PROPUESTA-DATOS-20260919.md y recién entonces abrir el plan SoT del scaffold.","id":"cli-repair-data-integration-20260919"}
 
 ## Status
 BLOCKED
