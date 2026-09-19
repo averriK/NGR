@@ -13,7 +13,7 @@ Etapa 1 del propietario: que `ngr` reemplace a qrt y psha, reproduciendo sus flu
 - Propietario, instalador 2026-09-18: «sudo bash install/install.sh. asi se instala en mac os, ASI ES DESDE HACE ANOS» y «ok» al plan de familia: kit canónico único en ~/github/agents/install/, contrato libraries/gmsp/dev/SoT/gmsp-v2-repair-20260917/INSTALLER-CONTRACT-20260918.md (D1–D8). `install/` es superficie del agente del instalador: desde aquí no se toca ni se escribe un instalador propio.
 - Propietario, oráculo 2026-09-18: «el oraculo de NGR es qrt. no lo ovlides». Toda verificación de comportamiento de `ngr` se hace contra qrt (y psha) instalados como referencia; NGR_REFERENCE_BIN=/usr/local/bin/qrt en cli/tests y oráculo manual en las pruebas con proyectos reales.
 - Propietario 2026-09-19, migración: «mis 7 proyectos activos AR-S2L1W AR-SAC00 ARSACU0 AR-S2P30 AR-S2C1R AR-SABP0 y AR-M2V4D estan siendo migrados a los nuevos agentes que reemplazaron a oqt (newmark y hazard) … los datos van a coexistir temporalmente en dos ubicaiones: oq/data y en las nuevas ubicaiones de data/newmark y data/hazard». Pregunta operativa: si el CLI encuentra la información en el lugar nuevo.
-- Propietario 2026-09-19, parámetros: «si, no deberia haber otro lugar. ni data.R ni nada por el estilo» (los científicos salen del contrato del productor) y «DaH es algo mas duro que rara vez el cliente quiera cambiar. no deberia ir a params.yml» → DaH.gmdp a newmark.json; siteID.gmdp no se declara (global.R:43-44 lo deriva y params$report$sites tiene la selección). params.yml no cambia: identidad y forma del documento más project_id, que NGR usa para sembrar artefactos.
+- Propietario 2026-09-19, parámetros: «si, no deberia haber otro lugar. ni data.R ni nada por el estilo» (los científicos salen del contrato del productor) , «DaH es algo mas duro que rara vez el cliente quiera cambiar. no deberia ir a params.yml» y, sobre la secuencia, «si, se escriben («migran») los 14 contratos» antes de que entre el cambio → DaH.gmdp a newmark.json; siteID.gmdp no se declara (global.R:43-44 lo deriva y params$report$sites tiene la selección). params.yml no cambia: identidad y forma del documento más project_id, que NGR usa para sembrar artefactos.
 - Rutas aplicables: code, sot, r, git; bash y python según archivo.
 
 ## Evidence and no-repeat
@@ -61,10 +61,10 @@ NEXT-CLOSED {"evidence":"R9 ejecutado (aceptación del propietario «ejecuta R9�
 - Trampa de entorno registrada: invocar install/cli/testProduct.R a mano exige Rscript --vanilla; sin él, el PATH de ~/.Renviron (sin /usr/local/bin) rompe la detección de R del instalador. La entrada canónica bash install/cli/test-installers.sh [R_LIBRARY] ya usa --vanilla en los 4 escenarios.
 
 ## Blocker
-Las tres decisiones del propietario en PROPUESTA-DATOS-20260919.md §7. La prueba de dos layouts ya no está bloqueada por la etapa 2: se arma sobre una copia porque los CLI aceptan cualquier ruta del contrato.
+none
 
 ## Next
-NEXT-ID {"action":"Esperar del propietario las tres decisiones de PROPUESTA-DATOS-20260919.md §7 (parámetros científicos desde los contratos; DaH.gmdp y siteID.gmdp a params.yml; secuencia: escribir los 14 contratos de los 7 proyectos antes de que entre el cambio, porque sin modo legado un proyecto sin contratos deja de renderizar). Con su ok: plan SoT con línea base congelada del scaffold, resolución por contrato en global.R, setup.R y los tres _tbl/SSM.*.qmd, procedencia por familia en el transmittal, protección de contratos y raíces declaradas en lib/R/resources.R:89-92, y oráculo de dos layouts sobre una copia.","id":"cli-repair-data-integration-20260919"}
+NEXT-ID {"action":"Paso 1 de PROPUESTA-DATOS-20260919.md §8: copia liviana (cp -Rc) de un proyecto real en scratch con los dos layouts —tablas de hazard en data/hazard, de newmark en data/newmark, contratos con su bloque path ajustado— confirmada con hazard process --dry-run y newmark process --steps dn,kmax --dry-run; congelar esa línea base en dev/SoT/cli-repair/ y demostrar con ella el fallo actual: con el scaffold de hoy el informe lee oq/data y devuelve NULL en silencio en vez de las tablas declaradas. Proyectos de solo lectura; borrar la copia al cerrar.","id":"cli-repair-data-oracle-20260919"}
 
 ## Status
-BLOCKED
+ACTIVE

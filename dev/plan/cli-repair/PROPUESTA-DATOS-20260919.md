@@ -188,17 +188,29 @@ Oráculo: la misma información en el layout legado y en el nuevo produce tablas
 productos idénticos; una ruta declarada ausente falla nombrando contrato, clave y
 ruta; `pull --force` no invade ninguna raíz declarada.
 
-## 7. Lo que decide el propietario
+## 7. Decisiones del propietario (cerradas el 2026-09-19)
 
-1. ~~Parámetros científicos desde los contratos~~ — **decidido: sí, sin otro
-   lugar** (§4).
-2. ~~`DaH.gmdp` y `siteID.gmdp` a `params.yml`~~ — **decidido: no**. `DaH.gmdp`
-   va a `newmark.json`; `siteID.gmdp` no se declara (§4).
-3. Secuencia: este cambio deja de renderizar cualquier proyecto sin sus dos
-   contratos (§3.3). El paso 1 de la migración —escribir los 14 contratos de los
-   7 proyectos— lo hace usted con su agente de migración; oqt-V2 solo verifica.
-   ¿Se escriben primero y recién entonces entra el cambio?
+1. **Parámetros científicos desde los contratos, sin otro lugar.** «si, no
+   debería haber otro lugar. ni data.R ni nada por el estilo».
+2. **`DaH.gmdp` a `newmark.json`, no a `params.yml`.** «DaH es algo más duro que
+   rara vez el cliente quiera cambiar». `siteID.gmdp` no se declara (§4).
+3. **Primero se escriben los 14 contratos, después entra el cambio.** «si, se
+   escriben ("migran") los 14 contratos». Hasta que existan `hazard.json` y
+   `newmark.json` en los 7 proyectos, el scaffold sigue como está.
 
 Una regla dura que prohíba mezclar generaciones necesitaría un criterio de
-compatibilidad entre generaciones que hoy nadie definió; queda fuera de esta
-propuesta y es decisión suya si alguna vez hace falta.
+compatibilidad que hoy nadie definió; queda fuera de esta propuesta.
+
+## 8. Trabajo, en orden
+
+1. **Ahora, sin depender de nadie:** copia liviana de un proyecto con los dos
+   layouts y el oráculo de §6, que fija la línea base y demuestra el fallo
+   actual (el `NULL` silencioso de `global.R:3`).
+2. **Plan SoT del scaffold**, con esa línea base congelada: resolución por
+   contrato en `global.R`, `setup.R` y los tres `_tbl/SSM.*.qmd`; fallo que
+   nombre contrato, clave y ruta; procedencia por familia en el transmittal;
+   retiro de `source(data.R)`.
+3. **En NGR:** proteger en `pull` los dos contratos y las raíces que declaren,
+   con su prueba (`lib/R/resources.R:89-92`).
+4. **Cuando estén los 14 contratos** (aviso del propietario; oqt-V2 confirma el
+   conteo en disco): verificación sobre copias de los 7 proyectos y cierre.
