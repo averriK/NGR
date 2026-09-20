@@ -1,4 +1,0 @@
-NGR 0.4.0 at /Users/averrik/Library/R/arm64/4.6/library/NGR
-[doctor] sha: Rscript scripts/setup/checkParameters.R
-SHA parameter contract passed
-[doctor] declared checks passed
