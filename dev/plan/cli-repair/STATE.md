@@ -78,7 +78,7 @@ NEXT-CLOSED {"evidence":"Protección dinámica agregada tras el aviso de oqt-V2 
 none
 
 ## Next
-NEXT-ID {"action":"No tocar los contratos: la forma de Dn_weights la decide y corrige oqt-V2 por orden del propietario. Acciones del propietario para cerrar: (a) sudo bash install/install.sh en el checkout de NGR, sin argumentos, y verificación fuera del checkout; (b) publicar o no los commits de contratos —cada repo tiene 2 sin publicar— y decidir sobre .netlify/sites.env.bak de AR-S2P30 y los ocho productos de newmark de AR-M2V4D; (c) su lectura del 18,8% de extrapolación de kmax en AR-M2V4D; (d) actualizar la librería newmark instalada, 1.7.0 frente a la publicada 1.7.1.","id":"cli-repair-session-closeout-20260919"}
+NEXT-ID {"action":"No tocar los contratos: la forma de Dn_weights la decide y corrige oqt-V2 por orden del propietario. Del propietario quedan solo: (a) sudo bash install/install.sh en el checkout de NGR, sin argumentos, y verificación fuera del checkout; (b) publicar o no los 7 commits de contratos y decidir sobre .netlify/sites.env.bak de AR-S2P30 y los ocho productos de newmark de AR-M2V4D; (c) su lectura del 18,8% de extrapolación de kmax en AR-M2V4D. De oqt-V2, no del propietario ni de esta sesión: la forma de Dn_weights y la actualización de la librería newmark instalada, que está en 1.7.0 frente a la publicada 1.7.1.","id":"cli-repair-session-closeout-20260919"}
 
 ## Status
 ACTIVE
