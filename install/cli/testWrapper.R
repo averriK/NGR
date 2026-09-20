@@ -53,7 +53,7 @@ runChecks <- function(kit) {
     }
     if (!Windows) OUT <- runCommand("bash", c(file.path(Fixture, "install/install.sh"), if (yes) "--yes",
       "--library", Library, "--prefix", Prefix, args), success = success, input = input)
-    stopifnot(sum(lengths(regmatches(OUT, gregexpr("[y/N]", OUT, fixed = TRUE)))) == prompts)
+    stopifnot(sum(lengths(regmatches(OUT, gregexpr("\\[[yY]/[nN]\\]", OUT)))) == prompts)
     OUT
   }
   snapshot <- function() {
@@ -63,7 +63,7 @@ runChecks <- function(kit) {
   }
   cancelWrapper <- function() {
     Before <- snapshot()
-    for (Input in list("n", "", character())) {
+    for (Input in list("n", character())) {
       OUT <- runWrapper(character(), success = length(Input) > 0L,
                         yes = FALSE, input = Input, prompts = 1L)
       stopifnot(identical(Before, snapshot()),
@@ -82,8 +82,9 @@ runChecks <- function(kit) {
   runWrapper("--check", yes = FALSE)
   stopifnot(identical(Before, snapshot()))
   writePackage("0.4.2", "same-version")
-  runWrapper(character())
+  OUT <- runWrapper(character(), yes = FALSE, input = "", prompts = 1L)
   stopifnot(identical(readPackage(), c("0.4.2", "same-version")))
+  stopifnot(any(grepl("[Y/n]", OUT, fixed = TRUE)))
   Hash <- tools::md5sum(file.path(Prefix, "libexec/installerprobe/install.json"))
   writeLines('list(command = "installerprobe", exports = "missingApi")',
     file.path(Fixture, "install/requirements.R"))
@@ -128,7 +129,8 @@ runChecks <- function(kit) {
     source(file.path(kit, "product.R"), local = TRUE)
     Calls <- character()
     installRequirements <- function(path, library, packages, dependencies) {
-      Calls <<- c(Calls, if (identical(dependencies, FALSE)) "tools" else "dependencies")
+      stopifnot(identical(dependencies, FALSE))
+      Calls <<- c(Calls, if (identical(packages, "jsonlite")) "CLI packages" else "tools")
     }
     installPackage <- function(file, library) Calls <<- c(Calls, basename(file))
     .readArtifact <- function(file) list(file = file, package = sub("[.]tar.gz$", "", basename(file)),
@@ -141,8 +143,8 @@ runChecks <- function(kit) {
     .runInstaller <- function(...) invisible(NULL)
     installProduct(root = Fixture, args = c("--prefix", Prefix, "--library", Library,
       "--dependency", file.path(Work, "private.tar.gz"), "--tarball", file.path(Work, "installerprobe.tar.gz")))
-    stopifnot(identical(Calls, c("tools", "private.tar.gz", "dependencies", "installerprobe.tar.gz")))
+    stopifnot(identical(Calls, c("tools", "private.tar.gz", "installerprobe.tar.gz", "CLI packages")))
   })
-  message("PASS: single confirmation, new/partial installs, N/empty/EOF unchanged, yes/check, foreign conflict, source/same-version updates, removed partial modes, exports, tarball, dependency order")
+  message("PASS: single confirmation, Enter accepts replacement, N/EOF unchanged, new/partial installs, yes/check, foreign conflict, source/same-version updates, removed partial modes, exports, tarball, dependency order")
 }
 runChecks(normalizePath(commandArgs(TRUE)[1L], mustWork = TRUE))

@@ -1,12 +1,17 @@
 {
   "schema": 1,
   "model": "AOM",
-  "release": "0.2.0",
-  "sha256": "076eb66b14515db5b3ca351257c6fc663024f786f415c2199fa842395d74e695",
-  "installer": "2.0.0",
+  "release": "0.3.0",
+  "sha256": "63c306165a2c9a5fb0f98cf63b64b75ba15e06c7e4939ce454b9c57532716ead",
+  "installer": "2.1.0",
   "package": "NGR",
   "answers": null,
   "managed": [
+    {
+      "path": ".github/actions/aom-r/action.yaml",
+      "sha256": "e90b3e3d42746de82aa1a91ce55111014bb47c0955743900d51924333513b5c7",
+      "mode": "0644"
+    },
     {
       "path": "install/build.R",
       "sha256": "8c9221de7e1be98400943a3f76c934f9982a1b046d061691c9e26abf5e44576d",
@@ -54,17 +59,27 @@
     },
     {
       "path": "install/cli/test-installers.ps1",
-      "sha256": "1af59a7933186b7fcf53c85a4bb60b9e7e37bb01b497a0cc3aa5d91f8edb3fc7",
+      "sha256": "6ddb581217d899c2590206d02db4d8e243e717b05fe2f13bb87cc35fc7f0455d",
       "mode": "0644"
     },
     {
       "path": "install/cli/test-installers.sh",
-      "sha256": "7ba3928cdacff503a7aba1371115b7338322b1ed692ebaff5e165ee1447c68d8",
+      "sha256": "7acb87d0d2fdfb76bd384a4ad5c6236eb154286f01203e5fc3fce1696d8c9dbf",
       "mode": "0755"
+    },
+    {
+      "path": "install/cli/testDependencies.R",
+      "sha256": "196efd83f8bfb2b224be36418b17ba11ac014817d2eb3337feed6e2176f64c41",
+      "mode": "0644"
     },
     {
       "path": "install/cli/testManager.R",
       "sha256": "f69419fe4ce394ed438ee57320d29912384ea3130b64a8d050052d0118a97861",
+      "mode": "0644"
+    },
+    {
+      "path": "install/cli/testPreflight.R",
+      "sha256": "dc59211bcc85ea5b7a445af6403377bd2d9278ce1c9ecd7fb7ccef06dad558d2",
       "mode": "0644"
     },
     {
@@ -79,7 +94,7 @@
     },
     {
       "path": "install/cli/testWrapper.R",
-      "sha256": "a3bca0d031549a98a7b61dc94f68e2967a241c4552ae00cc51a15e6680b4a7b6",
+      "sha256": "ced6ac18b05ad84a4e5544682d149d7c076db8a0e0725a7a5f1cdb47919d97a0",
       "mode": "0644"
     },
     {
@@ -89,27 +104,32 @@
     },
     {
       "path": "install/install.ps1",
-      "sha256": "764a78dd181c1e97c849402f66b3f7e106971c795128e0f73145f535aada2cf4",
+      "sha256": "6a8036e15e4351dbc792d867880863c5300facfcab7b590396f029fba8c05e19",
       "mode": "0644"
     },
     {
       "path": "install/install.sh",
-      "sha256": "fed65adf4c7d0c762ec3c3cf3d9913b3fe879e17f1650b3c104b20c9da452887",
+      "sha256": "9086619d17a5872e5ae6b86b744c6da7d26231356236b050ef050a4a3cb5a443",
       "mode": "0755"
     },
     {
       "path": "install/installProduct.R",
-      "sha256": "818adf09d471908730133d82671c5fff62912852e7c9aa4fd3ce9bfae81bc079",
+      "sha256": "c5f95c1ba62ff8795920d165be1d36d36e155e5bdf23032204acf8e936400a24",
       "mode": "0644"
     },
     {
       "path": "install/package.R",
-      "sha256": "f7a4e5876db439ec432aa2ecaaca2b6e5341667d801b39f3ecb5b803d301e97b",
+      "sha256": "4cd4fee03e5b4f11d04f549069719dd90635fc86495379f198398d1904667276",
       "mode": "0644"
     },
     {
       "path": "install/product.R",
-      "sha256": "9d65d911a5fa212e148525b19da5c746b8460654fc2769f2882b51358d5e0b89",
+      "sha256": "3354fa7b4a09eb99573d85b82da93eb1ee382ba527ef2930008de670c9d23ec5",
+      "mode": "0644"
+    },
+    {
+      "path": "install/rhub.R",
+      "sha256": "9459e5823caa9cf28cb564da8fb6588a54027193ea5cfcea959f8f3255e58322",
       "mode": "0644"
     },
     {
@@ -129,7 +149,7 @@
     },
     {
       "path": "install/USAGE.md",
-      "sha256": "5d32f226985ab85b6f305f65bb2072c39a409e01e2a461552e7c73964929be69",
+      "sha256": "d66cc4867a26e7cdc35f56990489da521d665f4084b40a2e0b694e26adec806f",
       "mode": "0644"
     }
   ]

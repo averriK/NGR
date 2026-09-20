@@ -114,28 +114,9 @@ local({
   })
   message("PASS: failed and interrupted checks cannot retain a passed verdict")
 
-  local({
-    Calls <- new.env(parent = emptyenv())
-    Calls$n <- 0L
-    testthat::local_mocked_bindings(
-      packageVersion = function(pkg, ...) {
-        stopifnot(identical(pkg, "pak"))
-        package_version(c("0.10.0", "0.11.1")[[min(Calls$n + 1L, 2L)]])
-      },
-      install.packages = function(pkgs, lib, repos, ...) {
-        stopifnot(identical(pkgs, "pak"), identical(basename(lib), "R library"))
-        Calls$n <- Calls$n + 1L
-      }, .package = "utils"
-    )
-    testthat::local_mocked_bindings(
-      local_install_deps = function(root, lib, upgrade, ask, dependencies) {
-        stopifnot(!upgrade, !ask, identical(lib[[1L]], normalizePath("../R library")))
-      }, .package = "pak"
-    )
-    installRequirements(path = ".", library = "../R library", packages = character(), dependencies = NA)
-    stopifnot(identical(Calls$n, 1L), identical(.libPaths(), Libraries))
-  })
-  message("PASS: an outdated pak is an explicit bootstrap target; library resolution is restored")
+  installRequirements(path = ".", library = "../R library", packages = character(), dependencies = NA)
+  stopifnot(identical(.libPaths(), Libraries))
+  message("PASS: native dependency preparation restores library resolution; dependency failures are covered by cli/testDependencies.R")
 
   write("tampered", file = Artifact, append = TRUE)
   runEntry(script = "cran-check.R", args = c(Artifact, "../forbidden check"),

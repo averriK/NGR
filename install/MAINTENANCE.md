@@ -24,11 +24,13 @@ Rscript ../install/setup.R "/absolute/path/to/R/library"
 ```
 
 This installs absent maintenance tools and the package's development
-dependencies, including Suggests. `pak` resolves DESCRIPTION constraints and
-Remotes with `upgrade = FALSE`; compatible dependencies in visible R libraries
-are reused. Missing tools come from CRAN. The bootstrap prepares `pak >= 0.11.1`;
-restart R first if an older pak namespace is already loaded. Installing a
-needed incompatible dependency can replace it in the selected library.
+dependencies, including Suggests, through `utils::install.packages()`.
+The public `desc` reader preserves DESCRIPTION version constraints.
+Compatible packages in visible libraries are reused; installations write
+only to the selected library. CRAN is the default, with explicit repository
+options preserved. Installation warnings stop the operation.
+Private dependencies must be installed from the explicitly selected source
+or recorded archive first; Remotes do not trigger implicit GitHub downloads.
 This is a dependency preparation operation, not a rollback transaction.
 
 A new library must remain visible in subsequent sessions: use R's existing
@@ -126,7 +128,7 @@ Rscript ../install/testMaintenance.R
 ```
 
 This exercises real Rscript entries, a fixture build, collision and tampering
-guards, failed/interrupted checker records, dependency bootstrap and preservation
+guards, failed/interrupted checker records, native dependency preparation and preservation
 of library resolution. Checker failures are simulated through testthat. These
 tests neither install this product into a personal library nor dispatch or
 submit a release. They do not certify the scientific package or other platforms.

@@ -127,7 +127,7 @@ for tool in $OPTIONAL; do
 done
 
 if [[ -z "$LIBRARY" ]]; then
-  LIBRARY="$(as_user "$rscript_path" --vanilla -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))')"
+  LIBRARY="$(as_user "$rscript_path" --no-site-file --no-init-file -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))')"
   [[ -n "$LIBRARY" ]] || fail "R reports no user library for $USER_NAME; set R_LIBS_USER and retry"
 fi
 ok "R library: $LIBRARY"
@@ -153,9 +153,12 @@ ok "Payload complete: manifest, manager and launchers listed in install/manifest
 stage 2 "R package"
 
 # Destination conflicts are checked before building or modifying the R library.
-check_action=check
-if [[ "$(id -u)" == 0 ]]; then check_action=inspect; fi
-as_user env R_LIBS="$r_libs" "$rscript_path" --vanilla "$ROOT_DIR/install/cli/manage.R" "$check_action" "$PREFIX"
+preflight=(--check)
+if [[ "$(id -u)" == 0 ]]; then preflight+=(--system-cli); fi
+preflight+=("$ROOT_DIR" --library "$LIBRARY" --prefix "$PREFIX")
+if [[ -n "$TARBALL" ]]; then preflight+=(--tarball "$TARBALL"); fi
+for archive in "${DEPENDENCIES[@]+${DEPENDENCIES[@]}}"; do preflight+=(--dependency "$archive"); done
+as_user env R_LIBS="$r_libs" "$rscript_path" --vanilla "$ROOT_DIR/install/installProduct.R" "${preflight[@]}"
 if [[ "$CHECK" == 1 ]]; then
   ok "Check passed; nothing was installed"
   exit 0
@@ -179,18 +182,15 @@ if [[ -f "$receipt" ]]; then
   replace=true
   info "Existing $PACKAGE CLI recorded at $receipt; it will be replaced through its receipt"
 fi
-if [[ -n "$TARBALL" && ( ! -f "$TARBALL" || ! -f "$TARBALL.rds" ) ]]; then
-  fail "Package archive and its .rds record are required: $TARBALL"
-fi
 if [[ "$(id -u)" != 0 ]]; then
   parent="$PREFIX"
   while [[ ! -e "$parent" && "$parent" != / ]]; do parent="${parent%/*}"; done
   [[ -w "$parent" ]] || fail "$PREFIX is not writable by $USER_NAME; run: sudo bash install/install.sh"
 fi
 if [[ "$replace" == true && "$YES" -ne 1 ]]; then
-  printf 'Replace %s library and CLI at the destinations shown above? [y/N] ' "$PACKAGE" >&2
+  printf 'Replace %s library and CLI at the destinations shown above? [Y/n] ' "$PACKAGE" >&2
   if ! IFS= read -r confirm; then fail "End of input while confirming replacement; nothing was installed. Use --yes for unattended installation."; fi
-  case "$confirm" in [yY]) ;; *) printf 'Aborted by user.\n'; exit 0 ;; esac
+  case "$confirm" in ""|[yY]) ;; *) printf 'Aborted by user.\n'; exit 0 ;; esac
 fi
 
 # The product installer (install/installProduct.R) owns every R-side check and
@@ -248,7 +248,7 @@ case ":$PATH:" in
   *":$PREFIX/bin:"*) ok "$PREFIX/bin is on PATH" ;;
   *) warn "$PREFIX/bin is not on PATH; add: export PATH=\"$PREFIX/bin:\$PATH\"" ;;
 esac
-default_library="$(as_user "$rscript_path" --vanilla -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))')"
+default_library="$(as_user "$rscript_path" --no-site-file --no-init-file -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))')"
 if [[ "$LIBRARY" != "$default_library" ]]; then
   warn "$LIBRARY is not the default R user library; keep R_LIBS=\"$LIBRARY\" in the shell that runs $COMMAND"
 fi

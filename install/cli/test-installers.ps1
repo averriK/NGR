@@ -11,6 +11,10 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & $Rscript --vanilla (Join-Path $PSScriptRoot 'testRegression.R') $Root
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& $Rscript --vanilla (Join-Path $PSScriptRoot 'testPreflight.R') (Join-Path $Root 'install')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& $Rscript --vanilla (Join-Path $PSScriptRoot 'testDependencies.R') (Join-Path $Root 'install')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 if ($Library) {
     & $Rscript --vanilla (Join-Path $PSScriptRoot 'testProduct.R') $Root $Library
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

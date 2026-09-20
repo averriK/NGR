@@ -12,19 +12,28 @@ bash install/install.sh --check --prefix "/writable/test/prefix"
 The Unix prefix defaults to `/usr/local`. Under sudo, Bash owns prefix writes;
 every R process runs as the validated invoking user. Without sudo choose a
 writable prefix. `--check` validates prerequisites and destinations without
-installing. Receipt handling requires `jsonlite` already visible to R.
+installing. This includes library destinations and the presence of explicitly
+selected archives and their records. Artifact hashes are checked before any
+package is installed. Receipt handling requires `jsonlite` already visible to R.
 
 The default builds `lib/` without manuals or vignettes and installs it even
 when the existing version is equal or newer. `--tarball FILE` selects a recorded
 archive and its adjacent `.rds` instead. Repeat `--dependency FILE` to install
-private dependency archives in the supplied order. DESCRIPTION and the package
-solver own dependencies. `requirements.R` lists CLI packages by name, without
-version constraints; the installer does not impose a minimum version of pak.
+private dependency archives in the supplied order. Dependencies and their version
+constraints come from DESCRIPTION; `requirements.R` adds CLI package names.
+The installer uses `utils::install.packages()` and the public `desc` metadata
+reader. It writes only to the selected library and reuses compatible packages
+visible in R's other libraries. CRAN is the default repository; explicit R
+repository options remain effective. Installation warnings terminate the operation
+before CLI publication. Selected archives resolve their own DESCRIPTION dependencies.
+Private packages must already be available or supplied as recorded `--dependency`
+archives; GitHub `Remotes` are not downloaded implicitly.
 The installed product must load from the selected library, match the selected
 artifact and expose its declared CLI exports.
 
 Replacing an existing package or CLI asks once before any build or installation.
-`n` or an empty answer cancels unchanged; EOF fails. `--yes` skips that question.
+The prompt defaults to `[Y/n]`: Enter or `y` accepts; `n` cancels unchanged.
+EOF fails. `--yes` skips that question.
 There are no public `--component` or `-Component` modes. R package maintenance
 and documentation building remain separate operations in `build.R`.
 
@@ -43,7 +52,8 @@ The receipt records installation history. Launchers do not read its interpreter
 or library path and do not retain a version-specific `RSCRIPT` file. Each call
 uses the current R's normal library search and user startup. After upgrading R,
 install the product for that R when it is absent from the new search path.
-`--library` defaults to that R's `R_LIBS_USER`; a custom library must remain
+`--library` defaults to that R's `R_LIBS_USER`, including its Renviron files;
+discovery reads environment files without executing R profiles. A custom library must remain
 visible through the caller's normal `R_LIBS`/`R_LIBS_USER`. No profile is edited.
 
 ## Local acceptance and rollback

@@ -59,7 +59,7 @@
                 args = c(library, package, version, length(packages), packages, exports))
 }
 
-installProduct <- function(root, args, system = FALSE) {
+installProduct <- function(root, args, system = FALSE, check = FALSE) {
   if (!length(args) || identical(args, "--help")) {
     writeLines(c(
       "Install the selected R package and CLI from this repository.",
@@ -129,7 +129,8 @@ installProduct <- function(root, args, system = FALSE) {
       any(!grepl("^[A-Za-z][A-Za-z0-9.]*$", Packages))) {
     stop("requirements.R packages must be an unnamed vector of package names; dependencies belong in DESCRIPTION", call. = FALSE)
   }
-  if (is.null(Options$build) == is.null(Options$tarball)) {
+  if ((!check && is.null(Options$build) && is.null(Options$tarball)) ||
+      (!is.null(Options$build) && !is.null(Options$tarball))) {
     stop("Select exactly one of --tarball or --build", call. = FALSE)
   }
   Manager <- file.path(root, "install", "cli", "manage.R")
@@ -154,10 +155,12 @@ installProduct <- function(root, args, system = FALSE) {
   }
   Files <- c(Options$dependency, Options$tarball)
   for (File in Files) {
-    if (!file.exists(File) || !file.exists(paste0(File, ".rds"))) {
+    if (!file.exists(File) || dir.exists(File) ||
+        !file.exists(paste0(File, ".rds")) || dir.exists(paste0(File, ".rds"))) {
       stop("Archive and adjacent .rds record are required: ", File, call. = FALSE)
     }
   }
+  if (check) return(invisible(NULL))
   # Hashing is needed before modifying the selected library. Bootstrap only
   # this verifier in scratch when it is absent; runtime resolution excludes it.
   if (length(Files) && !requireNamespace("digest", quietly = TRUE)) {
@@ -178,14 +181,14 @@ installProduct <- function(root, args, system = FALSE) {
   }
   Tools <- c("digest", if (!is.null(Output)) "pkgbuild")
   installRequirements(path = Package$path, library = Library, packages = Tools,
-                       dependencies = if (length(Options$dependency)) FALSE else NA)
+                       dependencies = FALSE)
   if (!dir.exists(Library)) stop("R library does not exist: ", Library, call. = FALSE)
   .libPaths(unique(c(Library, Libraries)))
   Sys.setenv(R_LIBS = paste(unique(c(Library, Libraries)), collapse = .Platform$path.sep))
   for (Artifact in head(Artifacts, length(Options$dependency))) {
     installPackage(file = Artifact$file, library = Library)
   }
-  if (length(Options$dependency)) {
+  if (!is.null(Output)) {
     installRequirements(path = Package$path, library = Library, packages = character(), dependencies = NA)
   }
   if (!is.null(Output)) {
@@ -196,10 +199,7 @@ installProduct <- function(root, args, system = FALSE) {
   installPackage(file = Artifact$file, library = Library)
   Version <- Artifact$version
   message("Selected artifact SHA-256: ", Artifact$sha256)
-  Missing <- Packages[!vapply(Packages, function(x) length(find.package(x, quiet = TRUE)) > 0L, logical(1L))]
-  if (length(Missing)) {
-    pak::pkg_install(Missing, lib = .libPaths(), upgrade = FALSE, ask = FALSE, dependencies = NA)
-  }
+  installRequirements(path = Package$path, library = Library, packages = Packages, dependencies = FALSE)
   .verifyInstallation(package = Package$package, library = Library, version = Version,
                        packages = Packages, exports = Cli$exports)
   if (!system) {

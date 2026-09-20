@@ -51,10 +51,10 @@ function Invoke-Logged {
 function Confirm-Step {
     param([string]$Question)
     if ($Yes) { return }
-    Write-Host "$Question [y/N] " -NoNewline
+    Write-Host "$Question [Y/n] " -NoNewline
     $answer = [Console]::ReadLine()
     if ($null -eq $answer) { Stop-Install 'End of input while confirming replacement; nothing was installed. Use -Yes for unattended installation.' }
-    if ($answer -notmatch '^[yY]$') { Write-Host 'Aborted by user.'; exit 0 }
+    if ($answer -ne '' -and $answer -notmatch '^[yY]$') { Write-Host 'Aborted by user.'; exit 0 }
 }
 . (Join-Path $Root 'install\cli\r.ps1')
 
@@ -106,7 +106,10 @@ if ($Optional) {
         if (-not (Get-Command $tool -CommandType Application -ErrorAction SilentlyContinue)) { Write-Warn2 "Optional tool not found: $tool" }
     }
 }
-if (-not $Library) { $Library = (& $Rscript --vanilla -e 'cat(path.expand(Sys.getenv(''R_LIBS_USER'')))') -join '' }
+if (-not $Library) {
+    $Library = (& $Rscript --no-site-file --no-init-file -e 'cat(path.expand(Sys.getenv(''R_LIBS_USER'')))') -join ''
+    if ($LASTEXITCODE -ne 0) { Stop-Install 'Cannot resolve the user R library' }
+}
 if (-not $Library) { Stop-Install "R reports no user library (R_LIBS_USER) for $env:USERNAME" }
 Write-Ok "R library: $Library"
 if (-not $Prefix) { $Prefix = Join-Path $env:LOCALAPPDATA "Programs\$PackageName" }
@@ -133,7 +136,10 @@ Write-Ok 'Payload complete: manifest, manager and launchers listed in install\ma
 # ------------------------------------------------------------------ stage 2
 Write-Stage 2 'R package'
 $env:R_LIBS = if ($env:R_LIBS) { "$Library;$env:R_LIBS" } else { $Library }
-Invoke-Logged $Rscript @('--vanilla', (Join-Path $Root 'install\cli\manage.R'), 'check', $Prefix)
+$preflight = @('--vanilla', (Join-Path $Root 'install\installProduct.R'), '--check', $Root, '--library', $Library, '--prefix', $Prefix)
+if ($Tarball) { $preflight += @('--tarball', $Tarball) }
+foreach ($archive in $Dependency) { $preflight += @('--dependency', $archive) }
+Invoke-Logged $Rscript $preflight
 if ($Check) { Write-Ok 'Check passed; nothing was installed'; exit 0 }
 $installedVersion = (& $Rscript --vanilla -e 'Args <- commandArgs(TRUE); if (dir.exists(file.path(Args[2L], Args[1L]))) cat(as.character(utils::packageVersion(Args[1L], lib.loc = Args[2L])))' $PackageName $Library) -join ''
 if ($LASTEXITCODE -ne 0) { Stop-Install 'Cannot read the installed package metadata' }
@@ -146,9 +152,6 @@ $replace = [bool]$installedVersion
 if ((Test-Path -LiteralPath $receipt)) {
     $replace = $true
     Write-Info "Existing $PackageName CLI recorded at $receipt; it will be replaced through its receipt"
-}
-if ($Tarball -and (-not (Test-Path -LiteralPath $Tarball) -or -not (Test-Path -LiteralPath "$Tarball.rds"))) {
-    Stop-Install "Package archive and its .rds record are required: $Tarball"
 }
 if ($replace) { Confirm-Step "Replace $PackageName library and CLI at the destinations shown above?" }
 
@@ -205,7 +208,7 @@ if ($onPath) {
     }
     Write-Ok "User PATH: added $binDir (open a new terminal to use it)"
 }
-$defaultLibrary = (& $Rscript --vanilla -e 'cat(path.expand(Sys.getenv(''R_LIBS_USER'')))') -join ''
+$defaultLibrary = (& $Rscript --no-site-file --no-init-file -e 'cat(path.expand(Sys.getenv(''R_LIBS_USER'')))') -join ''
 if (($Library -replace '\\', '/') -ne ($defaultLibrary -replace '\\', '/')) { Write-Warn2 "$Library is not the default R user library; keep R_LIBS=$Library in the shell that runs $Command" }
 
 # ------------------------------------------------------------------ stage 5

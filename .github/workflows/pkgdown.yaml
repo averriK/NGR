@@ -1,6 +1,6 @@
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
 
 name: pkgdown
@@ -18,15 +18,15 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v2
 
-      - uses: r-lib/actions/setup-r@v2
+      - uses: ./.github/actions/aom-r
         with:
-          use-public-rspm: true
+          system-packages: libuv1-dev libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev libfontconfig1-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libpng-dev libtiff-dev libjpeg-dev libwebp-dev
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: any::pkgdown, local::.
-          needs: website
-          working-directory: lib
+      - name: Install R dependencies
+        shell: Rscript {0}
+        run: |
+          source("install/package.R")
+          installRequirements(path = "lib", library = .libPaths()[1L], packages = "pkgdown", dependencies = TRUE)
 
       - name: Build site
         working-directory: lib
@@ -34,6 +34,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages

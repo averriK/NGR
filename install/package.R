@@ -49,8 +49,52 @@
   Artifact
 }
 
+.installPackages <- function(packages, library, repos, type) {
+  if (!length(packages)) return(invisible(NULL))
+  message("Installing ", paste(packages, collapse = ", "), "\nLibrary: ", library,
+          "\nRepository: ", paste(repos, collapse = ", "), "\nType: ", type)
+  # install.packages returns NULL even after some failures. A warning is not
+  # permission to publish a CLI backed by an old or incomplete installation.
+  withCallingHandlers(
+    utils::install.packages(packages, lib = library, repos = repos, type = type,
+                            dependencies = NA),
+    warning = function(e) stop("Package installation failed: ", conditionMessage(e), call. = FALSE)
+  )
+  invisible(NULL)
+}
+
+.satisfiedRequirements <- function(requirements) {
+  vapply(seq_len(nrow(requirements)), function(i) {
+    Name <- requirements$package[i]
+    Version <- getRversion()
+    if (Name != "R") {
+      FILE <- find.package(Name, quiet = TRUE)
+      if (!length(FILE)) return(FALSE)
+      Version <- package_version(.packageInfo(FILE)$version)
+    }
+    Constraint <- requirements$version[i]
+    if (Constraint == "*") return(TRUE)
+    Operator <- sub("[[:space:]].*$", "", Constraint)
+    if (!(Operator %in% c("<", "<=", "==", ">=", ">"))) {
+      stop("Unsupported version constraint: ", Name, " ", Constraint, call. = FALSE)
+    }
+    do.call(Operator, list(Version, package_version(sub("^[^[:space:]]+[[:space:]]+", "", Constraint))))
+  }, logical(1L))
+}
+
 installRequirements <- function(path, library, packages, dependencies) {
-  .packageInfo(path)
+  Package <- .packageInfo(path)
+  Fields <- dependencies
+  if (identical(dependencies, FALSE)) Fields <- character()
+  if (identical(dependencies, NA)) Fields <- c("Depends", "Imports", "LinkingTo")
+  if (identical(dependencies, TRUE)) Fields <- c("Depends", "Imports", "LinkingTo", "Suggests")
+  if (!is.character(Fields) || anyNA(Fields) ||
+      any(!Fields %in% c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances"))) {
+    stop("Invalid dependency scope", call. = FALSE)
+  }
+  if (length(library) != 1L || is.na(library) || !nzchar(library)) {
+    stop("Select one R library", call. = FALSE)
+  }
   if (!dir.exists(library) && !dir.create(library, recursive = TRUE)) {
     stop("Cannot create R library: ", library, call. = FALSE)
   }
@@ -61,22 +105,27 @@ installRequirements <- function(path, library, packages, dependencies) {
   Libraries <- .libPaths()
   on.exit(.libPaths(Libraries), add = TRUE)
   .libPaths(unique(c(library, Libraries)))
-  if (!length(find.package("pak", quiet = TRUE))) {
-    # Bootstrap with network access; the installer announces it, never silent.
-    message("[INFO] pak is not available; bootstrapping pak from CRAN into ", library)
-    utils::install.packages("pak", lib = library, repos = "https://cloud.r-project.org")
+  Repositories <- getOption("repos")
+  if (is.null(Repositories) || !length(Repositories)) Repositories <- c(CRAN = "https://cloud.r-project.org")
+  Repositories[Repositories == "@CRAN@"] <- "https://cloud.r-project.org"
+  Type <- getOption("pkgType")
+  if (length(Fields) && !length(find.package("desc", quiet = TRUE))) {
+    .installPackages("desc", library = library, repos = Repositories, type = Type)
   }
-  # Only absent extra tools are direct installation targets. The package solver
-  # handles dependency versions; compatible packages in other libraries stay visible.
-  packages <- packages[!vapply(packages, function(x) {
-    length(find.package(x, quiet = TRUE)) > 0L
-  }, logical(1L))]
-  if (length(packages)) {
-    pak::pkg_install(packages, lib = .libPaths(), upgrade = FALSE,
-                     ask = FALSE, dependencies = NA)
+  Requirements <- data.frame(package = packages, version = rep("*", length(packages)))
+  if (length(Fields)) {
+    AUX <- desc::desc_get_deps(file = file.path(Package$path, "DESCRIPTION"))
+    Requirements <- rbind(Requirements, AUX[AUX$type %in% Fields, c("package", "version")])
   }
-  pak::local_install_deps(root = path, lib = .libPaths(), upgrade = FALSE,
-                          ask = FALSE, dependencies = dependencies)
+  Missing <- Requirements[!.satisfiedRequirements(Requirements), , drop = FALSE]
+  if ("R" %in% Missing$package) {
+    stop("R version does not satisfy DESCRIPTION: ", Missing$version[Missing$package == "R"], call. = FALSE)
+  }
+  .installPackages(unique(Missing$package), library = library, repos = Repositories, type = Type)
+  Missing <- Requirements[!.satisfiedRequirements(Requirements), , drop = FALSE]
+  if (nrow(Missing)) {
+    stop("Unmet package requirements: ", paste(paste(Missing$package, Missing$version), collapse = ", "), call. = FALSE)
+  }
   invisible(library)
 }
 
@@ -166,15 +215,23 @@ checkPackage <- function(file, output) {
 
 installPackage <- function(file, library) {
   Artifact <- .readArtifact(file)
-  if (!dir.exists(library) && !dir.create(library, recursive = TRUE)) {
-    stop("Cannot create R library: ", library, call. = FALSE)
+  Scratch <- tempfile("artifact-description-")
+  dir.create(Scratch)
+  on.exit(unlink(Scratch, recursive = TRUE), add = TRUE)
+  FILE <- paste0(Artifact$package, "/DESCRIPTION")
+  if (utils::untar(Artifact$file, files = FILE, exdir = Scratch) != 0L) {
+    stop("Cannot read DESCRIPTION from selected artifact", call. = FALSE)
   }
+  Package <- .packageInfo(file.path(Scratch, Artifact$package))
+  if (!identical(Package$package, Artifact$package) || !identical(Package$version, Artifact$version)) {
+    stop("Artifact DESCRIPTION differs from its build record", call. = FALSE)
+  }
+  installRequirements(path = Package$path, library = library, packages = character(), dependencies = NA)
   library <- normalizePath(library, winslash = "/", mustWork = TRUE)
-  if (file.access(library, 2L) != 0L) {
-    stop("R library is not writable: ", library, call. = FALSE)
-  }
-  pak::pkg_install(paste0("local::", Artifact$file), lib = unique(c(library, .libPaths())),
-                   upgrade = FALSE, ask = FALSE, dependencies = NA)
+  Libraries <- .libPaths()
+  on.exit(.libPaths(Libraries), add = TRUE)
+  .libPaths(c(library, Libraries))
+  .installPackages(Artifact$file, library = library, repos = NULL, type = "source")
   Package <- .packageInfo(file.path(library, Artifact$package))
   if (!identical(Package$version, Artifact$version)) {
     stop("Installed package version differs from the selected artifact", call. = FALSE)
