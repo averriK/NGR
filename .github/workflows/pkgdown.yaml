@@ -20,7 +20,7 @@ jobs:
 
       - uses: ./.github/actions/aom-r
         with:
-          system-packages: libuv1-dev libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev libfontconfig1-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libpng-dev libtiff-dev libjpeg-dev libwebp-dev
+          system-packages: libuv1-dev libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev libfontconfig1-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libpng-dev libtiff-dev libjpeg-dev libwebp-dev libcairo2-dev
 
       - name: Install R dependencies
         shell: Rscript {0}
