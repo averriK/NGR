@@ -51,18 +51,17 @@ MINVERSION <- "0.4.0"
 
 .showHelp <- function() {
   cat("ngr \u2014 resources, reports and publication\n\n",
-      "Run from the project directory:\n",
-      "  ngr pull --from <manifest.json> [--from <manifest.json> ...] [paths...]\n",
-      "  ngr pull [--source <id> ...] [--force] [--dry-run] [paths...]\n",
-      "  ngr status [--source <id> ...] [--check] [paths...]\n",
-      "  ngr doctor [--source <id> ...]\n",
-      "  ngr render <input.qmd> --profile <book|html|revealjs|docx> [Quarto args...]\n",
-      "  ngr render --manifest <file> [--dry-run] [--only <aliases>] [--except <aliases>]\n",
-      "  ngr deploy --help\n  ngr --version\n\n",
-      "The first pull names its sources; --from ngr selects the installed base.\n",
-      "Later pulls use manifest.json; --from re-points a registered source.\n",
-      "Seeds stay local.\n",
-      "--force replaces managed files; incompatible sources always fail.\n", sep = "")
+      "Run from the project directory.\n\n",
+      "Commands:\n",
+      "  pull   --from <manifest.json> [paths...]      Bring resources from a source into the project\n",
+      "  pull   [--force] [--dry-run] [paths...]       Update the project from its recorded sources\n",
+      "  status [--check] [paths...]                   Compare the project with its sources\n",
+      "  doctor                                        Check the project against its declared checks\n",
+      "  render <input.qmd> --profile <profile>        Render through yml/_quarto*.yml (book|html|revealjs|docx)\n",
+      "  render --manifest <file> [--dry-run]          Render or plan the manifest artifacts\n",
+      "  deploy                                        Publish artifacts and register Netlify sites\n\n",
+      "  --version                                     Show the installed command, package and build\n\n",
+      "Run 'ngr <command> --help' for command-specific help.\n", sep = "")
   0L
 }
 
