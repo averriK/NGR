@@ -5,7 +5,7 @@ publish_cli() (
   set -euo pipefail
   # The subshell isolates this state. Bash 3.2 drops function locals before
   # running EXIT on an errexit failure, so the rollback state cannot be local.
-  STAGE="$1" PREFIX="$2" COMMAND="$3" RUNTIME="$4" ACTION="$5" VERIFY="$6"
+  STAGE="$1" PREFIX="$2" COMMAND="$3" RUNTIME="$4" ACTION="$5" RSCRIPT="$6"
   recovery="" complete=false restored=true changed=0 privileged=false
   [[ "$(id -u)" != 0 ]] || privileged=true
   paths=() existed=() slots=() created=()
@@ -119,8 +119,8 @@ publish_cli() (
     fi
   done
   if [[ "$ACTION" == install ]]; then
-    as_user env R_LIBS="$r_libs" "$PREFIX/bin/$COMMAND" --version
-    if [[ -n "$VERIFY" ]]; then as_user env R_LIBS="$r_libs" "$PREFIX/bin/$COMMAND" "$VERIFY"; fi
+    as_user env R_LIBS="$r_libs" "$RSCRIPT" --vanilla "$PREFIX/libexec/$RUNTIME/install/cli/verify.R" "$PREFIX/bin/$COMMAND"
   fi
   complete=true
+  if [[ "$ACTION" == uninstall ]]; then cat "$STAGE/package.txt"; fi
 )

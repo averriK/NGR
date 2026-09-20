@@ -5,7 +5,7 @@
 # launchers) under the prefix. Run in PowerShell from the repository:
 #
 #   powershell -ExecutionPolicy Bypass -File install\install.ps1 [-Yes] [-Prefix DIR]
-#       [-Tarball FILE] [-Component all|lib|cli] [-NoPath]
+#       [-Tarball FILE] [-NoPath]
 #
 # The prefix defaults to %LOCALAPPDATA%\Programs\<product>, which needs no
 # elevation; its bin directory is added to the user PATH unless -NoPath.
@@ -19,7 +19,6 @@ param(
     [string[]]$Dependency = @(),
     [switch]$Check,
     [string]$Tarball = '',
-    [ValidateSet('all', 'lib', 'cli')][string]$Component = 'all',
     [switch]$NoPath
 )
 
@@ -57,16 +56,7 @@ function Confirm-Step {
     if ($null -eq $answer) { Stop-Install 'End of input while confirming replacement; nothing was installed. Use -Yes for unattended installation.' }
     if ($answer -notmatch '^[yY]$') { Write-Host 'Aborted by user.'; exit 0 }
 }
-function Resolve-Rscript {
-    $command = Get-Command Rscript.exe -CommandType Application -ErrorAction SilentlyContinue
-    if ($command) { return $command.Source }
-    foreach ($hive in 'HKLM:\SOFTWARE\R-core\R', 'HKCU:\SOFTWARE\R-core\R', 'HKLM:\SOFTWARE\WOW6432Node\R-core\R') {
-        try { $install = (Get-ItemProperty -LiteralPath $hive -ErrorAction Stop).InstallPath } catch { continue }
-        $candidate = Join-Path $install 'bin\Rscript.exe'
-        if (Test-Path -LiteralPath $candidate) { return $candidate }
-    }
-    return $null
-}
+. (Join-Path $Root 'install\cli\r.ps1')
 
 # ------------------------------------------------------------------ stage 1
 $encodingBefore = [Console]::OutputEncoding
@@ -96,8 +86,7 @@ if (file.exists(File)) {
   Cli <- source(File, local = TRUE)$value
   Field <- function(x) if (length(x)) x else ''''
   cat(Field(Cli$command), Field(Cli$runtime),
-      paste(Cli$tools, collapse = '' ''), paste(Cli$optional, collapse = '' ''),
-      Field(Cli$verify), sep = ''\n'')
+      paste(Cli$tools, collapse = '' ''), paste(Cli$optional, collapse = '' ''), sep = ''\n'')
 }' $Root) | ForEach-Object { $_ }
 $PackageName = $facts[0]
 $sourceVersion = $facts[1]
@@ -105,15 +94,14 @@ $Command = $facts[2]
 $Runtime = $facts[3]; if (-not $Runtime) { $Runtime = $Command }
 $Tools = $facts[4]
 $Optional = $facts[5]
-$Verify = $facts[6]
 if (-not $PackageName -or -not $sourceVersion) { Stop-Install 'lib\DESCRIPTION must identify Package and Version' }
-if ($Component -ne 'lib' -and -not $Command) { Stop-Install 'This product has no implemented CLI (install\requirements.R); use -Component lib' }
-if ($Component -ne 'lib' -and $Tools) {
+if (-not $Command) { Stop-Install 'This product needs a CLI declaration in install\requirements.R' }
+if ($Tools) {
     foreach ($tool in $Tools -split ' ') {
         if (-not (Get-Command $tool -CommandType Application -ErrorAction SilentlyContinue)) { Stop-Install "Required executable unavailable: $tool" }
     }
 }
-if ($Component -ne 'lib' -and $Optional) {
+if ($Optional) {
     foreach ($tool in $Optional -split ' ') {
         if (-not (Get-Command $tool -CommandType Application -ErrorAction SilentlyContinue)) { Write-Warn2 "Optional tool not found: $tool" }
     }
@@ -124,7 +112,6 @@ Write-Ok "R library: $Library"
 if (-not $Prefix) { $Prefix = Join-Path $env:LOCALAPPDATA "Programs\$PackageName" }
 if ($Prefix -notmatch '^[A-Za-z]:[\\/]|^\\\\') { $Prefix = Join-Path (Get-Location).Path $Prefix }
 if ($Tarball -and $Tarball -notmatch '^[A-Za-z]:[\\/]|^\\\\') { $Tarball = Join-Path (Get-Location).Path $Tarball }
-if ($Component -eq 'cli' -and ($Tarball -or $Dependency.Count)) { Stop-Install '-Component cli cannot install R archives' }
 
 Write-Host ''
 Write-Host "$PackageName installation"
@@ -132,24 +119,21 @@ Write-Host "Source:  $Root"
 Write-Host "Prefix:  $Prefix"
 Write-Host "Library: $Library"
 Write-Host "R user:  $env:USERNAME"
-Write-Host "Component: $Component"
 if ($Tarball) { Write-Host "Archive: $Tarball" }
 Write-Host ''
 
-if ($Component -ne 'lib' -and $Command) {
-    $previous = Get-Command $Command -CommandType Application -ErrorAction SilentlyContinue
-    if ($previous -and $previous.Source -ne (Join-Path $Prefix "bin\$Command.cmd")) { Write-Warn2 "a previous $Command is first on PATH: $($previous.Source)" }
-    foreach ($file in 'lib\DESCRIPTION', 'install\requirements.R', 'install\manifest.json', 'install\cli\manage.R',
-                      'install\cli\checkPaths.ps1', 'install\installProduct.R', 'install\package.R', 'install\product.R') {
-        if (-not (Test-Path -LiteralPath (Join-Path $Root $file))) { Stop-Install "Missing source file: $file" }
-    }
-    Write-Ok 'Payload complete: manifest, manager and launchers listed in install\manifest.json'
+$previous = Get-Command $Command -CommandType Application -ErrorAction SilentlyContinue
+if ($previous -and $previous.Source -ne (Join-Path $Prefix "bin\$Command.cmd")) { Write-Warn2 "a previous $Command is first on PATH: $($previous.Source)" }
+foreach ($file in 'lib\DESCRIPTION', 'install\requirements.R', 'install\manifest.json', 'install\cli\manage.R',
+                  'install\cli\checkPaths.ps1', 'install\installProduct.R', 'install\package.R', 'install\product.R') {
+    if (-not (Test-Path -LiteralPath (Join-Path $Root $file))) { Stop-Install "Missing source file: $file" }
 }
+Write-Ok 'Payload complete: manifest, manager and launchers listed in install\manifest.json'
 
 # ------------------------------------------------------------------ stage 2
 Write-Stage 2 'R package'
 $env:R_LIBS = if ($env:R_LIBS) { "$Library;$env:R_LIBS" } else { $Library }
-if ($Component -ne 'lib') { Invoke-Logged $Rscript @('--vanilla', (Join-Path $Root 'install\cli\manage.R'), 'check', $Prefix) }
+Invoke-Logged $Rscript @('--vanilla', (Join-Path $Root 'install\cli\manage.R'), 'check', $Prefix)
 if ($Check) { Write-Ok 'Check passed; nothing was installed'; exit 0 }
 $installedVersion = (& $Rscript --vanilla -e 'Args <- commandArgs(TRUE); if (dir.exists(file.path(Args[2L], Args[1L]))) cat(as.character(utils::packageVersion(Args[1L], lib.loc = Args[2L])))' $PackageName $Library) -join ''
 if ($LASTEXITCODE -ne 0) { Stop-Install 'Cannot read the installed package metadata' }
@@ -158,100 +142,81 @@ Write-Info "Source:    $PackageName $sourceVersion"
 
 $runtimeDir = Join-Path $Prefix "libexec\$Runtime"
 $receipt = Join-Path $runtimeDir 'install.json'
-$replace = $Component -ne 'cli' -and [bool]$installedVersion
-if ($Component -ne 'lib' -and (Test-Path -LiteralPath $receipt)) {
+$replace = [bool]$installedVersion
+if ((Test-Path -LiteralPath $receipt)) {
     $replace = $true
     Write-Info "Existing $PackageName CLI recorded at $receipt; it will be replaced through its receipt"
 }
-if ($Component -eq 'cli' -and -not $installedVersion) { Stop-Install "-Component cli needs $PackageName installed in $Library" }
 if ($Tarball -and (-not (Test-Path -LiteralPath $Tarball) -or -not (Test-Path -LiteralPath "$Tarball.rds"))) {
     Stop-Install "Package archive and its .rds record are required: $Tarball"
 }
-if ($replace) { Confirm-Step "Replace $PackageName (component: $Component) at the destinations shown above?" }
+if ($replace) { Confirm-Step "Replace $PackageName library and CLI at the destinations shown above?" }
 
 # The product installer (install\installProduct.R) owns every check and
 # installation: artifact identity, dependencies, CLI tools and packages,
 # exports, library shadowing. This script sequences it.
 $kit = @('--vanilla', (Join-Path $Root 'install\installProduct.R'), $Root)
 foreach ($archive in $Dependency) { $kit += @('--dependency', $archive) }
-if ($Component -eq 'cli') {
-    Write-Ok 'Library stage skipped (-Component cli)'
+if ($Tarball) {
+    $kit += @('--tarball', $Tarball)
 } else {
-    if ($Tarball) {
-        $kit += @('--tarball', $Tarball)
-    } else {
-        $buildDir = Join-Path ([System.IO.Path]::GetTempPath()) ("$PackageName-build-" + [guid]::NewGuid().ToString('N').Substring(0, 8))
-        Write-Info "Building $PackageName $sourceVersion without manual or vignettes into $buildDir"
-        $kit += @('--build', $buildDir)
-    }
+    $buildDir = Join-Path ([System.IO.Path]::GetTempPath()) ("$PackageName-build-" + [guid]::NewGuid().ToString('N').Substring(0, 8))
+    Write-Info "Building $PackageName $sourceVersion without manual or vignettes into $buildDir"
+    $kit += @('--build', $buildDir)
 }
-$kit += @('--component', $Component, '--library', $Library)
-if ($Component -ne 'lib') { $kit += @('--prefix', $Prefix) }
+$kit += @('--library', $Library, '--prefix', $Prefix)
 Write-Info 'Product installer: checks, dependencies, package and CLI'
 try { Invoke-Logged $Rscript $kit } finally {
     if ($buildDir -and (Test-Path -LiteralPath $buildDir)) { Remove-Item -LiteralPath $buildDir -Recurse -Force }
 }
-if ($Component -ne 'cli') {
-    $installedVersion = (& $Rscript --vanilla -e 'Args <- commandArgs(TRUE); cat(as.character(utils::packageVersion(Args[1L], lib.loc = Args[2L])))' $PackageName $Library) -join ''
-    if ($LASTEXITCODE -ne 0) { Stop-Install 'Cannot read the installed package metadata' }
-    Write-Ok "$PackageName $installedVersion installed in $Library"
-}
+$installedVersion = (& $Rscript --vanilla -e 'Args <- commandArgs(TRUE); cat(as.character(utils::packageVersion(Args[1L], lib.loc = Args[2L])))' $PackageName $Library) -join ''
+if ($LASTEXITCODE -ne 0) { Stop-Install 'Cannot read the installed package metadata' }
+Write-Ok "$PackageName $installedVersion installed in $Library"
 
 # ------------------------------------------------------------------ stage 3
 Write-Stage 3 'Command-line interface'
-if ($Component -eq 'lib') {
-    Write-Ok 'CLI stage skipped (-Component lib)'
-} else {
-    $listed = & $Rscript --vanilla -e 'R <- jsonlite::read_json(commandArgs(TRUE)[1L], simplifyVector = TRUE); cat(file.path(commandArgs(TRUE)[2L], R$file), sep = ''\n'')' "$receipt" "$Prefix/"
-    foreach ($file in $listed) {
-        if (-not (Test-Path -LiteralPath $file)) { Stop-Install "Expected installed file is missing: $file" }
-        Write-Host "  - $file"
-    }
-    Write-Ok "$Command CLI installed under $Prefix"
+$listed = & $Rscript --vanilla -e 'R <- jsonlite::read_json(commandArgs(TRUE)[1L], simplifyVector = TRUE); cat(file.path(commandArgs(TRUE)[2L], R$file), sep = ''\n'')' "$receipt" "$Prefix/"
+foreach ($file in $listed) {
+    if (-not (Test-Path -LiteralPath $file)) { Stop-Install "Expected installed file is missing: $file" }
+    Write-Host "  - $file"
 }
+Write-Ok "$Command CLI installed under $Prefix"
 
 # ------------------------------------------------------------------ stage 4
 Write-Stage 4 'Verification'
-if ($Component -eq 'lib') {
-    Invoke-Logged $Rscript @('--vanilla', '-e', 'Args <- commandArgs(TRUE); invisible(loadNamespace(Args[1L], lib.loc = Args[2L])); message(Args[1L], '' loads from '', find.package(Args[1L], lib.loc = Args[2L]))', $PackageName, $Library)
-    Write-Ok 'Package loads'
+Write-Ok "$Command verification passed before committing the CLI transaction"
+$binDir = Join-Path $Prefix 'bin'
+$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+$onPath = ($userPath -split ';') -contains $binDir -or ($env:Path -split ';') -contains $binDir
+if ($onPath) {
+    Write-Ok "$binDir is on PATH"
+} elseif ($NoPath) {
+    Write-Warn2 "$binDir is not on PATH; add it to call $Command by name"
 } else {
-    Write-Ok "$Command verification passed before committing the CLI transaction"
-    $binDir = Join-Path $Prefix 'bin'
-    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-    $onPath = ($userPath -split ';') -contains $binDir -or ($env:Path -split ';') -contains $binDir
-    if ($onPath) {
-        Write-Ok "$binDir is on PATH"
-    } elseif ($NoPath) {
-        Write-Warn2 "$binDir is not on PATH; add it to call $Command by name"
-    } else {
-        $newPath = if ($userPath) { "$userPath;$binDir" } else { $binDir }
-        try {
-            [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
-            $record = Get-Content -LiteralPath $receipt -Raw -Encoding UTF8 | ConvertFrom-Json
-            $record | Add-Member -NotePropertyName pathAdded -NotePropertyValue $true -Force
-            [IO.File]::WriteAllText($receipt, ($record | ConvertTo-Json -Depth 20), (New-Object Text.UTF8Encoding($false)))
-        } catch {
-            [Environment]::SetEnvironmentVariable('Path', $userPath, 'User')
-            throw
-        }
-        Write-Ok "User PATH: added $binDir (open a new terminal to use it)"
+    $newPath = if ($userPath) { "$userPath;$binDir" } else { $binDir }
+    try {
+        [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
+        $record = Get-Content -LiteralPath $receipt -Raw -Encoding UTF8 | ConvertFrom-Json
+        $record | Add-Member -NotePropertyName pathAdded -NotePropertyValue $true -Force
+        [IO.File]::WriteAllText($receipt, ($record | ConvertTo-Json -Depth 20), (New-Object Text.UTF8Encoding($false)))
+    } catch {
+        [Environment]::SetEnvironmentVariable('Path', $userPath, 'User')
+        throw
     }
-    $defaultLibrary = (& $Rscript --vanilla -e 'cat(path.expand(Sys.getenv(''R_LIBS_USER'')))') -join ''
-    if (($Library -replace '\\', '/') -ne ($defaultLibrary -replace '\\', '/')) { Write-Warn2 "$Library is not the default R user library; keep R_LIBS=$Library in the shell that runs $Command" }
+    Write-Ok "User PATH: added $binDir (open a new terminal to use it)"
 }
+$defaultLibrary = (& $Rscript --vanilla -e 'cat(path.expand(Sys.getenv(''R_LIBS_USER'')))') -join ''
+if (($Library -replace '\\', '/') -ne ($defaultLibrary -replace '\\', '/')) { Write-Warn2 "$Library is not the default R user library; keep R_LIBS=$Library in the shell that runs $Command" }
 
 # ------------------------------------------------------------------ stage 5
 Write-Stage 5 'Summary'
 Write-Ok "$PackageName $installedVersion in $Library"
-if ($Component -ne 'lib') {
-    Write-Ok "$(Join-Path $Prefix "bin\$Command.cmd"), receipt $receipt"
-    Write-Host ''
-    Write-Host "Usage: $Command --help, $Command --version"
-    Write-Host 'Remove the CLI: powershell -ExecutionPolicy Bypass -File install\uninstall.ps1 [-Prefix DIR]'
-}
+Write-Ok "$(Join-Path $Prefix "bin\$Command.cmd"), receipt $receipt"
 Write-Host ''
-Write-Host "The R package is separate: Rscript -e 'remove.packages(`"$PackageName`")'"
+Write-Host "Usage: $Command --help, $Command --version"
+Write-Host 'Remove the CLI: powershell -ExecutionPolicy Bypass -File install\uninstall.ps1 [-Prefix DIR]'
+Write-Host ''
+Write-Host "The R package remains separate from CLI removal. Selected library: $Library"
 } finally {
     [Console]::OutputEncoding = $encodingBefore
 }

@@ -18,12 +18,11 @@ runChecks <- function(root, native) {
   writeLines(c("#!/bin/sh", "echo installerprobe"), Launcher)
   writeLines("invisible(NULL)", file.path(Fixture, "cli/main.R"))
   writeLines("invisible(NULL)", file.path(Fixture, "cli/helpers/retired.R"))
-  Files <- c("bin/installerprobe", "main.R", "helpers/retired.R")
+  Files <- c("bin/installerprobe", "main.R", "helpers/retired.R", "bin/installerprobe.cmd", "bin/installerprobe.ps1")
   if (Windows) {
     Launcher <- paste0(Launcher, ".cmd")
     writeLines(c("@echo off", "echo installerprobe", "exit /b 0"), Launcher)
     writeLines("Write-Output installerprobe", file.path(Fixture, "cli/bin/installerprobe.ps1"))
-    Files <- c(Files, "bin/installerprobe.cmd", "bin/installerprobe.ps1")
   }
   Manifest <- file.path(Fixture, "install/manifest.json")
   jsonlite::write_json(list(manifest_version = 1L, files = Files), Manifest, auto_unbox = TRUE)
@@ -40,8 +39,8 @@ runChecks <- function(root, native) {
     if (Status == 0L && !is.null(Stage)) {
       if (!Present) stopifnot(!dir.exists(prefix))
       OUT <- suppressWarnings(system2("bash", shQuote(c("-c",
-        'source "$1"; as_user() { "$@"; }; r_libs=""; publish_cli "$2" "$3" installerprobe installerprobe "$4" ""',
-        "--", file.path(Fixture, "install/cli/publish.sh"), Stage, prefix, action)),
+        'source "$1"; as_user() { "$@"; }; r_libs=""; publish_cli "$2" "$3" installerprobe installerprobe "$4" "$5"',
+        "--", file.path(Fixture, "install/cli/publish.sh"), Stage, prefix, action, Rscript)),
         stdout = TRUE, stderr = TRUE))
       Status <- attr(OUT, "status")
       if (is.null(Status)) Status <- 0L
@@ -94,10 +93,10 @@ runChecks <- function(root, native) {
   runManager("uninstall", Occupied)
   stopifnot(file.exists(Foreign))
   Hash <- tools::md5sum(file.path(Prefix, c(Record$file, "libexec/installerprobe/install.json")))
-  writeLines(if (Windows) c("@echo off", "exit /b 42") else c("#!/bin/sh", "echo broken >&2", "exit 42"), Launcher)
+  writeLines("quit(status = 42L)", file.path(Fixture, "cli/main.R"))
   runManager("install", Prefix, success = FALSE)
   stopifnot(identical(Hash, tools::md5sum(names(Hash))))
-  writeLines(if (Windows) c("@echo off", "echo installerprobe", "exit /b 0") else c("#!/bin/sh", "echo installerprobe"), Launcher)
+  writeLines("invisible(NULL)", file.path(Fixture, "cli/main.R"))
   Foreign <- file.path(Prefix, "libexec/installerprobe/foreign.txt")
   writeLines("keep", Foreign)
   runManager("uninstall", Prefix)

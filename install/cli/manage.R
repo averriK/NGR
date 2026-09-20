@@ -54,13 +54,16 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
          paste(Files[Invalid], collapse = ", "), call. = FALSE)
   }
   Launcher <- file.path("bin", Command)
-  if (!(Launcher %in% Files)) {
-    stop("install/manifest.json does not list ", Launcher, call. = FALSE)
+  Launchers <- paste0(Launcher, c("", ".cmd", ".ps1"))
+  if (action != "uninstall" && !all(Launchers %in% Files)) {
+    stop("install/manifest.json must list all command launchers: ", paste(Launchers, collapse = ", "), call. = FALSE)
   }
   Sources <- file.path(root, "cli", Files)
-  if (isTRUE(Requirements$launchers)) {
-    Sources[dirname(Files) == "bin"] <- file.path(root, "install/launchers", basename(Files[dirname(Files) == "bin"]))
-  }
+  if (any(dirname(Files) == "bin" & !Files %in% Launchers)) stop("Only the declared command may occupy bin/")
+  Sources[Files %in% Launchers] <- file.path(source, paste0("command", c(".sh", ".cmd", ".ps1")[match(Files[Files %in% Launchers], Launchers)]))
+  PathEnv <- Requirements$pathEnv
+  if (length(PathEnv) && (length(PathEnv) != 1L || is.na(PathEnv) ||
+      !grepl("^[A-Z][A-Z0-9_]*_COMMAND_PATH$", PathEnv))) stop("Invalid pathEnv declaration")
   if (action != "uninstall") {
     if (!all(file.exists(Sources)) || any(dir.exists(Sources))) {
       stop("Missing CLI source: ", paste(Sources[!file.exists(Sources)], collapse = ", "),
@@ -69,9 +72,8 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
     # Directories covered by the manifest must not hold unlisted files (psha
     # parity); cli/README.md and cli/tests/ are documentation, not payload.
     for (DIR in unique(dirname(Files))) {
-      if (DIR == ".") next
+      if (DIR %in% c(".", "bin")) next
       Directory <- file.path(root, "cli", DIR)
-      if (DIR == "bin" && isTRUE(Requirements$launchers)) Directory <- file.path(root, "install/launchers")
       Present <- file.path(DIR, list.files(Directory, recursive = TRUE,
                                            include.dirs = FALSE, no.. = TRUE))
       Unlisted <- setdiff(Present, Files)
@@ -86,7 +88,8 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
   # and wrappers. These files belong to the receipt like the runtime payload.
   Removal <- c("lib/DESCRIPTION", "install/requirements.R", "install/manifest.json",
                "install/uninstall.sh", "install/uninstall.ps1",
-               "install/cli/manage.R", "install/cli/checkPaths.ps1", "install/cli/publish.sh")
+               "install/cli/manage.R", "install/cli/checkPaths.ps1", "install/cli/publish.sh",
+               "install/cli/r.sh", "install/cli/r.ps1", "install/cli/verify.R")
   Files <- c(Files, Removal)
   Sources <- c(Sources, file.path(root, Removal))
   if (action != "uninstall" && !all(file.exists(Sources))) {
@@ -117,7 +120,6 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
     Commit <- .gitValue("rev-parse HEAD")
   }
   Extra <- file.path("libexec", Runtime, "BUILD_INFO")
-  if (isTRUE(Requirements$launchers)) Extra <- c(Extra, file.path("libexec", Runtime, "RSCRIPT"))
   if (length(Requirements$buildInfo)) {
     if (!.relativePaths(Requirements$buildInfo)) stop("Invalid buildInfo path")
     # Resource consumers represent unknown provenance by an absent stamp.
@@ -172,6 +174,11 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
       stop("Invalid created directories in receipt: ", File, call. = FALSE)
     }
   }
+  PackageNotice <- "R package untouched; its installation library is unknown (not recorded in receipt)."
+  if (is.list(Record$package) && is.character(Record$package$library) && length(Record$package$library) == 1L &&
+      !is.na(Record$package$library) && nzchar(Record$package$library)) {
+    PackageNotice <- paste0("R package untouched. Recorded library: ", Record$package$library)
+  }
   Paths <- file.path(prefix, union(Targets, Owned))
   if (action == "uninstall") Paths <- file.path(prefix, Owned)
   Paths <- c(Paths, File)
@@ -213,9 +220,10 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
   Kit <- c("installProduct.R", "product.R", "package.R", "build.R",
            "install.sh", "install.ps1", "uninstall.sh", "uninstall.ps1",
            "update-manifest.sh",
-           file.path("cli", c("manage.R", "checkPaths.ps1",
+           file.path("cli", c("manage.R", "checkPaths.ps1", "r.sh", "r.ps1",
+                              "command.sh", "command.cmd", "command.ps1", "verify.R",
                               "publish.sh", "test-installers.sh", "test-installers.ps1",
-                              "testManager.R", "testWrapper.R", "testProduct.R")))
+                              "testManager.R", "testWrapper.R", "testProduct.R", "testRegression.R")))
   if (action %in% c("check", "inspect")) {
     for (DIR in unique(dirname(Paths))) {
       while (!file.exists(DIR)) {
@@ -292,6 +300,15 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
         !Sys.chmod(Prepared[match(Launcher, Files)], "0755")) {
       stop("Cannot prepare CLI payloads", call. = FALSE)
     }
+    for (i in which(Files %in% Launchers)) {
+      Lines <- readLines(Prepared[i], warn = FALSE)
+      Export <- ""
+      if (length(PathEnv) && Files[i] == Launcher) Export <- paste0('export ', PathEnv, '="$PATH"')
+      if (length(PathEnv) && Files[i] == paste0(Launcher, ".ps1")) Export <- paste0('$env:', PathEnv, ' = $env:PATH')
+      Lines <- gsub("@RUNTIME@", Runtime, Lines, fixed = TRUE)
+      Lines <- gsub("@PATH_EXPORT@", Export, Lines, fixed = TRUE)
+      writeLines(Lines, Prepared[i])
+    }
     Now <- format(Sys.time(), tz = "UTC", format = "%Y-%m-%dT%H:%M:%SZ")
     # Dirt is scoped to the payload sources: foreign working-tree changes
     # (plans, docs) must not stamp every render as DRAFT (psha parity).
@@ -310,7 +327,6 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
               paste0("dirty=", tolower(as.character(Git$dirty))))
     for (i in seq_along(Extra)) {
       Lines <- Info
-      if (basename(Extra[i]) == "RSCRIPT") Lines <- file.path(R.home("bin"), if (Windows) "Rscript.exe" else "Rscript")
       writeLines(Lines, Prepared[length(Files) + i])
     }
     Found <- find.package(Package, quiet = TRUE)
@@ -348,6 +364,7 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
                 file.path(stage, "files.tsv"), sep = "\t", quote = FALSE,
                 row.names = FALSE, col.names = FALSE)
     writeLines(CreatedRel[order(nchar(CreatedRel), decreasing = TRUE)], file.path(stage, "created.txt"))
+    if (action == "uninstall") writeLines(PackageNotice, file.path(stage, "package.txt"))
     message("Prepared CLI ", action, " for the elevated Bash publisher: ", stage)
     return(invisible(NULL))
   }
@@ -363,10 +380,9 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
     if (!file.rename(Prepared[length(Paths)], File)) stop("Cannot replace ", File)
     Changed[length(Paths)] <- TRUE
     CommandPath <- file.path(prefix, paste0(Launcher, if (Windows) ".cmd" else ""))
-    for (Option in c("--version", Requirements$verify)) {
-      Status <- system2(CommandPath, shQuote(Option))
-      if (Status != 0L) stop("Installed CLI verification failed (", Status, "): ", CommandPath)
-    }
+    Status <- system2(file.path(R.home("bin"), "Rscript"),
+                      shQuote(c("--vanilla", file.path(source, "verify.R"), CommandPath)))
+    if (Status != 0L) stop("Installed CLI local verification failed (", Status, "): ", CommandPath)
   }
   if (action == "uninstall") {
     for (i in seq_along(Paths)) {
@@ -387,6 +403,7 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
       if (Status != 0L && action == "uninstall") message("Kept ", DIR, ": not empty")
     }
   }
+  if (action == "uninstall") message(PackageNotice)
   message(if (action == "install") "Installed " else "Removed ", Paths[1L])
   invisible(NULL)
 }

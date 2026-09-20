@@ -61,16 +61,10 @@ installRequirements <- function(path, library, packages, dependencies) {
   Libraries <- .libPaths()
   on.exit(.libPaths(Libraries), add = TRUE)
   .libPaths(unique(c(library, Libraries)))
-  if ("pak" %in% loadedNamespaces() && getNamespaceVersion("pak") < "0.11.1") {
-    stop("Restart R before preparing pak >= 0.11.1", call. = FALSE)
-  }
-  if (!length(find.package("pak", quiet = TRUE)) || utils::packageVersion("pak") < "0.11.1") {
+  if (!length(find.package("pak", quiet = TRUE))) {
     # Bootstrap with network access; the installer announces it, never silent.
     message("[INFO] pak is not available; bootstrapping pak from CRAN into ", library)
     utils::install.packages("pak", lib = library, repos = "https://cloud.r-project.org")
-  }
-  if (utils::packageVersion("pak") < "0.11.1") {
-    stop("pak >= 0.11.1 is required for multiple visible libraries", call. = FALSE)
   }
   # Only absent extra tools are direct installation targets. The package solver
   # handles dependency versions; compatible packages in other libraries stay visible.

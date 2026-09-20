@@ -44,9 +44,8 @@ else
   USER_NAME="$(id -un)"
   as_user() { "$@"; }
 fi
-rscript_path="$(as_user bash -c 'command -v Rscript' || true)"
-[[ -n "$rscript_path" ]] \
-  || fail "Rscript is not on the PATH of $USER_NAME; the receipt cannot be read."
+source "$ROOT_DIR/install/cli/r.sh"
+rscript_path="$(resolve_rscript)"
 if [[ -z "$LIBRARY" ]]; then
   LIBRARY="$(as_user "$rscript_path" --vanilla -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))')"
   [[ -n "$LIBRARY" ]] || fail "R reports no user library (R_LIBS_USER) for $USER_NAME"
@@ -83,7 +82,7 @@ if [[ "$(id -u)" == 0 ]]; then
   trap 'as_user rm -rf -- "$stage_dir"' EXIT
   as_user env R_LIBS="$r_libs" "$rscript_path" --vanilla "$ROOT_DIR/install/cli/manage.R" uninstall "$PREFIX" "$stage_dir"
   source "$ROOT_DIR/install/cli/publish.sh"
-  publish_cli "$stage_dir" "$PREFIX" "$COMMAND" "$RUNTIME" uninstall ""
+  publish_cli "$stage_dir" "$PREFIX" "$COMMAND" "$RUNTIME" uninstall "$rscript_path"
 else
   as_user env R_LIBS="$r_libs" "$rscript_path" --vanilla "$ROOT_DIR/install/cli/manage.R" uninstall "$PREFIX"
 fi
@@ -92,5 +91,3 @@ remaining="$(as_user bash -c "command -v \"$COMMAND\"" || true)"
 if [[ -n "$remaining" ]]; then
   warn "$COMMAND is still first on PATH: $remaining"
 fi
-printf 'The R package in %s is untouched. To remove it: Rscript -e '"'"'remove.packages("%s")'"'"'\n' \
-  "$LIBRARY" "$PACKAGE"

@@ -23,16 +23,7 @@ function Write-Ok { param([string]$Text) Write-Host "[OK]   $Text" }
 function Write-Info { param([string]$Text) Write-Host "[INFO] $Text" }
 function Write-Warn2 { param([string]$Text) [Console]::Error.WriteLine("[WARN] $Text") }
 function Stop-Install { param([string]$Text) [Console]::Error.WriteLine("[ERROR] $Text"); exit 1 }
-function Resolve-Rscript {
-    $command = Get-Command Rscript.exe -CommandType Application -ErrorAction SilentlyContinue
-    if ($command) { return $command.Source }
-    foreach ($hive in 'HKLM:\SOFTWARE\R-core\R', 'HKCU:\SOFTWARE\R-core\R', 'HKLM:\SOFTWARE\WOW6432Node\R-core\R') {
-        try { $install = (Get-ItemProperty -LiteralPath $hive -ErrorAction Stop).InstallPath } catch { continue }
-        $candidate = Join-Path $install 'bin\Rscript.exe'
-        if (Test-Path -LiteralPath $candidate) { return $candidate }
-    }
-    return $null
-}
+. (Join-Path $Root 'install\cli\r.ps1')
 
 $encodingBefore = [Console]::OutputEncoding
 try {
@@ -86,7 +77,6 @@ if (-not $NoPath -and $record.pathAdded -eq $true -and $userPath -and (($userPat
 }
 $remaining = Get-Command $Command -CommandType Application -ErrorAction SilentlyContinue
 if ($remaining) { Write-Warn2 "$Command is still first on PATH: $($remaining.Source)" }
-Write-Host "The R package in $Library is untouched. To remove it: Rscript -e 'remove.packages(`"$PackageName`")'"
 } finally {
     [Console]::OutputEncoding = $encodingBefore
 }

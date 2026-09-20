@@ -1,97 +1,103 @@
 # Product installation
 
-Run from the repository root. Installation is separate from documentation,
-release checks, submission and publication.
+Run from the repository root. The public operation installs the complete R
+library + CLI product. R must already be installed.
 
 ```sh
 sudo bash install/install.sh
-sudo bash install/install.sh --component cli
-bash install/install.sh --component lib --library "/path/to/R/library"
+bash install/install.sh --yes --library "/chosen/R/library" --prefix "/chosen/prefix"
 bash install/install.sh --check --prefix "/writable/test/prefix"
 ```
 
-The default Unix prefix is `/usr/local`. Under sudo, the original Bash process
-owns writes to that prefix. Every R process runs as the validated invoking
-`SUDO_USER`, including receipt preparation. R does not request elevation.
-Without sudo, select a prefix writable by the current user.
+The Unix prefix defaults to `/usr/local`. Under sudo, Bash owns prefix writes;
+every R process runs as the validated invoking user. Without sudo choose a
+writable prefix. `--check` validates prerequisites and destinations without
+installing. Receipt handling requires `jsonlite` already visible to R.
 
-R must be installed. The CLI installer requires `jsonlite` in a visible R
-library to validate its manifest and receipt before modifying the product.
-If absent, the diagnostic gives its installation command; `--check` never
-installs it. The selected library defaults to R's `R_LIBS_USER`;
-`--library` overrides it while retaining the existing library search chain.
+The default builds `lib/` without manuals or vignettes and installs it even
+when the existing version is equal or newer. `--tarball FILE` selects a recorded
+archive and its adjacent `.rds` instead. Repeat `--dependency FILE` to install
+private dependency archives in the supplied order. DESCRIPTION and the package
+solver own dependencies. `requirements.R` lists CLI packages by name, without
+version constraints; the installer does not impose a minimum version of pak.
+The installed product must load from the selected library, match the selected
+artifact and expose its declared CLI exports.
 
-The default always builds and installs the package from this checkout's `lib/`
-together with its CLI, even if the installed version number is equal or newer.
-No minimum package version selects or retains an older installation. The
-installed package is checked for its selected artifact version, loading path
-and required CLI exports. `--tarball FILE` explicitly selects an archive plus
-its adjacent `.rds` record instead of building the checkout.
-Repeated `--dependency FILE` installs recorded private dependency artifacts
-in the supplied order before resolving the product's remaining dependencies.
+Replacing an existing package or CLI asks once before any build or installation.
+`n` or an empty answer cancels unchanged; EOF fails. `--yes` skips that question.
+There are no public `--component` or `-Component` modes. R package maintenance
+and documentation building remain separate operations in `build.R`.
 
-`--component lib` always installs the selected package and does not write the
-CLI. `--component cli` is the explicit exception: it installs no R packages and
-requires the product and all CLI dependencies already visible. A non-default
-library must remain visible to subsequent commands
-through the user's normal R environment; no shell profile is edited.
-Source builds omit manuals and vignettes; `build.R` remains the separate
-documented maintenance operation.
+## Current R and its libraries
 
-Replacing any selected installed component asks once for the whole selected
-operation, before creating build output or changing dependencies, the package
-or the CLI. A new installation does not ask a replacement question. `n` or an
-empty answer cancels without changes; end of input fails with an explicit
-diagnostic. `--yes` skips the question only, and `--check` never asks or installs.
-The header identifies the source, optional archive, component and destinations.
+Installers, uninstallers and generated launchers share the same resolver.
+macOS uses the current Framework alias, then an unversioned Homebrew R prefix;
+Linux uses `/usr/local/bin/Rscript`, then `/usr/bin/Rscript`. An arbitrary
+`Rscript` first on PATH cannot replace these system locations. A private R
+installation outside these locations is not supported by this resolver.
+On Windows, the current R-core registry version selects the installation,
+with HKCU before HKLM. R's installer must register it; see the
+[R Windows FAQ](https://cran.r-project.org/bin/windows/base/rw-FAQ.html).
 
-On Windows, use native PowerShell without elevation:
+The receipt records installation history. Launchers do not read its interpreter
+or library path and do not retain a version-specific `RSCRIPT` file. Each call
+uses the current R's normal library search and user startup. After upgrading R,
+install the product for that R when it is absent from the new search path.
+`--library` defaults to that R's `R_LIBS_USER`; a custom library must remain
+visible through the caller's normal `R_LIBS`/`R_LIBS_USER`. No profile is edited.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File install\install.ps1
-powershell -ExecutionPolicy Bypass -File install\install.ps1 -Component cli -Library "C:\R library" -Prefix "C:\Tools\product" -NoPath
-```
+## Local acceptance and rollback
 
-Equivalent options are `-Yes`, `-Check`, `-Library`, `-Dependency`,
-`-Tarball`, `-Component` and `-Prefix`. The default prefix is
-`%LOCALAPPDATA%\Programs\<package>`. `-NoPath` prevents a user PATH change.
-Removal only removes a PATH entry that this installer recorded adding.
+Before committing a CLI transaction, both publishers run only `--version` and
+`--help`, with the selected library and explicitly empty R environment/profile
+files. Those two operations must be local and require no service credentials.
+`doctor`, APIs and scientific operations belong to product acceptance tests.
+Normal CLI invocations keep their normal user environment. This distinction
+uses R's documented [startup controls](https://stat.ethz.ch/R-manual/R-patched/library/base/html/Startup.html).
 
 The CLI lives in `PREFIX/bin/<command>` and `PREFIX/libexec/<runtime>`.
-Updates and removal validate receipt paths, hashes and symlink ancestors,
-preserve foreign files, and retain a backup until installed-command verification
-passes. A CLI failure restores CLI files; it does not roll back an already
-installed R package. Unknown legacy layouts are refused, never adopted by name.
-Updates retire files no longer in the payload and remove empty directories
-recorded as installer-created. Foreign files and nonempty directories remain.
+Receipt paths, hashes and symlink ancestors are validated. Failed publication
+restores the previous CLI; an already installed R package remains installed.
+Updates retire previously owned files absent from the new payload. Foreign
+files and nonempty directories survive. Unknown or modified files are refused.
 
 ```sh
 sudo bash install/uninstall.sh
-# After deleting the checkout, use the installed copy:
 sudo bash /usr/local/libexec/<runtime>/install/uninstall.sh
 ```
 
-For another prefix or library, pass `--prefix` and `--library` again. Windows
-uses `install/uninstall.ps1` (also copied below the runtime), with `-Prefix`,
-`-Library`, `-Yes` and `-NoPath`. The installed removal bundle contains only
-the wrappers, manager, path validator, Bash publisher and metadata it needs.
-It contains no package implementation or release tooling.
+Removal works without the source checkout. Supply the chosen `--prefix` again;
+`--library` selects a library for receipt-reading dependencies, not a removal
+target. The final notice reports the historical package library from the receipt
+(or unknown if absent). It never removes an R package.
 
-# Maintainer checks
+## Windows
 
-`bash install/cli/test-installers.sh [R_LIBRARY]` runs the common disposable
-fixtures; supplying an already installed test library also exercises the
-product's installed CLI without modifying that library.
-`powershell -File install/cli/test-installers.ps1 [-Library R_LIBRARY]` is the
-native Windows entry. A macOS result does not certify Windows or real sudo.
+```powershell
+powershell -ExecutionPolicy Bypass -File install\install.ps1 -Yes -Library "C:\R library" -Prefix "C:\Tools\product" -NoPath
+```
 
-Product declarations are `requirements.R` and `manifest.json`. A product with
-legacy source launchers can set `launchers = TRUE` and supply the three files
-under `install/launchers/`; the manager copies them and records its chosen
-Rscript in `RSCRIPT`. Regenerate the payload manifest with
-`bash install/update-manifest.sh`. Do not edit package or CLI APIs to adapt
-an installer.
+Options are `-Yes`, `-Check`, `-Library`, `-Dependency`, `-Tarball`, `-Prefix`
+and `-NoPath`. The default prefix is `%LOCALAPPDATA%\Programs\<package>`.
+Unless `-NoPath`, installation adds its bin directory to the user PATH; removal
+only removes an entry its receipt records adding. Use `install\uninstall.ps1`
+(or the installed copy) with `-Prefix`, `-Library`, `-Yes` and `-NoPath`.
+macOS checks do not certify native Windows or real sudo.
 
-The public wrappers no longer accept `--build`/`-Build`: source installation is
-the default. The internal R entry still receives `--build DIR` from the wrapper
-to locate its disposable build output; it is not a user mode or retention gate.
+## Product declarations and tests
+
+`requirements.R` names `command`, optional `runtime`, `exports`, `packages`
+(an unnamed character vector), `tools` and optional tools. NGR declares
+`pathEnv = "NGR_COMMAND_PATH"` to preserve the caller's executable search path.
+`manifest.json` lists the payload and the command's three `bin/` entries.
+The manager generates those launchers from the managed `install/cli/command.*`
+templates; old product-owned launchers are not read. There is no `launchers`
+or `verify` policy switch. Run `bash install/update-manifest.sh` after changing
+payload files. Domain code and public APIs remain product-owned.
+
+`bash install/cli/test-installers.sh [R_LIBRARY]` runs disposable fixtures.
+Supplying an installed library also runs `install/acceptance.R` through the
+installed CLI without replacing that library. Windows uses
+`powershell -File install/cli/test-installers.ps1 [-Library R_LIBRARY]`.
+The internal manager supports these isolated CLI tests; it is not a public
+partial-installation mode.

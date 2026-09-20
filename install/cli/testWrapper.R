@@ -34,14 +34,14 @@ runChecks <- function(kit) {
       Library))
   }
   writePackage("0.4.0", "old")
-  # A stale minimum must not authorize retaining the old package.
-  Requirements <- 'list(command = "installerprobe", minimum = "0.4.0", exports = "probe")'
+  # A source update replaces the installed package regardless of its version.
+  Requirements <- 'list(command = "installerprobe", packages = "jsonlite", exports = "probe")'
   writeLines(Requirements, file.path(Fixture, "install/requirements.R"))
   writeLines(c("#!/bin/sh", "echo installerprobe"), file.path(Fixture, "cli/bin/installerprobe"))
   writeLines(c("@echo off", "echo installerprobe"), file.path(Fixture, "cli/bin/installerprobe.cmd"))
   writeLines("invisible(NULL)", file.path(Fixture, "cli/main.R"))
   jsonlite::write_json(list(manifest_version = 1L,
-    files = c("bin/installerprobe", "bin/installerprobe.cmd", "main.R")),
+    files = c("bin/installerprobe", "bin/installerprobe.cmd", "bin/installerprobe.ps1", "main.R")),
     file.path(Fixture, "install/manifest.json"), auto_unbox = TRUE)
   Prefix <- file.path(Work, "prefix")
   runWrapper <- function(args, success = TRUE, yes = TRUE, input = character(), prompts = 0L) {
@@ -61,10 +61,10 @@ runChecks <- function(kit) {
                              full.names = TRUE, include.dirs = TRUE))
     list(paths = Files, hash = tools::md5sum(Files[!dir.exists(Files)]))
   }
-  cancelWrapper <- function(component) {
+  cancelWrapper <- function() {
     Before <- snapshot()
     for (Input in list("n", "", character())) {
-      OUT <- runWrapper(c("--component", component), success = length(Input) > 0L,
+      OUT <- runWrapper(character(), success = length(Input) > 0L,
                         yes = FALSE, input = Input, prompts = 1L)
       stopifnot(identical(Before, snapshot()),
                 !any(grepl("Building ", OUT, fixed = TRUE)))
@@ -77,7 +77,7 @@ runChecks <- function(kit) {
   runWrapper(character(), yes = FALSE, input = "y", prompts = 1L)
   stopifnot(identical(readPackage(), c("0.4.2", "updated")))
   stopifnot(file.exists(file.path(Prefix, "bin/installerprobe")))
-  for (Component in c("all", "lib", "cli")) cancelWrapper(Component)
+  cancelWrapper()
   Before <- snapshot()
   runWrapper("--check", yes = FALSE)
   stopifnot(identical(Before, snapshot()))
@@ -87,31 +87,23 @@ runChecks <- function(kit) {
   Hash <- tools::md5sum(file.path(Prefix, "libexec/installerprobe/install.json"))
   writeLines('list(command = "installerprobe", exports = "missingApi")',
     file.path(Fixture, "install/requirements.R"))
-  OUT <- runWrapper(c("--component", "cli"), success = FALSE)
+  OUT <- runWrapper(character(), success = FALSE)
   stopifnot(any(grepl("Package lacks CLI exports: missingApi", OUT, fixed = TRUE)),
-            !any(grepl("--build", OUT, fixed = TRUE)),
             identical(Hash, tools::md5sum(names(Hash))))
-  writeLines('list(command = "installerprobe", exports = "probe")',
+  writeLines('list(command = "installerprobe", packages = "jsonlite", exports = "probe")',
     file.path(Fixture, "install/requirements.R"))
-  Prefix <- file.path(Work, "lib only")
-  cancelWrapper("all")
-  cancelWrapper("lib")
-  writePackage("0.4.3", "lib-only")
-  runWrapper(c("--component", "lib"))
-  stopifnot(identical(readPackage(), c("0.4.3", "lib-only")), !dir.exists(Prefix))
-  Files <- list.files(file.path(Library, "installerprobe"), recursive = TRUE, full.names = TRUE)
-  Hash <- tools::md5sum(Files)
+  Prefix <- file.path(Work, "library present CLI absent")
+  cancelWrapper()
   writePackage("0.4.4", "archive")
+  Before <- snapshot()
   runWrapper("--check")
-  stopifnot(!dir.exists(Prefix), identical(Hash, tools::md5sum(Files)))
-  runWrapper(c("--component", "cli"), yes = FALSE)
-  stopifnot(identical(Hash, tools::md5sum(Files)))
-  # An existing CLI alone still requires consent for an all-components update.
+  stopifnot(!dir.exists(Prefix), identical(Before, snapshot()))
+  runWrapper(character())
+  stopifnot(identical(readPackage(), c("0.4.4", "archive")))
+  # An existing CLI alone still asks before installing the whole product.
   stopifnot(file.rename(file.path(Library, "installerprobe"), file.path(Library, "held")))
-  cancelWrapper("all")
+  cancelWrapper()
   stopifnot(file.rename(file.path(Library, "held"), file.path(Library, "installerprobe")))
-  runWrapper(c("--component", "cli"), yes = FALSE, input = "y", prompts = 1L)
-  stopifnot(identical(Hash, tools::md5sum(Files)))
   Previous <- Prefix
   Prefix <- file.path(Work, "foreign")
   dir.create(file.path(Prefix, "bin"), recursive = TRUE)
@@ -141,15 +133,16 @@ runChecks <- function(kit) {
     installPackage <- function(file, library) Calls <<- c(Calls, basename(file))
     .readArtifact <- function(file) list(file = file, package = sub("[.]tar.gz$", "", basename(file)),
                                         version = "0.4.5", sha256 = "fixture")
-    .verifyInstallation <- function(...) invisible(NULL)
+    .verifyInstallation <- function(package, library, version, packages, exports) stopifnot(identical(packages, "jsonlite"))
     for (File in c("private.tar.gz", "installerprobe.tar.gz")) {
       writeLines("fixture", file.path(Work, File))
       writeLines("fixture", file.path(Work, paste0(File, ".rds")))
     }
-    installProduct(root = Fixture, args = c("--component", "lib", "--library", Library,
+    .runInstaller <- function(...) invisible(NULL)
+    installProduct(root = Fixture, args = c("--prefix", Prefix, "--library", Library,
       "--dependency", file.path(Work, "private.tar.gz"), "--tarball", file.path(Work, "installerprobe.tar.gz")))
     stopifnot(identical(Calls, c("tools", "private.tar.gz", "dependencies", "installerprobe.tar.gz")))
   })
-  message("PASS: single confirmation, new/partial installs, N/empty/EOF unchanged, yes/check, foreign conflict, source/same-version updates, cli-only isolation, exports, tarball, dependency order")
+  message("PASS: single confirmation, new/partial installs, N/empty/EOF unchanged, yes/check, foreign conflict, source/same-version updates, removed partial modes, exports, tarball, dependency order")
 }
 runChecks(normalizePath(commandArgs(TRUE)[1L], mustWork = TRUE))
