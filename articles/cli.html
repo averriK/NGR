@@ -81,64 +81,91 @@ from command and installer tests.</p>
 <h2 id="install">Install<a class="anchor" aria-label="anchor" href="#install"></a>
 </h2>
 <p>Run installation commands from the <strong>repository root</strong>,
-where <code>install/</code> and <code>lib/</code> are siblings. Replace
-the example paths with your actual destinations before running a
-command. Install R first and make <code>Rscript</code> available. The
-installer does not install R or operating-system tools.</p>
+where <code>install/</code> and <code>lib/</code> are siblings. The
+public installer installs the complete R package and CLI product.
+Install R and Quarto first; the installer does not install R or
+operating-system tools. Python is an optional installer prerequisite,
+though operations such as DOCX correction require it. Receipt handling
+requires <code>jsonlite</code> already visible to R.</p>
 <div class="section level3">
-<h3 id="r-package">R package<a class="anchor" aria-label="anchor" href="#r-package"></a>
+<h3 id="macos-and-linux">macOS and Linux<a class="anchor" aria-label="anchor" href="#macos-and-linux"></a>
 </h3>
-<p>Build and install only the package into an explicit, writable R
-library:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">bash</span> install/install.sh <span class="at">--component</span> lib <span class="at">--library</span> /absolute/path/to/R/library <span class="at">--build</span> /absolute/path/to/build</span></code></pre></div>
-<p>On Windows, run the corresponding entry from PowerShell:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="op">./</span>install<span class="op">/</span>install<span class="op">.</span><span class="fu">ps1</span> <span class="op">--</span>component lib <span class="op">--</span>library C<span class="op">:/</span><span class="fu">R</span><span class="op">/</span>library <span class="op">--</span>build C<span class="op">:/</span>Build<span class="op">/</span>NGR</span></code></pre></div>
-<p><code>--build</code> creates a development archive without building
-manuals or vignettes; it does not run a release check. Choose a new
-build directory for each attempt. Use
-<code>--tarball /absolute/path/to/NGR_version.tar.gz</code> instead to
-select an existing archive with its adjacent <code>.tar.gz.rds</code>
-build record. Keep the chosen R library visible through
-<code>R_LIBS</code> or <code>R_LIBS_USER</code> in later sessions.
-Compatible visible dependencies are reused; missing or incompatible
-requirements can be installed into the selected library.</p>
+<p>Use the default <code>/usr/local</code> prefix, or choose a writable
+prefix without sudo:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">sudo</span> bash install/install.sh</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">bash</span> install/install.sh <span class="at">--library</span> <span class="st">"/absolute/path/to/R/library"</span> <span class="at">--prefix</span> <span class="st">"/absolute/writable/prefix"</span></span></code></pre></div>
+<p>These are alternatives; replace example paths with your actual
+destinations. Under sudo, prefix writes are elevated but every R process
+runs as the validated invoking user. The R library defaults to that
+user’s current <code>R_LIBS_USER</code>; <code>--library</code>
+overrides it. Keep a custom library visible through <code>R_LIBS</code>
+or <code>R_LIBS_USER</code> in later sessions. Add the prefix’s
+<code>bin</code> directory to PATH; the Unix installer does not edit
+shell profiles.</p>
+<p>Validate prerequisites and destinations without installing:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">bash</span> install/install.sh <span class="at">--check</span> <span class="at">--prefix</span> <span class="st">"/absolute/writable/prefix"</span></span></code></pre></div>
+<p>The default builds <code>lib/</code> without manuals or vignettes and
+installs it even if an equal or newer version is already present. Use
+<code>--tarball FILE</code> to select an existing archive with its
+adjacent <code>.rds</code> build record; repeat
+<code>--dependency FILE</code> for private dependency archives in
+installation order. Compatible visible dependencies are reused; missing
+or incompatible requirements are installed into the selected library.
+There are no public component-selection or build directory options.
+Package maintenance and documentation building use the separate
+<code>build.R</code> workflow.</p>
 </div>
 <div class="section level3">
-<h3 id="system-cli">System CLI<a class="anchor" aria-label="anchor" href="#system-cli"></a>
+<h3 id="windows">Windows<a class="anchor" aria-label="anchor" href="#windows"></a>
 </h3>
-<p>The CLI requires the installed NGR package, Python and Quarto. Select
-a system CLI prefix and use the platform’s required privileges. For
-example, on macOS:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">sudo</span> bash install/install.sh <span class="at">--component</span> cli <span class="at">--library</span> /absolute/path/to/R/library <span class="at">--prefix</span> /usr/local</span></code></pre></div>
-<p>On Windows, open PowerShell <strong>as Administrator</strong>, select
-the same R library, and choose the system CLI destination:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="op">./</span>install<span class="op">/</span>install<span class="op">.</span><span class="fu">ps1</span> <span class="op">--</span>component <span class="fu">cli</span> <span class="op">--</span>library C<span class="op">:/</span><span class="fu">R</span><span class="op">/</span>library <span class="op">--</span>prefix <span class="st">"C:/Program Files/NGR"</span></span></code></pre></div>
-<p>The CLI component does not install, update or remove R packages. The
-macOS entry keeps R verification under the invoking user when elevating
-the CLI installation. On Windows, use the explicitly selected library
-when elevating. Add the prefix’s <code>bin</code> directory to PATH;
-neither installer changes your shell profile. Repeat the same command to
-update the CLI. Modified or foreign runtime files block replacement.
-These installation templates do not certify a particular elevated
-destination or change its ownership policy.</p>
+<p>Run from a normal PowerShell session:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>powershell <span class="op">-</span>ExecutionPolicy Bypass <span class="op">-</span>File install\install<span class="op">.</span><span class="fu">ps1</span></span></code></pre></div>
+<p>The default prefix is <code>%LOCALAPPDATA%\Programs\NGR</code>, which
+requires no elevation. <code>-Prefix</code> and <code>-Library</code>
+select other destinations. Installation adds the prefix’s
+<code>bin</code> directory to the user PATH unless <code>-NoPath</code>
+is supplied. Other public options are <code>-Check</code>,
+<code>-Yes</code>, <code>-Tarball</code> and <code>-Dependency</code>. R
+must be registered by its installer so the current R-core registry entry
+can be resolved. Launchers use the current R and its normal library
+search; they do not pin a version-specific interpreter or library.</p>
+</div>
+<div class="section level3">
+<h3 id="updates-and-verification">Updates and verification<a class="anchor" aria-label="anchor" href="#updates-and-verification"></a>
+</h3>
+<p>Repeat the installation command to update the product. Replacing a
+package or CLI asks once before building or installing;
+<code>--yes</code> on Unix or <code>-Yes</code> on Windows skips that
+question. Modified or foreign runtime files block replacement. Failed
+CLI publication restores the previous CLI; an already installed R
+package remains installed.</p>
 <p>After installation, verify the selected environment:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">ngr</span> <span class="at">--version</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="ex">ngr</span> <span class="at">--help</span></span></code></pre></div>
-<p>Package installation and CLI installation are separate effects. The
-common entry can also coordinate both with <code>--component all</code>,
-an explicit library, prefix and exactly one of <code>--build</code> or
-<code>--tarball</code>. A CLI failure does not undo a completed package
-installation.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">ngr</span> <span class="at">--version</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="ex">ngr</span> <span class="at">--help</span></span></code></pre></div>
+<p>These local checks do not render reports or certify scientific
+inputs. The repository’s <code>install/USAGE.md</code> describes the
+complete installation contract.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="work-from-your-project-directory">Work from your project directory<a class="anchor" aria-label="anchor" href="#work-from-your-project-directory"></a>
+<h2 id="select-your-project-directory">Select your project directory<a class="anchor" aria-label="anchor" href="#select-your-project-directory"></a>
 </h2>
-<p>Change to the project directory before using resource or render
-commands. The source manifest and master in this example must already
-exist. They are project choices, not files supplied by the installation.
-Review the source’s declared checks before running
-<code>doctor</code>.</p>
+<p>Run from the project directory or select it with
+<code>--root DIR</code> (CLI 0.3.0-dev or later). <code>DIR</code> must
+exist; a relative value is resolved from the caller’s working directory.
+Relative source manifests, masters, outputs and the
+<code>.netlify/sites.env</code> registry use the selected project.
+Operations retain their existing path rules: supported absolute paths
+keep their destinations, and Quarto masters remain project-relative.
+Omitting <code>--root</code> preserves the working-directory behavior.
+The option may appear before or after the command, also as
+<code>--root=DIR</code>, once and before any <code>--</code> argument
+separator.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">ngr</span> <span class="at">--root</span> /path/to/project status <span class="at">--check</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="ex">ngr</span> render <span class="at">--root</span> /path/to/project <span class="at">--manifest</span> manifest.json <span class="at">--dry-run</span></span></code></pre></div>
+<p>The source manifest and master in this example must already exist.
+They are project choices, not files supplied by the installation. Review
+the source’s declared checks before running <code>doctor</code>.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">ngr</span> pull <span class="at">--from</span> ngr <span class="at">--from</span> /path/to/book/manifest.json</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="ex">ngr</span> status <span class="at">--check</span></span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="ex">ngr</span> doctor</span>
