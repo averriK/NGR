@@ -21,8 +21,23 @@ declared checks and scientific content can require additional software.
 
 ## Project workflow
 
-Run in the project directory. All paths, including `.netlify/sites.env`, resolve
-there. No enclosing Git checkout or `--project` argument is needed.
+Run in the project directory, or select it with `--root DIR` (CLI 0.3.0-dev
+or later). `DIR` must exist; a relative `DIR` is resolved from the caller's
+working directory. Source manifests, masters, artifact paths and
+`.netlify/sites.env` resolve from the selected project. Operations retain
+their existing path rules: supported absolute paths keep their destinations,
+and Quarto masters remain project-relative. Without `--root`, the working
+directory remains the base.
+No enclosing Git checkout or `--project` argument is needed.
+
+The option may appear before or after the command and also accepts
+`--root=DIR`. Supply it once, before any `--` argument separator. For example,
+from outside the project:
+
+```sh
+ngr --root /path/to/project pull --from /path/to/book/manifest.json
+ngr render --root /path/to/project --manifest manifest.json --dry-run
+```
 
 The following commands illustrate separate operations. Replace the source
 manifest, source ID, artifact alias and master with entries that exist in your

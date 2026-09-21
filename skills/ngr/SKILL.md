@@ -11,7 +11,7 @@ helper is not a consumer entry point. NGR does not calculate missing
 scientific inputs, translate content, or administer Netlify passwords.
 
 Resolve the intended project directory and `command -v ngr`, then read
-`ngr --help` and the relevant operation help. The interface represented here
+`ngr --version`, `ngr --help` and the relevant operation help. The interface represented here
 has no `init`, `push`, `clean` or standalone `validate`: the first
 `ngr pull --from ngr` seeds a project, and `ngr --version` reports the
 package, library, CLI and build lines. If the installed interface differs,
@@ -41,10 +41,18 @@ through its verified phases without repeated confirmation.
 
 ## Resolve identities before effects
 
-Every operation uses the command CWD as the project root; there is no Git
-worktree resolution. The Netlify registry is `.netlify/sites.env` under the
-project root. Resolve relative manifests, sources and outputs against the
-chosen project directory; a nested shell directory must not redirect a plan.
+With CLI 0.3.0-dev or later, select the project with `--root DIR`. DIR must
+exist; a relative DIR resolves from the caller's working directory. Supply
+the option once, before any `--` separator; it may appear before or after
+the command and also accepts `--root=DIR`. Without it, or on an older CLI
+that does not offer it, run from the selected project directory. There is
+no Git worktree resolution.
+
+Relative manifests, sources, outputs and `.netlify/sites.env` use that project.
+Existing path restrictions still apply: Quarto masters must remain
+project-relative, and selecting a root does not permit arbitrary output or
+resource destinations. Bind this context before inspecting or executing a
+plan; the caller's nested shell directory must not redirect it.
 
 Resources come from named sources recorded in the project `manifest.json`:
 the installed base `ngr` plus any scientific source. The first pull names its
@@ -73,7 +81,7 @@ authorize nor prove their real counterparts. Do not add a dry-run flag to
 another direct form or emulate it with a wrapper.
 
 Before execution, identify the existing outputs that may be replaced and the
-inputs/generation being consumed. Afterward retain the exact command, CWD,
+inputs/generation being consumed. Afterward retain the exact command, CWD and selected root,
 selection, return status and final output or provider identity needed to
 distinguish this attempt. A file's presence or an internal `Output created`
 line cannot prove the final NGR artifact is current or fit for publication.

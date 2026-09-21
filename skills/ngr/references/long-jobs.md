@@ -14,12 +14,20 @@ older rows. Record stdout/stderr and the actual command's exit status per job,
 including failures before the product starts. A queue's final status must not
 conceal earlier failures or missing result records.
 
-A verified nohup shape (placeholders, not selected task values):
+A Bash shape after resolving absolute project, log and marker paths:
 
-```text
-cd PROJECT && nohup ngr render --manifest manifest.json >LOG 2>&1 & echo $!
-# on completion: echo $? >LOG.exit   (via a wrapper that captures it)
+```bash
+nohup bash -c 'cd "$1" && ngr render --manifest "$2"; result=$?; printf "%s\n" "$result" > "$3"; exit "$result"' ngr-render "$PROJECT" "$MANIFEST" "$EXIT_FILE" >"$LOG_FILE" 2>&1 &
+job_pid=$!
 ```
+
+`PROJECT`, `MANIFEST`, `EXIT_FILE` and `LOG_FILE` are caller-selected values,
+not defaults. Use fresh log/marker paths with existing writable parents.
+The child writes the status of `cd` or `ngr`, including failure to start;
+the parent printing a PID supplies no completion status. While that same
+parent shell lives, `wait "$job_pid"` also returns the child's status.
+After reconnecting, use the marker and the exact attempt's log. A missing
+marker leaves completion unknown, even when the PID has disappeared.
 
 Choose concurrent jobs from the task's resource budget and independent
 writes, with sequential work inside each queue. Three queues is not a default.
@@ -50,7 +58,7 @@ publication separate.
 
 ## NGR boundary
 
-Each job selects project CWD, master/source, explicit profile or manifest
+Each job selects the project root (`--root` where supported, or CWD), master/source, explicit profile or manifest
 selection, and final destination. Use `ngr render`, including the required
 profile for direct DOCX. A tmux/nohup launch or a `[render manifest]`
 progress line does not prove final completion; the batch prints

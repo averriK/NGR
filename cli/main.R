@@ -51,7 +51,8 @@ MINVERSION <- "0.4.0"
 
 .showHelp <- function() {
   cat("ngr \u2014 resources, reports and publication\n\n",
-      "Run from the project directory.\n\n",
+      "Run from the project directory, or select it with --root DIR.\n",
+      "DIR must exist; relative paths use the selected project.\n\n",
       "Commands:\n",
       "  pull   --from <manifest.json> [paths...]      Bring resources from a source into the project\n",
       "  pull   [--force] [--dry-run] [paths...]       Update the project from its recorded sources\n",
@@ -116,7 +117,7 @@ MINVERSION <- "0.4.0"
     if (Command %in% c("pull", "status")) cat("[--from MANIFEST] ")
     if (Command == "pull") cat("[--force] [--dry-run] ")
     if (Command == "status") cat("[--check] ")
-    cat("[--help]")
+    cat("[--root DIR] [--help]")
     if (Command %in% c("pull", "status")) cat(" [TARGETS ...]")
     cat("\n")
     return(0L)
@@ -163,6 +164,7 @@ MINVERSION <- "0.4.0"
     if (Arg %in% c("-h", "--help")) {
       cat("Usage: ngr render <input.qmd> --profile <book|revealjs|docx|html> [Quarto args...]\n",
           "       ngr render --manifest <file> [--dry-run] [--only <aliases>] [--except <aliases>]\n\n",
+          "--root DIR selects an existing project directory; default is the working directory.\n",
           "Uses yml/_quarto.yml and yml/_quarto-<profile>.yml from the project.\n",
           "Book masters supply chapters and appendices through frontmatter.\n",
           "Output: html/<stem>/, the manifest's HTML path, or docx/.\n",
@@ -216,7 +218,8 @@ MINVERSION <- "0.4.0"
         "  ngr deploy init --manifest <file> [--dry-run] [--create] [--account <slug>] [--only <aliases>] [--except <aliases>]\n",
         "  ngr deploy domain <alias> <domain> [--https] [--rebind] [--dry-run]\n",
         "  ngr deploy domain --manifest <file> [--https] [--dry-run] [--only <aliases>] [--except <aliases>]\n",
-        "  ngr deploy unbind <alias>\n", sep = "")
+        "  ngr deploy unbind <alias>\n\n",
+        "--root DIR selects the project and its .netlify/sites.env registry.\n", sep = "")
     return(if (length(args)) 0L else 1L)
   }
   Values <- list(manifest = NULL, only = "", except = "", account = NULL)
@@ -284,6 +287,25 @@ MINVERSION <- "0.4.0"
 }
 
 .runCommand <- function(args, runtime) {
+  IDX <- which((args == "--root" | startsWith(args, "--root=")) &
+                 seq_along(args) < match("--", args, nomatch = length(args) + 1L))
+  if (length(IDX) > 1L) .failUsage("--root may be supplied only once")
+  if (length(IDX)) {
+    i <- IDX[[1L]]
+    Root <- sub("^--root=", "", args[[i]])
+    if (args[[i]] == "--root") {
+      if (i == length(args) || startsWith(args[[i + 1L]], "-")) .failUsage("--root requires a directory")
+      Root <- args[[i + 1L]]
+      IDX <- c(i, i + 1L)
+    }
+    if (!nzchar(Root) || !dir.exists(Root)) .failUsage("--root must be an existing directory: ", Root)
+    # Resolve the launcher payload before changing the base of relative paths.
+    force(runtime)
+    Directory <- getwd()
+    on.exit(setwd(Directory), add = TRUE)
+    setwd(Root)
+    args <- args[-IDX]
+  }
   if (!length(args) || args[[1L]] %in% c("--help", "-h")) return(.showHelp())
   Command <- args[[1L]]
   if (Command == "--version") {

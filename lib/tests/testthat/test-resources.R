@@ -239,3 +239,43 @@ test_that("a project's contracts protect the roots they declare, whatever their 
   Result <- pullResources(from = Fixture$manifest, root = Fixture$project, dryRun = TRUE)
   expect_identical(Result$actions$action, "create")
 })
+
+for (Kind in c("relative", "dot", "absolute", "missing", "project", "parent")) {
+  test_that(paste("declared root protects bytes with force:", Kind), {
+    Fixture <- resourceFixture()
+    on.exit(unlink(Fixture$root, recursive = TRUE), add = TRUE)
+    pullResources(from = Fixture$manifest, root = Fixture$project)
+    writeLines("project data", file.path(Fixture$project, "nested/first.txt"))
+    Value <- switch(Kind,
+      relative = "nested",
+      dot = "./nested",
+      absolute = file.path(Fixture$project, "nested"),
+      missing = file.path(Fixture$project, "nested/not-produced-yet"),
+      project = ".",
+      parent = Fixture$root
+    )
+    jsonlite::write_json(list(path = list(data = Value)),
+                         file.path(Fixture$project, "hazard.json"), auto_unbox = TRUE)
+    Files <- list.files(Fixture$project, recursive = TRUE, full.names = TRUE)
+    Before <- tools::md5sum(Files)
+    expect_error(pullResources(root = Fixture$project, force = TRUE),
+                 "Destination declared by hazard.json cannot be supplied", fixed = TRUE,
+                 info = Kind)
+    expect_identical(tools::md5sum(Files), Before, info = Kind)
+    expect_identical(list.files(Fixture$project, recursive = TRUE, full.names = TRUE),
+                     Files, info = Kind)
+  })
+}
+
+test_that("external declared roots do not reserve an unrelated project directory", {
+  Fixture <- resourceFixture()
+  on.exit(unlink(Fixture$root, recursive = TRUE), add = TRUE)
+  External <- file.path(Fixture$root, "external")
+  dir.create(External)
+  writeLines("external data", file.path(External, "first.txt"))
+  jsonlite::write_json(list(path = list(data = External)),
+                       file.path(Fixture$project, "hazard.json"), auto_unbox = TRUE)
+  pullResources(from = Fixture$manifest, root = Fixture$project)
+  expect_identical(readLines(file.path(Fixture$project, "nested/first.txt")), "one")
+  expect_identical(readLines(file.path(External, "first.txt")), "external data")
+})

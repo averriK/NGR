@@ -15,11 +15,10 @@ Public documentation is rendered by pkgdown from `lib/vignettes/` and
 
 ## Installation and use
 
-Use the common macOS or Windows installer from the repository root, selecting
-the R library and component explicitly. Follow the
+Use the common macOS, Linux or Windows installer from the repository root to
+install the R library and CLI together. Follow the
 [installation and CLI guide](https://averrik.github.io/NGR/articles/cli.html).
-The package and CLI are separate installations; runtime commands load the
-installed package and do not install dependencies.
+Runtime commands load the installed package and do not install dependencies.
 
 The repository is private. Public documentation is on
 [GitHub Pages](https://averrik.github.io/NGR/).

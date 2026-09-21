@@ -55,6 +55,14 @@ condition, not a CLI defect; confirm against the project before attributing.
 
 ## Manifest identities
 
+Keep source-resource and artifact manifests distinct. A source manifest has
+`schemaVersion`, a source `id`, and `resources` entries with `from`, `to`
+and `ownership` (`managed` or `seed`). Read the selected source's public
+manifest before enrolling it; the installed base currently declares managed
+resources only, so it does not imply that a project master is a seed.
+The artifact schema below describes render/deploy products, not resource
+ownership. Do not put artifact fields into a source declaration.
+
 The explicit artifact manifest owns the artifact set and publication choices.
 Resolve values from that contract; the same alias can refer to a differently
 named master and output. `qrt.manifest.json` is foreign state: NGR never reads

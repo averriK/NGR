@@ -278,17 +278,36 @@ NULL
 # does not restate a producer's defaults.
 .declaredRoots <- function(root) {
   OUT <- stats::setNames(character(), character())
+  Root <- stringi::stri_trans_casefold(root)
+  Prefix <- paste0(sub("/$", "", Root), "/")
   for (Product in c("hazard", "newmark")) {
     FILE <- file.path(root, paste0(Product, ".json"))
     if (!file_test("-f", FILE)) next
     DATA <- tryCatch(jsonlite::fromJSON(FILE, simplifyVector = TRUE), error = function(e) NULL)
     if (!is.list(DATA$path) && !is.character(DATA$path)) next
     for (Value in as.list(DATA$path)) {
-      if (!is.character(Value) || length(Value) != 1L || !nzchar(Value)) next
-      if (grepl("^(/|[A-Za-z]:)", Value)) next
-      Segment <- strsplit(Value, "/", fixed = TRUE)[[1L]][1L]
-      if (!nzchar(Segment) || Segment %in% c(".", "..")) next
-      OUT[[stringi::stri_trans_casefold(Segment)]] <- basename(FILE)
+      if (!is.character(Value) || length(Value) != 1L || is.na(Value) || !nzchar(Value)) next
+      Path <- path.expand(Value)
+      if (!fs::is_absolute_path(Path)) Path <- file.path(root, Path)
+      # Outputs need not exist yet. Resolve the existing parent first so an
+      # absolute path through an alias (for example /var on macOS) still matches.
+      DIR <- Path
+      Parts <- character()
+      while (!file.exists(DIR) && dirname(DIR) != DIR) {
+        Parts <- c(basename(DIR), Parts)
+        DIR <- dirname(DIR)
+      }
+      if (!file.exists(DIR)) next
+      Path <- fs::path_norm(file.path(normalizePath(DIR, winslash = "/", mustWork = TRUE),
+                                      paste(Parts, collapse = "/")))
+      Path <- stringi::stri_trans_casefold(Path)
+      if (Path == Root || startsWith(Root, paste0(sub("/$", "", Path), "/"))) {
+        OUT[["."]] <- basename(FILE)
+        next
+      }
+      if (!startsWith(Path, Prefix)) next
+      Segment <- strsplit(substring(Path, nchar(Prefix) + 1L), "/", fixed = TRUE)[[1L]][1L]
+      OUT[[Segment]] <- basename(FILE)
     }
   }
   OUT
@@ -322,7 +341,10 @@ NULL
     for (Path in names(Source$files)) {
       if (!.selectedResource(Path, Paths)) next
       Resource <- Source$files[[Path]]
-      Owner <- Declared[stringi::stri_trans_casefold(strsplit(Path, "/", fixed = TRUE)[[1L]][1L])]
+      Owner <- Declared["."]
+      if (is.na(Owner)) {
+        Owner <- Declared[stringi::stri_trans_casefold(strsplit(Path, "/", fixed = TRUE)[[1L]][1L])]
+      }
       if (!is.na(Owner)) {
         stop("Destination declared by ", Owner, " cannot be supplied: ", Path, call. = FALSE)
       }

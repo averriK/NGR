@@ -1,7 +1,8 @@
 # Deploy and site registration
 
 Read `ngr deploy --help` for all nested forms. Every form resolves paths from
-the project root (the command CWD); there is no Git worktree resolution. The
+the selected project root (`--root DIR` with CLI 0.3.0-dev or later, or the
+command CWD); there is no Git worktree resolution. The
 registry is `.netlify/sites.env` under the project root. Check the form's
 Netlify requirements and jq for manifest/site/domain operations; do not
 install or authenticate a replacement environment as an implicit repair.
@@ -33,6 +34,10 @@ silently excluding them or changing `required`.
 A real manifest deploy without `.netlify/sites.env` stops with
 `Missing .netlify/sites.env; register aliases first.` Manifest dry-run checks
 local paths, website entry points and UUID-shaped registry entries. It does
+require an existing binding for each selected alias; a fresh project can
+fail with `Alias not registered: NAME` even in dry-run. Report the missing
+binding without inventing a UUID or creating a site to make the plan pass.
+It does
 not query the provider, prove authentication or establish that those sites
 still exist. Once uploading begins, jobs run sequentially and a later failure
 leaves earlier uploads live.
