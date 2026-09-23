@@ -7,7 +7,7 @@
 | R package | [lib/](lib/) | Existing package |
 | CLI | [cli/](cli/) | Development implementation; project acceptance in progress |
 | Application | [app/](app/) | Planned |
-| Skill | [skill/](skill/) | Planned |
+| Skill | [skills/ngr/](skills/ngr/) | Producer prototype; the approved and installed copy lives in agents `skills/ngr` and is promoted from here |
 | MCP | [mcp/](mcp/) | Planned |
 
 Public documentation is rendered by pkgdown from `lib/vignettes/` and
