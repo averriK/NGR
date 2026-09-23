@@ -1,124 +1,163 @@
-# Resources and manifest
+# Resources and artifact manifests
 
-## Local resource operations
+## Resources
 
-```text
-ngr pull --from <manifest.json> [--from <manifest.json> ...] [paths...]
-ngr pull [--source <id> ...] [--force] [--dry-run] [paths...]
-ngr status [--source <id> ...] [--check] [paths...]
-```
+Read the project's `manifest.json` and the source declaration involved. The
+project file records `scaffolds` associations/receipts and an `artifacts` array;
+let `pull` maintain the resource records. A source file declares its own `id`
+and resources. Both can be called `manifest.json`; they are different objects.
 
-Read the selected local files and any existing `manifest.json` before a
-write. The first pull in a project must name its sources with `--from`;
-`--from ngr` selects the installed base. Without `paths`, a `--from` pull
-selects the complete source and a later pull uses the enrolled selection.
-
-A source is identified by the `id` in its manifest. Pulling a manifest whose
-`id` is already associated re-points the association and prints
-`source <id> now at <path> (was <path>)`; pulling from a registered location
-that no longer exists fails with an error naming the source and asking for
-`--from`. All implicated claims are checked before any write, including
-claims of sources not selected for update. Incompatible source claims always
-fail; `--force` never overrides them.
-
-`pull` preserves existing seeds, extra project files and scientific data;
-files retired from a source are not deleted. `--force` replaces different
-managed files only — never seeds. Ordinary write errors restore the files
-already written; concurrent writers and process termination are not covered
-by that recovery. After an authorized write, compare the selected files and
-copied/skipped results and verify project-unique files are unchanged.
-
-`status` compares local files with their registered sources per-file:
-`equal`, `different`, `missing`, `retired`, `project-seed` (customized seed)
-or `locally-modified` (edited against its receipt). Capture stdout, stderr
-and exit status. `--check` makes drift exit 1; customized seeds alone do not
-set drift. A nonzero result without a report is inconclusive, never "clean";
-preserve that observation and use bounded read-only comparisons if further
-diagnosis is requested.
-
-`status --from` compares against another manifest without re-pointing the
-association. A refusal or a `different` report does not authorize adding
-force, broadening a file to a whole source or re-pulling everything.
-
-## Doctor
+To incorporate the installed base and an already identified source:
 
 ```text
-ngr doctor [--source <id> ...]
+ngr pull --from ngr --from <source-manifest.json> --dry-run
+ngr pull --from ngr --from <source-manifest.json>
+ngr status --check
 ```
 
-Doctor validates all applied source claims, then runs each selected source's
-declared check commands in the project directory. Those commands can have
-effects; this is not a read-only query. A failed check stops the operation
-with `Source check failed: <id> (exit <status>)`. A doctor failure on data
-the project never had (for example missing `params.yml` values) is a project
-condition, not a CLI defect; confirm against the project before attributing.
+Include only the sources needed by the task. `--from ngr` supplies `yml/`,
+`styles/`, `lua/` and `bib/apa.csl`; it does not supply a scientific master or
+data. If a render lacks those base resources, a scoped base pull can prepare
+them when the user's explicit validation covers that source and selection.
+Missing resources do not authorize choosing a source. A scientific scaffold
+likewise requires validation of its identified source before pull.
 
-## Manifest identities
+Subsequent operations reuse registered locations and selections:
 
-Keep source-resource and artifact manifests distinct. A source manifest has
-`schemaVersion`, a source `id`, and `resources` entries with `from`, `to`
-and `ownership` (`managed` or `seed`). Read the selected source's public
-manifest before enrolling it; the installed base currently declares managed
-resources only, so it does not imply that a project master is a seed.
-The artifact schema below describes render/deploy products, not resource
-ownership. Do not put artifact fields into a source declaration.
+```text
+ngr pull --source <id> [destination-paths...]
+ngr pull --source <id> --force <destination-path>
+ngr status --source <id> --check [destination-paths...]
+ngr status --from <source-manifest.json> [destination-paths...]
+```
 
-The explicit artifact manifest owns the artifact set and publication choices.
-Resolve values from that contract; the same alias can refer to a differently
-named master and output. `qrt.manifest.json` is foreign state: NGR never reads
-or writes it, and the two files may coexist while a migration is verified; the
-earlier file is removed in a later commit of the project.
+`--source` and `--from` can repeat. Positional paths select destination files
+or subtrees. Without paths, `--from` selects the whole source; an ordinary pull
+uses its enrolled selection. `status --from` compares without changing the
+association. To repair a moved source, use `pull --from <new-manifest>` only
+after confirming its `id`; the same id repoints its recorded location.
 
-| Field or record | Role |
+| Observation | Action |
 | --- | --- |
-| `alias` | Unique local artifact identity; also selects a registry entry for deploy |
-| `renderSource`, `profile` | Source to execute and its explicit Quarto profile |
-| `path` | Local output directory; it does not rename NGR's generated destination |
-| `siteSlug` | Provider site name used for lookup/creation |
-| `.netlify/sites.env` | Local `alias=UUID` mapping under the project root |
-| `domain` | Custom hostname, without a scheme or URL path |
-| `required` | Whether missing final output fails its output gate; not optionality of a selected render source |
+| Managed files differ | Compare source and local edits; use `--force` on the exact paths when replacing those edits is within the task. Ordinary pull refuses differing managed files. |
+| Customized seed | Preserve it. `project-seed` is expected, and `--force` never replaces an existing seed. |
+| Two sources claim incompatible content at one destination | Resolve which source/content the project should use; force cannot arbitrate this conflict. |
+| Source file retired or extra local file present | Pull does not delete it. Do not turn an update into a cleanup. |
 
-NGR accepts schema versions 1 and 2. Use explicit V2 for newly authored work;
-do not migrate an existing valid V1 manifest merely to run it. Both require a
-nonempty `artifacts` array, unique nonempty aliases, nonempty paths and boolean
-`required`. `siteSlug` and `domain` may be null or nonempty strings; the chosen
-site/domain operation imposes its further requirements.
+`status` reports `equal`, `different`, `missing`, `retired` or `project-seed`,
+and may append `locally-modified` for a change against its receipt. With
+`--check`, drift exits 1; customized seeds alone do not count as drift. Check
+the report as well as the exit status. After pull, verify the selected files
+and that project-specific seeds/extra files remain intact. Ordinary write
+failures have rollback handling; interruption or concurrent writers are not
+covered by that guarantee.
 
-| V2 `kind` | `renderSource` | `profile` | Render behavior |
-| --- | --- | --- | --- |
-| `quarto` | Nonempty source path | `book`, `revealjs`, `docx` or `html` | Runs that source/profile |
-| `map` | Nonempty pipeline path | null | External: checked as an existing output; its producer never runs |
-| `static` | null | null | No render; an output must be supplied by its own producer |
+### Declaring a source
 
-V1 uses null source/profile for static entries; otherwise it uses a Quarto
-source/profile pair. Do not infer or add a map kind to V1. Unlike the
-predecessor CLI, NGR never executes a map pipeline; supply its product
-through its own producer before the output gate.
+When preparing a source declaration is requested, use inputs, destinations and
+ownership explicitly validated by the user. Existing files alone do not settle
+those choices. This example supplies styles as managed resources
+and an editable report as a seed:
 
-For a Quarto source, `stem` is its basename without `.qmd` or `.md`:
-`book`, `html` and `revealjs` publish to `html/<stem>`; `docx` publishes into
-`docx`, with final file `<stem>.docx`. The alias and `siteSlug` do not determine
-these paths. In particular, an alias named `report` does not turn a source
-named `book.es.qmd` into `html/report`.
+```json
+{
+  "schemaVersion": 1,
+  "id": "reports",
+  "resources": [
+    {"from": "styles", "to": "styles", "ownership": "managed"},
+    {"from": "report.qmd", "to": "report.qmd", "ownership": "seed"}
+  ]
+}
+```
 
-## Selection and planning
+`from` is relative to the source manifest; `to` is relative to the project.
+Use confined relative paths without `..` or symlinks. Resources cannot supply
+project-owned scientific data or producer input/output roots. A source may
+also declare artifact seeds: pull fills an empty project `artifacts` array,
+preserving an existing nonempty one. If a seed uses `{project_id}`, resolve
+the real `params.project_id` from the user-validated project contract; a missing
+or template value leaves artifact seeding pending. Inspect the declarations before
+rendering or publishing.
 
-Manifest forms accept comma-separated aliases via `--only` and `--except`.
-No selector means all declarations; an unknown alias or empty selection is an
-error. Filters preserve array order. NGR has no dependency graph: read the
-actual included content and upstream products to establish the required order,
-then use an authorized manifest order or sequence of selections that respects
-it. Do not assume one project's deck/hub/report relationships apply to another.
+### Doctor
 
-Use the native dry-run for the intended operation. Render planning checks
-output claims across the whole manifest, even when a subset is selected.
-Case-folded equal claims collide; two Quarto sources with the same basename can
-target the same output despite different parent directories. A selector cannot
-hide a collision or correct a declared path that disagrees with NGR's output.
+```text
+ngr doctor --source <id>
+```
 
-Do not set `required=false`, remove declarations or change aliases to get a
-plan through. A selected missing source still fails render planning even when
-its final output is optional. Render-only entries such as DOCX need an
-explicit editorial selection for the deploy operation; its website checks
-are not a reason to silently rewrite the manifest.
+Doctor validates source claims and runs its recorded `checks` in the project
+directory. Read those checks before execution: each is an argv array, such as
+`["Rscript", "scripts/check.R"]`, and can write files or run calculations.
+Use doctor when those checks serve the requested task; it is not mandatory
+before every render. A failure names the check/source to diagnose and may
+reflect missing project inputs.
+
+## Artifact manifests
+
+Use the existing artifact manifest when the user has explicitly validated it
+for this task. When creating one, use only validated masters, profiles, aliases
+and output choices, using schema version 2; ask and wait before filling any
+missing choice. Keep valid V1 contracts unless migration is requested. NGR does not read
+`qrt.manifest.json`; if it is the only old declaration, translate its intended
+products into the current schema only after the user validates that source and
+its intended products for the migration; preserve it while checking the result.
+
+Example: render `report.qmd` to a deliberately named HTML directory and also
+produce its Word version. These aliases and paths are examples, not defaults.
+
+```json
+{
+  "schemaVersion": 2,
+  "artifacts": [
+    {
+      "alias": "report-web", "kind": "quarto",
+      "renderSource": "report.qmd", "profile": "html",
+      "path": "html/custom-gallery", "required": true,
+      "siteSlug": null, "domain": null
+    },
+    {
+      "alias": "report-word", "kind": "quarto",
+      "renderSource": "report.qmd", "profile": "docx",
+      "path": "docx", "required": true
+    }
+  ]
+}
+```
+
+Preserve `scaffolds` and other existing project fields when editing its
+`artifacts`; do not replace a populated project manifest with this example.
+
+| Field | Contract |
+| --- | --- |
+| `alias` | Unique nonempty selection identity; also selects a deploy registry entry. |
+| `kind` | V2: `quarto`, `static` or `map`. |
+| `renderSource`, `profile` | Quarto: source path and `book`, `html`, `revealjs` or `docx`. Static: both null. Map: nonempty producer path and null profile; NGR never runs that producer. |
+| `path` | Quarto HTML: `html/<name>`, one directory below `html`, with name other than `.` or `..`. It **does choose the actual destination**, independently of the master stem. DOCX: exactly `docx`, producing `<master-stem>.docx` there. External entries name their existing output directory. |
+| `required` | Boolean controlling the final missing-output check, not whether a selected Quarto source must exist. |
+| `siteSlug`, `domain` | Omitted/null until needed, otherwise nonempty strings. Site registration requires the selected entries' site names; domain operations require their hostnames. Neither is derived from the alias. |
+
+Both versions require a nonempty `artifacts` array. V1 represents static
+entries with null source/profile and Quarto entries with a source/profile
+pair; it has no separate map behavior.
+
+### Selection and planning
+
+```text
+ngr render --manifest manifest.json --only report-web,report-word --dry-run
+ngr render --manifest manifest.json --only report-web,report-word
+```
+
+`--only` and `--except` accept comma-separated aliases; no selector means all.
+Unknown aliases and empty selections fail. Execution follows the manifest's
+array order, even if `--only` lists another order. Establish dependencies from
+the included content; NGR does not schedule a dependency graph.
+
+Render checks output claims across the whole manifest, including unselected
+entries, and compares them case-insensitively. HTML entries can avoid an
+otherwise shared destination by declaring distinct `html/<name>` paths.
+DOCX claims include the source stem: two different stems can share `docx`,
+but equal stems collide. A subset cannot hide an existing collision.
+
+Use the final destinations and the limits of the plan described in
+[Render](render.md). Keep requiredness, aliases and publication selections
+faithful to the task instead of changing them to bypass an error.

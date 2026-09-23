@@ -1,86 +1,85 @@
 # Deploy and site registration
 
-Read `ngr deploy --help` for all nested forms. Every form resolves paths from
-the selected project root (`--root DIR` with CLI 0.3.0-dev or later, or the
-command CWD); there is no Git worktree resolution. The
-registry is `.netlify/sites.env` under the project root. Check the form's
-Netlify requirements and jq for manifest/site/domain operations; do not
-install or authenticate a replacement environment as an implicit repair.
+NGR uses the installed Netlify CLI. Real provider operations require its
+authentication. Resolve the project root and read its `.netlify/sites.env`
+mapping (`alias=UUID`), the selected artifact declarations and intended
+publication mode. An alias, local path, provider site name and UUID are
+different identities; use the mapping whose use the user explicitly validated
+for this task. Its presence or UUID format alone does not validate a destination.
 
 ## Upload an existing output
 
 ```text
-ngr deploy <alias> <dir> [--prod]
-ngr deploy --manifest <file> [--dry-run] [--prod] [--only <aliases>] [--except <aliases>]
+ngr deploy <alias> <directory>
+ngr deploy <alias> <directory> --prod
+ngr deploy --manifest <file> --only <aliases> --dry-run
+ngr deploy --manifest <file> --only <aliases> [--prod]
 ```
 
-Resolve the exact output, alias and `.netlify/sites.env` UUID with the intended
-provider context. Verify that the output's generation and requested QA already
-passed; uploading does not repair old or incomplete renders. NGR invokes
-Netlify with no build, so it does not render, create sites, write the registry
-or bind domains during deploy.
+Use the draft or production mode explicitly validated by the user; the CLI
+default is draft and `--prod` publishes to production, but neither selects the
+user's intent. If mode or destination lacks validation, ask and wait before
+preparing a deploy contract or uploading. Once both are authorized,
+proceed without repeating approval.
 
-The CLI defaults to a draft; `--prod` changes production. Resolve the intended
-mode from the request/contract before upload. A request already choosing that
-mode and destination authorizes proceeding without another approval ritual.
+Verify that the selected output is the intended generation and has passed
+the requested QA. Upload uses `--no-build`: it does not render, create sites,
+write bindings or set domains. If the binding is missing and registration is
+part of the request, complete [site registration](#register-or-create-a-site)
+using its known site name, then upload.
 
-Direct deploy has no dry-run and does not require `index.html`; verify the
-directory against the requested product. Manifest deploy requires a website
-directory with `index.html` for each selected deployable entry. Missing optional
-outputs skip before alias validation; missing required outputs fail. For
-render-only DOCX entries, resolve the intended publication subset rather than
-silently excluding them or changing `required`.
+Direct deploy requires an existing directory and registered alias. It has no
+dry-run and imposes no `index.html` check. Manifest deploy requires
+`<path>/index.html` for every selected website: a missing required output
+fails, while a missing optional one skips before alias validation. Use the
+requested website subset when a manifest also contains render-only DOCX;
+do not change `required` to conceal a wrong selection.
 
-A real manifest deploy without `.netlify/sites.env` stops with
-`Missing .netlify/sites.env; register aliases first.` Manifest dry-run checks
-local paths, website entry points and UUID-shaped registry entries. It does
-require an existing binding for each selected alias; a fresh project can
-fail with `Alias not registered: NAME` even in dry-run. Report the missing
-binding without inventing a UUID or creating a site to make the plan pass.
-It does
-not query the provider, prove authentication or establish that those sites
-still exist. Once uploading begins, jobs run sequentially and a later failure
-leaves earlier uploads live.
+Manifest dry-run checks local paths, website entry points and UUID-shaped
+alias bindings. A fresh project can fail with `Alias not registered` even
+in dry-run. Supply the real binding through registration when authorized;
+do not invent UUIDs. This plan makes no provider calls and does not prove
+authentication or that a recorded site still exists.
 
-Capture per alias the provider site UUID, deploy identity, mode, response and
-URL needed to verify the effect. A provider `ready` state proves that deploy's
-state, not who created an old deploy or that its content passed QA. Check the
-served requested artifact when claiming publication. Reconcile a timeout or
-unknown last response against that exact identity before resuming only the
-authorized uncompleted aliases. Do not replay the successful prefix, widen the
-selection or switch to production to recover.
+Real deploy validates sites, then uploads sequentially. Preserve the site UUID,
+deploy identity, mode, response and returned URL for each attempt. Check the
+served artifact when claiming publication. On later failure, earlier uploads
+remain live. Reconcile a timeout/unknown response with the exact provider
+deploy before retrying, and resume only unfinished aliases.
 
 ## Register or create a site
 
 ```text
-ngr deploy init <alias> <site-name> [--create] [--account <slug>]
-ngr deploy init --manifest <file> [--dry-run] [--create] [--account <slug>] [--only <aliases>] [--except <aliases>]
+ngr deploy init <alias> <site-name>
+ngr deploy init <alias> <site-name> --create [--account <slug>]
+ngr deploy init --manifest <file> --only <aliases> --dry-run
+ngr deploy init --manifest <file> --only <aliases> [--create] [--account <slug>]
 ```
 
-Resolve alias, provider site name (`siteSlug` in a manifest), intended account
-where material, and whether missing-site creation is authorized. An alias,
-slug, domain and UUID are different identities; do not guess one from another.
-Registration looks up an existing site and writes `alias=UUID` locally.
-`--create` additionally permits creation if absent. Neither form renders,
-uploads or sets a domain. Direct init has no dry-run.
+Require explicit user validation of the site name (`siteSlug` in a manifest)
+and intended account, directly or through an identified contract. Registration
+looks up an existing site and writes the local binding. Add `--create` when
+creating the missing site is authorized;
+it is not needed to associate an existing site. Neither operation uploads
+content or configures domains. Direct init has no dry-run.
 
-Site slugs must be unique across the complete manifest, not only the
-selection, and every selected artifact must declare a slug. Manifest init
-dry-run checks schema, selection and slug uniqueness and prints the plan; it
-reads neither the provider nor the registry. It cannot confirm an alias is
-unused, a site is absent or the account is authenticated. Use a bounded
-public provider read when those facts are needed; an error or timeout from
-lookup is not proof of absence.
+Manifest init requires every selected `siteSlug` and rejects duplicate site
+slugs across the whole manifest. Its dry-run prints the plan without reading
+the provider or registry, so it cannot discover an existing alias conflict,
+prove site availability or establish authentication.
 
-Real init refuses to retarget an alias already pointing at another UUID. Stop
-on that conflict and reconcile the current site/registry identity; do not
-remove the alias to make the command pass. If exact stale-binding replacement
-is authorized, [unbind](domains-recovery.md#remove-a-local-binding) removes
-only that local mapping before the separately authorized registration/create.
+After init, verify the actual provider UUID and corresponding local mapping.
+An alias already pointing to another UUID is refused: reconcile the identities
+instead of silently deleting the binding. If exact local replacement is
+authorized, [unbind](domains-recovery.md#remove-a-local-binding) is the local
+step before registering the intended site.
 
-After init, verify both the actual provider UUID and the exact local mapping.
-A batch can leave earlier sites/mappings complete, or a newly created site
-without its final registry write. Preserve that site's UUID and recovery hint
-before any retry so creation is not duplicated. A historical UUID returning
-Not Found establishes current lookup failure only; it does not establish who
-removed it or authorize a new site.
+Creation may succeed before lookup/registry writing fails. Preserve the known
+site name/UUID and reconcile it through ordinary init before attempting any
+new creation. A provider lookup error or timeout does not establish absence.
+If NGR does not expose the provider observation needed to reconcile the
+attempt, report that CLI limitation and preserve the known identity and
+unresolved effect. Do not bypass NGR with a direct provider CLI/API call or
+retry creation on an assumption of absence.
+
+Continue with [Domains](domains-recovery.md) only when that effect is requested.
