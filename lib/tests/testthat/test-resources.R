@@ -195,7 +195,7 @@ test_that("a source outside Git takes its revision from the record beside its ma
   Project <- jsonlite::fromJSON(file.path(Fixture$project, "manifest.json"), simplifyVector = FALSE)
   expect_false(file.exists(file.path(Fixture$project, "BUILD_INFO")))
   expect_identical(quartoRenderStamp(Project, root = Fixture$project),
-                   paste0("Pub: ", format(Sys.time(), "%d/%m/%Y"), " Rev.0123456"))
+                   paste0("Printed: ", format(Sys.time(), "%d/%m/%Y")))
   writeLines(c("git_commit=0123456789abcdef0123456789abcdef01234567", "git_describe=0123456-dirty"), Record)
   expect_true(.resourceRevision(Fixture$manifest)$dirty)
   writeLines("git_commit=not-a-commit", Record)

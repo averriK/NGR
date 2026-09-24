@@ -1,4 +1,4 @@
-test_that("publication stamps reflect per-file provenance without writing inputs", {
+test_that("the print stamp names the date and ignores the provenance state", {
   Root <- tempfile("ngr-stamp-")
   dir.create(Root)
   on.exit(unlink(Root, recursive = TRUE), add = TRUE)
@@ -9,27 +9,24 @@ test_that("publication stamps reflect per-file provenance without writing inputs
   Manifest <- list(scaffolds = list(book = list(
     complete = TRUE, files = list("chapter.qmd" = Entry)
   )))
-  Prefix <- paste0("Pub: ", format(Sys.Date(), "%d/%m/%Y"), " Rev.")
+  Stamp <- paste0("Printed: ", format(Sys.Date(), "%d/%m/%Y"))
   expect_message(
-    Stamp <- NGR::quartoRenderStamp(Manifest, root = Root),
+    Out <- NGR::quartoRenderStamp(Manifest, root = Root),
     "Render timestamp:"
   )
-  expect_identical(Stamp, paste0(Prefix, "abcdef0"))
+  expect_identical(Out, Stamp)
   expect_identical(unname(tools::md5sum(FILE)), Digest)
 
   Manifest$scaffolds$book$files[["chapter.qmd"]]$dirty <- TRUE
-  expect_identical(suppressMessages(NGR::quartoRenderStamp(Manifest, root = Root)),
-                   paste0(Prefix, "abcdef0 \u00b7 DRAFT"))
+  expect_identical(suppressMessages(NGR::quartoRenderStamp(Manifest, root = Root)), Stamp)
   Manifest$scaffolds$book$files[["chapter.qmd"]]$dirty <- FALSE
   writeLines("local change", FILE)
-  expect_identical(suppressMessages(NGR::quartoRenderStamp(Manifest, root = Root)),
-                   paste0(Prefix, "abcdef0 \u00b7 DRAFT"))
+  expect_identical(suppressMessages(NGR::quartoRenderStamp(Manifest, root = Root)), Stamp)
   unlink(FILE)
-  expect_identical(suppressMessages(NGR::quartoRenderStamp(Manifest, root = Root)),
-                   paste0(Prefix, "abcdef0 \u00b7 DRAFT"))
+  expect_identical(suppressMessages(NGR::quartoRenderStamp(Manifest, root = Root)), Stamp)
 })
 
-test_that("mixed revisions are sorted and unknown coverage remains a draft", {
+test_that("mixed revisions, incomplete coverage and empty manifests keep the same stamp", {
   Root <- tempfile("ngr-stamp-")
   dir.create(Root)
   on.exit(unlink(Root, recursive = TRUE), add = TRUE)
@@ -42,14 +39,11 @@ test_that("mixed revisions are sorted and unknown coverage remains a draft", {
     supplement = list(complete = TRUE, files = list("chapter.qmd" = Entry))
   ))
   Manifest$scaffolds$supplement$files[["chapter.qmd"]]$commit <- "123456789abcdef"
-  Prefix <- paste0("Pub: ", format(Sys.Date(), "%d/%m/%Y"), " Rev.")
-  expect_identical(suppressMessages(NGR::quartoRenderStamp(Manifest, root = Root)),
-                   paste0(Prefix, "1234567 / abcdef0"))
+  Stamp <- paste0("Printed: ", format(Sys.Date(), "%d/%m/%Y"))
+  expect_identical(suppressMessages(NGR::quartoRenderStamp(Manifest, root = Root)), Stamp)
   Manifest$scaffolds$book$complete <- FALSE
-  expect_identical(suppressMessages(NGR::quartoRenderStamp(Manifest, root = Root)),
-                   paste0(Prefix, "1234567 / abcdef0 / \u2014 \u00b7 DRAFT"))
-  expect_identical(suppressMessages(NGR::quartoRenderStamp(list(), root = Root)),
-                   paste0(Prefix, "\u2014 \u00b7 DRAFT"))
+  expect_identical(suppressMessages(NGR::quartoRenderStamp(Manifest, root = Root)), Stamp)
+  expect_identical(suppressMessages(NGR::quartoRenderStamp(list(), root = Root)), Stamp)
 })
 
 test_that("invalid provenance and escaping paths fail before use", {

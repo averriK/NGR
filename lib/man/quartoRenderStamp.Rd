@@ -2,7 +2,7 @@
 % Please edit documentation in R/quartoRenderStamp.R
 \name{quartoRenderStamp}
 \alias{quartoRenderStamp}
-\title{Resolve the publication stamp from scaffold provenance}
+\title{Resolve the print stamp of a render from scaffold provenance}
 \usage{
 quartoRenderStamp(manifest, root = getwd())
 }
@@ -14,14 +14,13 @@ a project without recorded scaffold provenance.}
 Defaults to the current working directory.}
 }
 \value{
-A character scalar with the publication date, sorted abbreviated
-revisions and, when applicable, a \code{DRAFT} marker. The current local time
-supplies the date and is also reported through a message condition.
+A character scalar \code{Printed: dd/mm/yyyy} with the current local
+date, which is also reported through a message condition.
 }
 \description{
-Aggregates the per-file revisions recorded in a project manifest and checks
-those files against their recorded MD5 digests. The stamp describes all
-registered scaffolds, not only the files used by one rendered artifact.
-Missing or modified files, dirty revisions and unknown provenance mark the
-result as a draft. This function reads files without changing them.
+Validates the per-file scaffold provenance recorded in a project manifest
+and returns the print stamp of the render: the print date alone. The
+technical revisions and the draft state of the resources stay in the
+manifest receipts and are not shown to readers. This function reads files
+without changing them.
 }
