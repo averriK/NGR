@@ -93,6 +93,16 @@ test_that("quartoSetProjectRender sets render targets without touching other fie
   expect_identical(Rendered$project$render[[1]], "report.qmd")
 })
 
+test_that("book language survives excluding the master from rendered chapters", {
+  Base <- list(lang = "en", project = list(type = "book"))
+  Manifest <- list(title = "Informe", lang = "es-AR", chapters = "index.qmd")
+  Merged <- quartoMergeBookManifest(Base, Manifest)
+  expect_identical(Merged$lang, "es-AR")
+  expect_identical(Merged$project$render, list("index.qmd"))
+  Manifest$lang <- NULL
+  expect_identical(quartoMergeBookManifest(Base, Manifest)$lang, "en")
+})
+
 test_that("quartoDocxBookProfile sets book type and validates docx format", {
   Fixture <- testthat::test_path("fixtures", "qrt-yaml")
   Profile <- yaml::read_yaml(file.path(Fixture, "docx.yml"))

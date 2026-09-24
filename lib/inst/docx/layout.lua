@@ -1,7 +1,16 @@
 -- Quarto's resolved section number gets CAN's hanging-indent tab. Appendix
--- titles and explicitly unnumbered headings retain their resolved content.
+-- titles use the same localized prefix as Quarto's appendix references.
 function Header(el)
   local number = el.attributes.number
+  if el.level == 1 and number and number:match('^[A-Z]+$')
+      and el.content[1] and el.content[1].t == 'Str'
+      and el.content[1].text == 'Appendix' then
+    local language = quarto.doc.language
+    if language and language['crossref-apx-prefix'] then
+      el.content[1].text = language['crossref-apx-prefix']
+      return el
+    end
+  end
   if el.level > 3 or not number or #el.content < 2
       or el.content[1].t ~= 'Str' or el.content[1].text ~= number then return nil end
   if el.content[2].t == 'Space' or (el.content[2].t == 'Str' and el.content[2].text == '. ') then

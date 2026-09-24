@@ -82,8 +82,8 @@ quartoSetProjectRender <- function(base, render) {
 
 #' Merge QMD book-manifest frontmatter into Quarto YAML
 #'
-#' Merges qrt-style manifest fields (`title`, `chapters`, `appendices`, and
-#' `bibliography`) into a parsed `_quarto.yml` list and sets `project.render` to
+#' Merges qrt-style manifest fields (`title`, `chapters`, `appendices`,
+#' `bibliography`, and `lang`) into a parsed `_quarto.yml` list and sets `project.render` to
 #' the declared chapters plus appendices. `part:` entries are preserved in
 #' `book.chapters`/`book.appendices` and flattened to their chapter files for
 #' `project.render`, which only accepts paths.
@@ -108,6 +108,7 @@ quartoMergeBookManifest <- function(base, manifest) {
   if (length(Render) > 0L) Base <- quartoSetProjectRender(Base, Render)
 
   if (!is.null(Manifest$bibliography)) Base$bibliography <- Manifest$bibliography
+  if (!is.null(Manifest$lang)) Base$lang <- Manifest$lang
   Base
 }
 

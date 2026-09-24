@@ -4,35 +4,48 @@ test_that("DOCX metadata comes from project params and the render date", {
   Params <- list(params = list(client = list(name = "Verificación del formato documental"),
     consultant = list(name = "SRK Consulting (Argentina) S.A."), project_id = "NGR"))
   Date <- format(Sys.Date(), "%d/%m/%Y")
-  OUT <- Spec(Master, params = Params, date = Date)
+  OUT <- Spec(Master, params = Params, date = Date, fileName = "document.docx")
   expect_identical(OUT$cover, list(title = Master$title, client = Params$params$client$name,
     company = Params$params$consultant$name, issue = "NGR", date = Date))
   expect_identical(OUT$headerFooter$date, Date)
   expect_identical(OUT$lang, "es")
   expect_identical(OUT$appendices, list())
+  expect_identical(OUT$titlePage, list(clientAddress = list(), companyAddress = list(),
+    clientWeb = "", companyWeb = "", fileName = "document.docx"))
+  DATA <- Params
+  DATA$params$client$address <- c("Av. Emilio Civit 404", "Mendoza")
+  DATA$params$consultant$web <- "https://www.srk.com"
+  Details <- Spec(Master, params = DATA, date = Date, fileName = "document.docx")$titlePage
+  expect_identical(Details$clientAddress, as.list(DATA$params$client$address))
+  expect_identical(Details$companyWeb, DATA$params$consultant$web)
+  for (x in list(123, list("line", NA_character_), list(list("nested")), "line\nbreak")) {
+    DATA$params$client$address <- x
+    expect_error(Spec(Master, params = DATA, date = Date, fileName = "document.docx"),
+      "params.client.address", fixed = TRUE)
+  }
   Master$srk <- list(title = "Ignored", client = "Ignored", date = "Ignored")
-  expect_identical(Spec(Master, params = Params, date = Date), OUT)
+  expect_identical(Spec(Master, params = Params, date = Date, fileName = "document.docx"), OUT)
   Master$lang <- NULL
-  expect_identical(Spec(Master, params = Params, date = Date)$lang, "en")
+  expect_identical(Spec(Master, params = Params, date = Date, fileName = "document.docx")$lang, "en")
   Master$lang <- "es-AR"
-  expect_identical(Spec(Master, params = Params, date = Date)$lang, "es")
+  expect_identical(Spec(Master, params = Params, date = Date, fileName = "document.docx")$lang, "es")
   Master$lang <- "en-CA"
-  expect_identical(Spec(Master, params = Params, date = Date)$lang, "en")
+  expect_identical(Spec(Master, params = Params, date = Date, fileName = "document.docx")$lang, "en")
   for (x in list("unsupported", NA_character_, list("es"))) {
     Master$lang <- x
-    expect_error(Spec(Master, params = Params, date = Date), "lang must")
+    expect_error(Spec(Master, params = Params, date = Date, fileName = "document.docx"), "lang must")
   }
   Master$lang <- "es"
   for (Key in list(c("client", "name"), c("consultant", "name"), "project_id")) {
     for (x in list(NULL, "", NA_character_, 123, list("value"), "line\nbreak")) {
       DATA <- Params
       DATA$params[[Key]] <- x
-      expect_error(Spec(Master, params = DATA, date = Date),
+      expect_error(Spec(Master, params = DATA, date = Date, fileName = "document.docx"),
         paste0("params.", paste(Key, collapse = "."), " in params.yml"), fixed = TRUE)
     }
   }
   Master$title <- NULL
-  expect_error(Spec(Master, params = Params, date = Date), "title in the DOCX master", fixed = TRUE)
+  expect_error(Spec(Master, params = Params, date = Date, fileName = "document.docx"), "title in the DOCX master", fixed = TRUE)
 })
 
 test_that("missing project metadata fails before staging or launching Quarto", {
@@ -68,10 +81,13 @@ test_that("appendix identity uses Pandoc and flattens part entries", {
   Master <- list(appendices = list(list(part = "Apéndices", chapters = list("a.qmd", "b.qmd"))))
   expect_identical(Appendices(Master), list(list(bookmark = "sec-apx-a"), list(bookmark = "sec-apx-b")))
   expect_identical(Appendices(list()), list())
+  expect_message(Appendices(list(chapters = "index.qmd")), "no appendices declared", fixed = TRUE)
   writeLines("# Tablas y notas {#sec-apx-a}", "b.qmd")
   expect_error(Appendices(Master), "unique")
-  writeLines("# Tablas y notas {.unnumbered}", "b.qmd")
+  writeLines("# Tablas y notas {#sec-apx-b .unnumbered}", "b.qmd")
   expect_error(Appendices(Master), "must be numbered")
+  writeLines("# Tablas y notas", "b.qmd")
+  expect_error(Appendices(Master), "one level-1")
   writeLines(c("# One", "# Two"), "b.qmd")
   expect_error(Appendices(Master), "one level-1")
 })

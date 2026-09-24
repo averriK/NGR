@@ -59,7 +59,7 @@ class DocxTests(unittest.TestCase):
                     Parent.insert(i, v)
                     i += 1
             Parent.remove(x)
-        self.assertEqual(8, len(Document.findall(".//w:sectPr", srk.NS)))
+        self.assertEqual(9, len(Document.findall(".//w:sectPr", srk.NS)))
         Ids = Document.xpath(".//@w14:paraId", namespaces={"w14": "http://schemas.microsoft.com/office/word/2010/wordml"})
         self.assertEqual(len(Ids), len(set(Ids)))
         self.assertGreater(Manifest["repairs"]["captionProperties"], 0)
@@ -69,7 +69,7 @@ class DocxTests(unittest.TestCase):
             if s.startswith("word/media/"):
                 self.assertEqual(Content[s], Parts[s])
         Body = Document.find("w:body", srk.NS)
-        for x in list(Body)[:Manifest["coverElements"] + 1]:
+        for x in list(Body)[:Manifest["frontMatterElements"]]:
             Body.remove(x)
         for x in self.Spec["appendices"]:
             Bookmark = Body.xpath("./w:bookmarkStart[@w:name=$name]", namespaces=srk.NS, name=x["bookmark"])[0]
@@ -103,7 +103,77 @@ class DocxTests(unittest.TestCase):
                 self.Spec["appendices"] = json.loads((Root / "spec.json").read_text())["appendices"][:n]
                 self.compose()
                 Document = srk._xml(srk.readPackage(self.Output)["word/document.xml"])
-                self.assertEqual(2 + 2 * n, len(Document.findall(".//w:sectPr", srk.NS)))
+                self.assertEqual(3 + 2 * n, len(Document.findall(".//w:sectPr", srk.NS)))
+
+    def testAppendixSeparatorsKeepLevelOneForTableOfContents(self):
+        Manifest = self.compose()
+        Document = srk._xml(srk.readPackage(self.Output)["word/document.xml"])
+        Headings = Document.xpath(".//w:p[w:pPr/w:pStyle/@w:val=$style]", namespaces=srk.NS,
+                                  style=Manifest["mapping"]["styles"]["Heading8"])
+        self.assertEqual(3, len(Headings))
+        for Heading in Headings:
+            self.assertEqual(["0"], Heading.xpath("./w:pPr/w:outlineLvl/@w:val", namespaces=srk.NS))
+
+    def testTitlePageUsesCanLayoutAndProjectMetadata(self):
+        self.Spec["titlePage"]["clientAddress"] = [self.Spec["cover"]["client"], self.Spec["cover"]["issue"]]
+        self.Spec["titlePage"]["companyAddress"] = [self.Spec["cover"]["company"]]
+        Manifest = self.compose()
+        Document = srk._xml(srk.readPackage(self.Output)["word/document.xml"])
+        TitlePage = Document.find("w:body", srk.NS)[Manifest["coverElements"] + 1]
+        Text = TitlePage.xpath(".//w:t/text()", namespaces=srk.NS)
+        for v in self.Spec["cover"].values():
+            self.assertIn(v, Text)
+        self.assertIn(self.Spec["titlePage"]["fileName"], Text)
+        self.assertFalse(TitlePage.findall(".//w:sdt", srk.NS))
+        self.assertFalse(TitlePage.findall(".//w:fldSimple", srk.NS))
+        self.assertNotIn("Crawford", "".join(Text))
+        for s in ("Canada Nickel", "130 King", "Toronto", "Vancouver", "320 Granville", "+1 604", "canadanickel.com"):
+            self.assertNotIn(s, "".join(Text))
+        self.assertNotIn("Copyright", "".join(Text))
+        Source = srk._xml(srk._readTemplate(Resources / "srk-template.zip")["title-page.xml"])
+        for s in ("gridCol", "tcW", "trHeight"):
+            self.assertEqual([dict(x.attrib) for x in Source.findall(".//w:" + s, srk.NS)], [dict(x.attrib) for x in TitlePage.findall(".//w:" + s, srk.NS)])
+        Sections = Document.findall(".//w:sectPr", srk.NS)
+        self.assertIsNone(Sections[0].find("w:pgNumType", srk.NS))
+        self.assertEqual({f"{{{srk.W}}}fmt": "lowerRoman", f"{{{srk.W}}}start": "2"}, dict(Sections[1].find("w:pgNumType", srk.NS).attrib))
+        self.assertEqual("1", Sections[2].find("w:pgNumType", srk.NS).get(f"{{{srk.W}}}start"))
+
+    def testTitlePageLabelsAndOptionalValues(self):
+        for s, Labels in (("en", ("Prepared for", "Prepared by", "Project No.:", "File Name:")), ("es", ("Preparado para", "Preparado por", "Proyecto:", "Archivo:"))):
+            self.Spec["lang"] = s
+            self.Spec["titlePage"]["clientWeb"] = ""
+            self.Spec["titlePage"]["companyWeb"] = ""
+            Manifest = self.compose()
+            Document = srk._xml(srk.readPackage(self.Output)["word/document.xml"])
+            TitlePage = Document.find("w:body", srk.NS)[Manifest["coverElements"] + 1]
+            Text = TitlePage.xpath(".//w:t/text()", namespaces=srk.NS)
+            for v in Labels:
+                self.assertIn(v, Text)
+            self.assertNotIn("Web:", Text)
+            self.assertNotIn("{{", "".join(Text))
+
+    def testPreliminariesEndBeforeHeadingBookmarkWithoutExtraPageBreak(self):
+        def change(parts):
+            Document = srk._xml(parts["word/document.xml"])
+            Body = Document.find("w:body", srk.NS)
+            x = srk._xml(f'<w:p xmlns:w="{srk.W}"><w:pPr><w:pStyle w:val="BodyText"/></w:pPr><w:r><w:t>Firmas</w:t></w:r></w:p>'.encode())
+            Body.insert(1, x)
+            Body.insert(2, srk._xml(f'<w:p xmlns:w="{srk.W}"><w:pPr><w:pStyle w:val="BodyText"/></w:pPr><w:r><w:br w:type="page"/></w:r></w:p>'.encode()))
+            parts["word/document.xml"] = srk._bytes(Document)
+        self.compose(contentPath=self.contentWith(change))
+        Document = srk._xml(srk.readPackage(self.Output)["word/document.xml"])
+        Heading = Document.xpath("./w:body/w:p[w:pPr/w:pStyle/@w:val='Heading1']", namespaces=srk.NS)[0]
+        self.assertEqual(f"{{{srk.W}}}bookmarkStart", Heading.getprevious().tag)
+        Boundary = Heading.getprevious().getprevious()
+        self.assertEqual("lowerRoman", Boundary.find("w:pPr/w:sectPr/w:pgNumType", srk.NS).get(f"{{{srk.W}}}fmt"))
+        self.assertFalse(Boundary.findall(".//w:br", srk.NS))
+
+    def testMalformedTitlePageMetadataPreservesOutput(self):
+        self.Output.write_bytes(b"prior output")
+        self.Spec["titlePage"]["clientAddress"] = "not a list"
+        with self.assertRaisesRegex(ValueError, "address lists"):
+            self.compose()
+        self.assertEqual(b"prior output", self.Output.read_bytes())
 
     def testCoverLabelsFollowLanguageWithoutChangingLayout(self):
         Covers = []

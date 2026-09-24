@@ -47,10 +47,17 @@ the project's \code{params.yml}. Required values are non-empty single-line
 strings; missing values fail before Quarto. The date is calculated for the
 render in \code{dd/mm/yyyy}, matching the print stamp. Cover labels follow
 English or Spanish. A master \code{srk} block is not read. Other Word metadata
-is left blank for editing in Word. The project DOCX profile must use a
+is left blank for editing in Word. The CAN inner title page uses optional
+\code{address} lists and \code{web} strings from the client and consultant blocks,
+together with the output filename. The project DOCX profile must use a
 CAN-compatible reference and \code{number-sections: true}. Each appendix file
-needs one numbered level-1 heading; its Pandoc identifier selects the
-separator. Input DOCX sections within the body are currently unsupported.
+declared in \code{appendices} needs one numbered level-1 heading with an explicit
+identifier (\verb{\{#sec-...\}}), which selects its separator. A book without
+\code{appendices} emits a diagnostic and receives no CAN appendix separators.
+Input DOCX sections within the body are currently unsupported.
+Preliminaries before the first Heading1 use Roman numbering; the body
+starts at page 1. The profile enables a Word table of contents, which may
+need a manual update. No field-update request is set on document opening.
 The installed library owns the Python compositor and semantic filters.
 Quarto resolves citations and cross-references once for the complete book.
 Rendering and composition finish before publication begins. HTML output

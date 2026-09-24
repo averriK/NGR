@@ -108,12 +108,18 @@ class RenderTest(unittest.TestCase):
                         DATA = ZIP.read("word/document.xml")
                         self.assertIn(b"Alpha", DATA)
                         Manifest = json.loads(ZIP.read("word/srk-composition.json"))
-                        self.assertEqual("ngr-srk-can-components-1", Manifest["format"])
+                        self.assertEqual("ngr-srk-can-components-2", Manifest["format"])
                         self.assertEqual(2 if Name == "book" else 0, len(Manifest["appendices"]))
                         self.assertIn(b"SRKDataTable", DATA)
                         self.assertIn(date.today().strftime("%d/%m/%Y").encode(), DATA)
                         self.assertIn(b"Preparado para" if Name == "book" else b"Prepared for", DATA)
                         NS = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+                        Document = ElementTree.fromstring(DATA)
+                        TitlePage = Document.find("w:body", NS)[Manifest["coverElements"] + 1]
+                        TitleStyle = Manifest["mapping"]["styles"]["Cover2"]
+                        self.assertIsNotNone(TitlePage.find(f".//w:pStyle[@w:val='{TitleStyle}']", NS))
+                        self.assertIn(f"{Name}.docx", "".join(TitlePage.itertext()))
+                        self.assertIsNotNone(Document.find(".//w:pgNumType[@w:fmt='lowerRoman']", NS))
                         Styles = ElementTree.fromstring(ZIP.read("word/styles.xml"))
                         Font = Styles.find("w:style[@w:styleId='Heading1']/w:rPr/w:rFonts", NS)
                         self.assertEqual("Arial", Font.get("{" + NS["w"] + "}ascii"))

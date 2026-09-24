@@ -9,7 +9,7 @@ format:
     filters:
       - lua/cover-title.lua
       - lua/list-style.lua
-    toc: false
+    toc: true
     number-sections: true
     number-depth: 4
     fig-width: 6.3

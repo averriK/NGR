@@ -1,5 +1,5 @@
 # Private contract between project metadata, Pandoc and the CAN compositor.
-.docxSpec <- function(frontmatter, params, date) {
+.docxSpec <- function(frontmatter, params, date, fileName) {
   Keys <- c(client = "params.client.name", company = "params.consultant.name", project = "params.project_id")
   Values <- list(title = frontmatter$title, date = date)
   for (Name in names(Keys)) {
@@ -29,8 +29,26 @@
   }
   Cover <- list(title = Values$title, client = Values$client, company = Values$company,
                 issue = Values$project, date = Values$date)
+  TitlePage <- list(clientAddress = list(), companyAddress = list(),
+                    clientWeb = "", companyWeb = "", fileName = fileName)
+  for (Name in c("client", "consultant")) {
+    Key <- if (Name == "client") "client" else "company"
+    for (Field in c("address", "web")) {
+      x <- params$params[[Name]][[Field]]
+      if (is.null(x)) next
+      if (Field == "web") x <- list(x)
+      if (!(is.list(x) || is.character(x)) || any(!vapply(x, function(s) {
+        is.character(s) && length(s) == 1L && !is.na(s) && !grepl("[[:cntrl:]]", s)
+      }, logical(1L)))) {
+        stop("Invalid params.", Name, ".", Field, " in params.yml: expected single-line text",
+             if (Field == "address") " entries." else ".", call. = FALSE)
+      }
+      if (Field == "address") TitlePage[[paste0(Key, "Address")]] <- as.list(x)
+      if (Field == "web") TitlePage[[paste0(Key, "Web")]] <- x[[1L]]
+    }
+  }
   list(cover = Cover, headerFooter = Values[c("title", "date", "project", "company")],
-       appendices = list(), lang = sub("-.*$", "", Language))
+       titlePage = TitlePage, appendices = list(), lang = sub("-.*$", "", Language))
 }
 
 .docxAppendices <- function(frontmatter) {
@@ -43,11 +61,11 @@
     }
     Json <- tempfile("ngr-appendix-", fileext = ".json")
     on.exit(unlink(Json), add = TRUE)
-    .runRenderCommand("quarto", args = c("pandoc", FILE, "--from", "markdown", "--to", "json", "--output", Json))
+    .runRenderCommand("quarto", args = c("pandoc", FILE, "--from", "markdown-auto_identifiers", "--to", "json", "--output", Json))
     DATA <- jsonlite::fromJSON(Json, simplifyVector = FALSE)$blocks
     Headers <- Filter(function(x) identical(x$t, "Header") && identical(x$c[[1L]], 1L), DATA)
     if (length(Headers) != 1L || !nzchar(Headers[[1L]]$c[[2L]][[1L]])) {
-      stop("Each appendix file requires one level-1 heading with an identifier: ", FILE, call. = FALSE)
+      stop("Each appendix file requires one level-1 heading with an explicit identifier: ", FILE, call. = FALSE)
     }
     if ("unnumbered" %in% unlist(Headers[[1L]]$c[[2L]][[2L]])) {
       stop("Appendix heading must be numbered so Quarto can resolve its letter and references: ", FILE, call. = FALSE)
@@ -57,6 +75,9 @@
   }
   Ids <- vapply(OUT, function(x) x$bookmark, character(1L))
   if (anyDuplicated(Ids)) stop("Appendix heading identifiers must be unique.", call. = FALSE)
+  if (!length(OUT) && quartoHasBookManifest(frontmatter)) {
+    message("[render] DOCX book: no appendices declared; CAN separators require appendices in the master.")
+  }
   OUT
 }
 

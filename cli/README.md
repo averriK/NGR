@@ -204,18 +204,31 @@ the project code. The title and these values must be non-empty single-line
 strings. A missing or invalid project field fails before Quarto with its key
 and `params.yml` in the diagnostic.
 
-The cover, header and footer use the same automatic `dd/mm/yyyy` render date
+The cover, inner title page, header and footer use the same automatic `dd/mm/yyyy` render date
 as the `Printed` stamp. NGR does not read a master `srk` block or a manual
 issue date. No additional project fields are required: document number,
 revision, distribution and other Word-specific details remain blank for
 editing in Word. Existing project masters and `params.yml` need no migration
 for this metadata contract.
 
+The inner title page uses the CAN contact layout. Optional `address` lists and
+`web` strings under `params.client` and `params.consultant` fill its contact
+columns; absent values remain blank. Its file name is the delivered DOCX name.
+The profile enables a Word table of contents. Content before the first Heading1,
+such as the index and signatures, uses Roman page numbering; the body starts at 1.
+Word may require a manual table-of-contents update. The compositor does not request
+automatic field updates when opening the document.
+
 The DOCX profile requires `number-sections: true` and a CAN-compatible
-`styles/reference.docx`. Each appendix file listed by the master needs exactly
-one numbered level-1 heading, preferably with an explicit `{#sec-...}` identifier.
+`styles/reference.docx`. Each appendix file listed under the master's `appendices`
+needs exactly one numbered level-1 heading with an explicit `{#sec-...}` identifier.
+A book without that declaration receives a diagnostic and no CAN appendix dividers.
 Part entries are supported. Quarto resolves citations, bibliography and crossrefs
-for the entire document once; Python then composes the cover and appendix dividers.
+for the entire document once; Python then composes the cover, inner title page and
+appendix dividers. A chapter titled “Appendices” is still a chapter: migrate its
+content to the explicit master declaration. Existing master seeds are not replaced
+by `pull`; review and migrate them separately. Retire any duplicated legacy cover
+blocks in the report source, preserving the intended signature page.
 Native tables receive CAN styles. Preformatted tables retain widths, grids,
 merges and repeated headers. Input bodies with internal section breaks, including
 landscape sections, are rejected before replacing an existing output.

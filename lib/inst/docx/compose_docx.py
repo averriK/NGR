@@ -22,10 +22,11 @@ REL = "http://schemas.openxmlformats.org/package/2006/relationships"
 CT = "http://schemas.openxmlformats.org/package/2006/content-types"
 NS = {"w": W, "r": R, "m": "http://schemas.openxmlformats.org/officeDocument/2006/math"}
 DIGEST = "7ec329ffa48eea32f473cd9efcf1b39c054bdc43b7f1e8de4d1c0884e83d7605"
-FORMAT = "ngr-srk-can-components-1"
+FORMAT = "ngr-srk-can-components-2"
 MARKER = "word/srk-composition.json"
 SLOTS = {"title": "reporttitle", "client": "clientname", "issue": "projectnumber",
          "date": "monthyear", "company": "company"}
+TITLEFIELDS = {"clientAddress", "companyAddress", "clientWeb", "companyWeb", "fileName"}
 PORDER = {s: i for i, s in enumerate(("pStyle", "keepNext", "keepLines", "pageBreakBefore", "framePr", "widowControl", "numPr", "suppressLineNumbers", "pBdr", "shd", "tabs", "suppressAutoHyphens", "kinsoku", "wordWrap", "overflowPunct", "topLinePunct", "autoSpaceDE", "autoSpaceDN", "bidi", "adjustRightInd", "snapToGrid", "spacing", "ind", "contextualSpacing", "mirrorIndents", "suppressOverlap", "jc", "textDirection", "textAlignment", "textboxTightWrap", "outlineLvl", "divId", "cnfStyle", "rPr", "sectPr", "pPrChange"))}
 
 
@@ -99,6 +100,36 @@ def prepareTemplate(sourcePath, outputPath):
         raise ValueError("Unsupported NA cover anchors")
     Cover = etree.Element(f"{{{W}}}body", nsmap=Body.nsmap)
     Cover.extend(deepcopy(x) for x in [*reversed(Anchors), Table])
+    TitlePage = etree.Element(f"{{{W}}}body", nsmap=Body.nsmap)
+    TitlePage.append(deepcopy(_one(Body.xpath("./w:tbl[.//w:pStyle/@w:val='Cover2']", namespaces=NS), "CAN title page")))
+    for x in list(TitlePage.findall(".//w:sdt", NS)):
+        Parent = x.getparent()
+        i = Parent.index(x)
+        for v in list(x.find("w:sdtContent", NS)):
+            Parent.insert(i, v)
+            i += 1
+        Parent.remove(x)
+    Rows = TitlePage.find("w:tbl", NS).findall("w:tr", NS)
+    if len(Rows) != 7 or [len(x.findall("w:tc", NS)) for x in Rows] != [2, 2, 3, 3, 3, 2, 2]:
+        raise ValueError("Unsupported CAN title page grid")
+    for s, t in (("title", "Cover2"), ("date", "Cover4")):
+        _replaceText(_one(TitlePage.xpath(".//w:p[w:pPr/w:pStyle/@w:val=$style]", namespaces=NS, style=t), t), "{{" + s + "}}")
+    for i, (s, t) in enumerate((("client", "Canada Nickel Co."), ("company", "SRK Consulting (Canada) Inc.")), start=1):
+        Cell = Rows[3].findall("w:tc", NS)[i]
+        LIST = Cell.findall("w:p", NS)
+        x = _one(Cell.xpath("./w:p[.//w:t=$name]", namespaces=NS, name=t), "title page organization " + s)
+        n = LIST.index(x)
+        _replaceText(x, "{{" + s + "}}")
+        _replaceText(LIST[n + 1], "{{" + s + "Address}}")
+        for x in LIST[n + 2:]:
+            Cell.remove(x)
+        LIST = Rows[4].findall("w:tc", NS)[i].findall("w:p", NS)
+        _replaceText(LIST[0], "")
+        _replaceText(LIST[1], "{{" + s + "Web}}")
+    LIST = Rows[5].findall("w:tc", NS)[1].findall("w:p", NS)
+    _replaceText(LIST[0], "{{issue}}")
+    _replaceText(LIST[2], "{{fileName}}")
+    _replaceText(Rows[6].findall("w:tc", NS)[1].find("w:p", NS), "")
     for s, t in SLOTS.items():
         if s == "company":
             x = _one(Cover.xpath(".//w:p[w:r/w:t='SRK Consulting (Canada) Inc.']", namespaces=NS), "source company")
@@ -125,7 +156,7 @@ def prepareTemplate(sourcePath, outputPath):
             Parent.insert(i, v)
             i += 1
         Parent.remove(x)
-    for x in Cover.findall(".//w:p", NS):
+    for x in Cover.findall(".//w:p", NS) + TitlePage.findall(".//w:p", NS):
         v = x.find("w:pPr", NS)
         if v is None:
             v = etree.Element(f"{{{W}}}pPr")
@@ -144,16 +175,17 @@ def prepareTemplate(sourcePath, outputPath):
     SectionAppendix = _one(Body.xpath("./w:p[w:pPr/w:pStyle/@w:val='Heading8']/w:pPr/w:sectPr[w:vAlign/@w:val='center']", namespaces=NS), "centered NA appendix section")
     SectionCover = Body.find(".//w:sectPr", NS)
     Relationships = _xml(Source["word/_rels/document.xml.rels"])
-    ImageId = _one(Cover.xpath(".//@r:embed", namespaces=NS), "SRK logo")
+    ImageId = _one(list(set(Cover.xpath(".//@r:embed", namespaces=NS) + TitlePage.xpath(".//@r:embed", namespaces=NS))), "SRK logo")
     x = _one([v for v in Relationships if v.get("Id") == ImageId], "SRK logo relationship")
     if x.get("Type") != R + "/image" or x.get("TargetMode") == "External":
         raise ValueError("Unsupported SRK logo relationship")
     ImagePath = posixpath.normpath(posixpath.join("word", x.get("Target")))
     Footer = etree.Element(f"{{{W}}}ftr", nsmap={"w": W})
     etree.SubElement(Footer, f"{{{W}}}p")
-    for x in Cover.xpath(".//*[@descr]", namespaces=NS):
+    for x in Cover.xpath(".//*[@descr]", namespaces=NS) + TitlePage.xpath(".//*[@descr]", namespaces=NS):
         x.set("descr", "SRK Consulting logo")
     Parts = {"cover.xml": _bytes(Cover), "cover-section.xml": _bytes(SectionCover),
+             "title-page.xml": _bytes(TitlePage),
              "cover-footer.xml": _bytes(Footer), "appendix-heading.xml": _bytes(Heading),
              "appendix-section.xml": _bytes(SectionAppendix),
              "styles.xml": Source["word/styles.xml"], "numbering.xml": Source["word/numbering.xml"],
@@ -375,7 +407,7 @@ def _addPart(parts, relationships, types, name, content, kind):
     return s
 
 
-def _section(source, references, start):
+def _section(source, references, start, numberFormat="decimal"):
     Section = deepcopy(source)
     for x in list(Section):
         if etree.QName(x).localname in {"headerReference", "footerReference", "titlePg", "type", "pgNumType"}:
@@ -385,7 +417,10 @@ def _section(source, references, start):
     Section.insert(len(references), etree.Element(f"{{{W}}}type", {f"{{{W}}}val": "nextPage"}))
     if start is not None:
         x = Section.find("w:cols", NS)
-        Section.insert(Section.index(x) if x is not None else len(Section), etree.Element(f"{{{W}}}pgNumType", {f"{{{W}}}fmt": "decimal", f"{{{W}}}start": str(start)}))
+        Section.insert(Section.index(x) if x is not None else len(Section), etree.Element(f"{{{W}}}pgNumType", {f"{{{W}}}fmt": numberFormat, f"{{{W}}}start": str(start)}))
+    elif numberFormat != "decimal":
+        x = Section.find("w:cols", NS)
+        Section.insert(Section.index(x) if x is not None else len(Section), etree.Element(f"{{{W}}}pgNumType", {f"{{{W}}}fmt": numberFormat}))
     return Section
 
 
@@ -427,13 +462,17 @@ def _appendixTable(heading, section):
 
 def _readSpec(path):
     Spec = json.loads(Path(path).read_text(encoding="utf-8"))
-    if set(Spec) != {"cover", "headerFooter", "appendices", "lang"} or set(Spec["cover"]) != set(SLOTS) or set(Spec["headerFooter"]) != {"title", "date", "project", "company"}:
-        raise ValueError("Spec requires explicit cover, headerFooter, appendices and lang fields")
+    if set(Spec) != {"cover", "titlePage", "headerFooter", "appendices", "lang"} or set(Spec["cover"]) != set(SLOTS) or set(Spec["titlePage"]) != TITLEFIELDS or set(Spec["headerFooter"]) != {"title", "date", "project", "company"}:
+        raise ValueError("Spec requires explicit cover, titlePage, headerFooter, appendices and lang fields")
     if Spec["lang"] not in ("en", "es"):
         raise ValueError("Spec lang must be en or es")
     for x in list(Spec["cover"].values()) + list(Spec["headerFooter"].values()):
         if not isinstance(x, str) or not x.strip() or any(ord(v) < 32 for v in x):
             raise ValueError("Metadata must be non-empty single-line strings")
+    for s, x in Spec["titlePage"].items():
+        LIST = x if s.endswith("Address") else [x]
+        if not isinstance(LIST, list) or any(not isinstance(v, str) or any(ord(t) < 32 for t in v) for v in LIST):
+            raise ValueError("titlePage requires address lists and single-line strings")
     if not isinstance(Spec["appendices"], list):
         raise ValueError("appendices must be an ordered list")
     for x in Spec["appendices"]:
@@ -548,7 +587,7 @@ def validatePackage(parts, contentParts):
     if Manifest["titleRemoved"]:
         x = Before.find("w:body/w:p", NS)
         x.getparent().remove(x)
-    for x in list(Body)[:Manifest["coverElements"] + 1]:
+    for x in list(Body)[:Manifest["frontMatterElements"]]:
         Body.remove(x)
     for x in Manifest["appendices"]:
         Bookmark = _one(Body.xpath("./w:bookmarkStart[@w:name=$name]", namespaces=NS, name=x["bookmark"]), "output appendix bookmark")
@@ -622,26 +661,50 @@ def composeDocument(templatePath, contentPath, specPath, outputPath):
     Types = _xml(Parts["[Content_Types].xml"])
     Cover = _xml(Template["cover.xml"])
     _clearParagraphIds(Cover)
+    TitlePage = _xml(Template["title-page.xml"])
+    _clearParagraphIds(TitlePage)
     Footer = _xml(Template["cover-footer.xml"])
     for s, v in Spec["cover"].items():
         x = _one(Cover.xpath(".//w:p[.//w:t=$token]", namespaces=NS, token="{{" + s + "}}"), "prepared cover slot " + s)
         _replaceText(x, v)
+    Labels = {"issue": "Project No.:" if Spec["lang"] == "en" else "Proyecto:",
+              "fileName": "File Name:" if Spec["lang"] == "en" else "Archivo:",
+              "clientWeb": "Web:", "companyWeb": "Web:"}
+    for s, v in {**Spec["cover"], **Spec["titlePage"]}.items():
+        x = _one(TitlePage.xpath(".//w:p[.//w:t=$token]", namespaces=NS, token="{{" + s + "}}"), "prepared title page slot " + s)
+        if s.endswith("Address"):
+            Parent = x.getparent()
+            for t in v:
+                y = deepcopy(x)
+                _replaceText(y, t)
+                Parent.insert(Parent.index(x), y)
+            Parent.remove(x)
+        else:
+            _replaceText(x, v)
+            if s in Labels and v:
+                y = x.find("w:r", NS)
+                t = etree.Element(f"{{{W}}}t")
+                t.text = Labels[s]
+                n = 1 if y.find("w:rPr", NS) is not None else 0
+                y.insert(n, t)
+                y.insert(n + 1, etree.Element(f"{{{W}}}tab"))
     if Spec["lang"] == "es":
         for s, v in (("Prepared for", "Preparado para"), ("Prepared by", "Preparado por")):
-            x = _one(Cover.xpath(".//w:t[.=$label]", namespaces=NS, label=s), "cover label " + s)
-            x.text = v
+            for x in (Cover, TitlePage):
+                _one(x.xpath(".//w:t[.=$label]", namespaces=NS, label=s), "preliminary label " + s).text = v
     Required = set(Cover.xpath(".//w:pStyle/@w:val | .//w:rStyle/@w:val | .//w:tblStyle/@w:val", namespaces=NS))
+    Required.update(TitlePage.xpath(".//w:pStyle/@w:val | .//w:rStyle/@w:val | .//w:tblStyle/@w:val", namespaces=NS))
     Required.update(Footer.xpath(".//w:pStyle/@w:val | .//w:rStyle/@w:val", namespaces=NS))
     Required.update(("Heading8", "Heading9", "BodyText", "Normal"))
     Mapping = _importStyles(Styles, Numbering, stylesSource=_xml(Template["styles.xml"]), numberingSource=_xml(Template["numbering.xml"]), required=Required)
-    for x in (Cover, Footer):
+    for x in (Cover, TitlePage, Footer):
         for v in x.xpath(".//w:pStyle | .//w:rStyle | .//w:tblStyle", namespaces=NS):
             v.set(f"{{{W}}}val", Mapping["styles"][v.get(f"{{{W}}}val")])
     ImageId = _addPart(Parts, Relationships, Types, name="word/media/srk-na-logo.wmf", content=Template["logo.wmf"], kind="image")
-    for x in Cover.xpath(".//*[@r:embed]", namespaces=NS):
+    for x in Cover.xpath(".//*[@r:embed]", namespaces=NS) + TitlePage.xpath(".//*[@r:embed]", namespaces=NS):
         x.set(f"{{{R}}}embed", ImageId)
     n = max([int(x) for x in Document.xpath(".//*[local-name()='docPr']/@id")] + [0])
-    for i, x in enumerate(Cover.xpath(".//*[local-name()='docPr']"), start=n + 1):
+    for i, x in enumerate(Cover.xpath(".//*[local-name()='docPr']") + TitlePage.xpath(".//*[local-name()='docPr']"), start=n + 1):
         x.set("id", str(i))
     References = []
     for s, v in (("header", "hdr"), ("footer", "ftr")):
@@ -665,15 +728,40 @@ def composeDocument(templatePath, contentPath, specPath, outputPath):
                 ReferencesBody.append(v)
     SectionMain = _section(SectionBody, references=ReferencesBody, start=1)
     SectionContent = _section(SectionBody, references=ReferencesBody, start=None)
+    # Content before the first top-level heading is Quarto's TOC and the
+    # report's signature page. Keep its bookmarks with the heading itself.
+    Headings = Body.xpath("./w:p[w:pPr/w:pStyle/@w:val='Heading1']", namespaces=NS)
+    Start = Headings[0] if Headings else None
+    while Start is not None and Start.getprevious() is not None and Start.getprevious().tag == f"{{{W}}}bookmarkStart":
+        Start = Start.getprevious()
+    if Start is not None and Body.index(Start) > 0:
+        Section = _section(SectionBody, references=ReferencesBody, start=None, numberFormat="lowerRoman")
+        x = Start.getprevious()
+        if (x.tag == f"{{{W}}}p" and len(x.findall("w:r/w:br", NS)) == 1
+                and x.find("w:r/w:br", NS).get(f"{{{W}}}type") == "page"
+                and not x.xpath(".//w:t | .//w:drawing | .//w:bookmarkStart | .//w:bookmarkEnd | .//w:footnoteReference | .//m:oMath", namespaces=NS)
+                and all(v.tag in {f"{{{W}}}pPr", f"{{{W}}}r"} for v in x)
+                and all(v.tag in {f"{{{W}}}rPr", f"{{{W}}}br"} for y in x.findall("w:r", NS) for v in y)):
+            x.find("w:r/w:br", NS).getparent().remove(x.find("w:r/w:br", NS))
+            Properties = x.find("w:pPr", NS)
+            if Properties is None:
+                Properties = etree.Element(f"{{{W}}}pPr")
+                x.insert(0, Properties)
+            Properties.append(Section)
+        else:
+            Body.insert(Body.index(Start), _sectionParagraph(Section))
     Body.remove(SectionBody)
     CoverChildren = list(Cover)
-    for i, x in enumerate(CoverChildren):
+    FrontMatter = [*CoverChildren, _sectionParagraph(_section(_xml(Template["cover-section.xml"]), references=ReferencesCover, start=None)),
+                   *list(TitlePage), _sectionParagraph(_section(_xml(Template["cover-section.xml"]), references=References, start=2, numberFormat="lowerRoman"))]
+    for i, x in enumerate(FrontMatter):
         Body.insert(i, x)
-    Body.insert(len(CoverChildren), _sectionParagraph(_section(_xml(Template["cover-section.xml"]), references=ReferencesCover, start=None)))
     for i, (Bookmark, Heading) in enumerate(AppendixPoints):
         Body.insert(Body.index(Bookmark), _sectionParagraph(SectionMain if i == 0 else SectionContent))
         Properties = deepcopy(_xml(Template["appendix-heading.xml"]).find("w:pPr", NS))
         Properties.find("w:pStyle", NS).set(f"{{{W}}}val", Mapping["styles"]["Heading8"])
+        # Keep the source H1's outline role while using CAN's divider style.
+        etree.SubElement(Properties, f"{{{W}}}outlineLvl", {f"{{{W}}}val": "0"})
         for x in Properties.findall("w:numPr", NS):
             Properties.remove(x)
         etree.SubElement(etree.SubElement(Properties, f"{{{W}}}numPr"), f"{{{W}}}numId", {f"{{{W}}}val": "0"})
@@ -708,7 +796,7 @@ def composeDocument(templatePath, contentPath, specPath, outputPath):
                 x.remove(v)
         Parts["word/_rels/settings.xml.rels"] = _bytes(x)
     normalizeParagraphs(Document)
-    Manifest = {"format": FORMAT, "sourceSha256": DIGEST, "contentSha256": sha256(Path(contentPath).read_bytes()).hexdigest(), "specSha256": sha256(Path(specPath).read_bytes()).hexdigest(), "coverElements": len(CoverChildren), "titleRemoved": TitleRemoved, "appendices": Spec["appendices"], "repairs": Repairs, "mapping": Mapping}
+    Manifest = {"format": FORMAT, "sourceSha256": DIGEST, "contentSha256": sha256(Path(contentPath).read_bytes()).hexdigest(), "specSha256": sha256(Path(specPath).read_bytes()).hexdigest(), "coverElements": len(CoverChildren), "frontMatterElements": len(FrontMatter), "titleRemoved": TitleRemoved, "appendices": Spec["appendices"], "repairs": Repairs, "mapping": Mapping}
     Parts[MARKER] = (json.dumps(Manifest, ensure_ascii=False, indent=2) + "\n").encode()
     etree.SubElement(Types, f"{{{CT}}}Override", PartName="/" + MARKER, ContentType="application/json")
     for s, x in (("word/document.xml", Document), ("word/styles.xml", Styles), ("word/numbering.xml", Numbering), ("word/_rels/document.xml.rels", Relationships), ("[Content_Types].xml", Types)):

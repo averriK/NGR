@@ -29,6 +29,10 @@ ZIP timestamps and member ordering are fixed. The reference and scaffold copy
 must be byte-identical. The source report is needed only for regeneration;
 the installed renderer consumes the prepared resources and never reads `dev/`.
 The ZIP contains normalized components; it is not a Word `.dotx` template.
+Component format `ngr-srk-can-components-2` includes the original CAN cover and
+inner title-page table, with variable text replaced by slots. The title page uses
+optional contact values from `params.yml`; source-client and Canadian office text
+are removed during template preparation.
 
 ## Style and object contract
 
@@ -55,6 +59,11 @@ links. Composition removes the request to update all fields on opening, which
 can cause Word's external-file warning. Native PAGE fields remain live and are
 recalculated by the page layout engine independently of that request. Other
 fields, such as a Word table of contents, may require a manual update in Word.
+The cover has no visible number; the inner title page begins the Roman sequence
+at ii, without a visible number as in CAN. Quarto's TOC and the report's signatures
+remain before the first Heading1; their section continues the Roman sequence.
+The body restarts at 1. A terminal empty page-break paragraph before that heading
+is converted into the section boundary, preserving the heading's bookmarks.
 Input requires one terminal section and each appendix bookmark immediately
 before its Heading1. Internal body/landscape sections are explicitly unsupported.
 Composition validates references, styles/numbering, inheritance cycles, notes,
