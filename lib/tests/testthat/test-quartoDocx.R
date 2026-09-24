@@ -1,22 +1,58 @@
-test_that("DOCX metadata is explicit and mapped from the master", {
+test_that("DOCX metadata comes from project params and the render date", {
   Spec <- getFromNamespace(".docxSpec", "NGR")
-  Master <- list(title = "Formato de informes SRK", srk = list(
-    client = "Verificación del formato documental", company = "SRK Consulting (Argentina) S.A.",
-    project = "NGR", date = "Septiembre 2026"))
-  OUT <- Spec(Master)
-  expect_identical(OUT$cover$issue, Master$srk$project)
-  expect_identical(OUT$headerFooter$date, Master$srk$date)
+  Master <- list(title = "Formato de informes SRK", lang = "es")
+  Params <- list(params = list(client = list(name = "Verificación del formato documental"),
+    consultant = list(name = "SRK Consulting (Argentina) S.A."), project_id = "NGR"))
+  Date <- format(Sys.Date(), "%d/%m/%Y")
+  OUT <- Spec(Master, params = Params, date = Date)
+  expect_identical(OUT$cover, list(title = Master$title, client = Params$params$client$name,
+    company = Params$params$consultant$name, issue = "NGR", date = Date))
+  expect_identical(OUT$headerFooter$date, Date)
+  expect_identical(OUT$lang, "es")
   expect_identical(OUT$appendices, list())
-  expect_error(Spec(list(title = Master$title)), "requires srk")
-  for (Name in names(Master$srk)) {
-    DATA <- Master
-    DATA$srk[[Name]] <- NULL
-    expect_error(Spec(DATA), "requires srk")
-    DATA$srk[[Name]] <- ""
-    expect_error(Spec(DATA), "non-empty")
+  Master$srk <- list(title = "Ignored", client = "Ignored", date = "Ignored")
+  expect_identical(Spec(Master, params = Params, date = Date), OUT)
+  Master$lang <- NULL
+  expect_identical(Spec(Master, params = Params, date = Date)$lang, "en")
+  Master$lang <- "es-AR"
+  expect_identical(Spec(Master, params = Params, date = Date)$lang, "es")
+  Master$lang <- "en-CA"
+  expect_identical(Spec(Master, params = Params, date = Date)$lang, "en")
+  for (x in list("unsupported", NA_character_, list("es"))) {
+    Master$lang <- x
+    expect_error(Spec(Master, params = Params, date = Date), "lang must")
+  }
+  Master$lang <- "es"
+  for (Key in list(c("client", "name"), c("consultant", "name"), "project_id")) {
+    for (x in list(NULL, "", NA_character_, 123, list("value"), "line\nbreak")) {
+      DATA <- Params
+      DATA$params[[Key]] <- x
+      expect_error(Spec(Master, params = DATA, date = Date),
+        paste0("params.", paste(Key, collapse = "."), " in params.yml"), fixed = TRUE)
+    }
   }
   Master$title <- NULL
-  expect_error(Spec(Master), "title")
+  expect_error(Spec(Master, params = Params, date = Date), "title in the DOCX master", fixed = TRUE)
+})
+
+test_that("missing project metadata fails before staging or launching Quarto", {
+  Root <- tempfile("ngr-docx-params-")
+  dir.create(Root)
+  on.exit(unlink(Root, recursive = TRUE), add = TRUE)
+  dir.create(file.path(Root, "yml"))
+  writeLines(c("---", "title: Formato de informes SRK", "---"), file.path(Root, "document.qmd"))
+  for (Name in c("_quarto.yml", "_quarto-docx.yml")) writeLines("{}", file.path(Root, "yml", Name))
+  testthat::local_mocked_bindings(
+    .copyRenderPath = function(...) stop("Unexpected staging"),
+    .runRenderCommand = function(...) stop("Unexpected process"), .package = "NGR")
+  expect_error(NGR::quartoRender("document.qmd", profile = "docx", root = Root),
+    "DOCX metadata file not found: params.yml", fixed = TRUE)
+  for (Params in list(list(), list(params = list()), list(params = list(client = "invalid")))) {
+    yaml::write_yaml(Params, file.path(Root, "params.yml"))
+    expect_error(NGR::quartoRender("document.qmd", profile = "docx", root = Root),
+      "params.client.name in params.yml", fixed = TRUE)
+    expect_false(dir.exists(file.path(Root, "docx")))
+  }
 })
 
 test_that("appendix identity uses Pandoc and flattens part entries", {
@@ -53,19 +89,20 @@ test_that("installed DOCX API composes a single master and fails without replaci
   writeLines("project: {type: default}", file.path(Root, "yml/_quarto.yml"))
   writeLines(c("format:", "  docx:", "    reference-doc: styles/reference.docx", "    number-sections: true"),
              file.path(Root, "yml/_quarto-docx.yml"))
-  Master <- c("---", "title: Formato de informes SRK", "srk:",
-    "  client: Verificación del formato documental", "  company: SRK Consulting (Argentina) S.A.",
-    "  project: NGR", "  date: Septiembre 2026", "---", "", "# Results", "", "A render sentinel.")
+  Master <- c("---", "title: Formato de informes SRK", "lang: es", "---", "", "# Results", "", "A render sentinel.")
+  Params <- c("params:", "  client: {name: Verificación del formato documental}",
+    "  consultant: {name: SRK Consulting (Argentina) S.A.}", "  project_id: NGR")
+  writeLines(Params, file.path(Root, "params.yml"))
   Input <- file.path(Root, "_master/document.qmd")
   writeLines(Master, Input)
   Directory <- getwd()
   Stamp <- Sys.getenv("NGR_RENDER_STAMP", unset = NA_character_)
   Stage <- list.files(tempdir(), pattern = "^ngr-render-")
-  Before <- tools::md5sum(Input)
+  Before <- tools::md5sum(c(Input, file.path(Root, "params.yml")))
   OUT <- NGR::quartoRender("_master/document.qmd", profile = "docx", root = Root, args = "--quiet")
   Output <- file.path(Root, "docx/document.docx")
   expect_true(normalizePath(Output, winslash = "/") %in% OUT)
-  expect_identical(tools::md5sum(Input), Before)
+  expect_identical(tools::md5sum(c(Input, file.path(Root, "params.yml"))), Before)
   Parts <- unzip(Output, list = TRUE)$Name
   expect_true("word/srk-composition.json" %in% Parts)
   Connection <- unz(Output, "word/srk-composition.json")
@@ -73,7 +110,18 @@ test_that("installed DOCX API composes a single master and fails without replaci
   close(Connection)
   expect_length(DATA$appendices, 0L)
   expect_true(DATA$titleRemoved)
+  Connection <- unz(Output, "word/document.xml")
+  Text <- paste(readLines(Connection, warn = FALSE), collapse = "\n")
+  close(Connection)
+  expect_match(Text, "Preparado para", fixed = TRUE)
+  expect_match(Text, "Preparado por", fixed = TRUE)
+  expect_match(Text, format(Sys.Date(), "%d/%m/%Y"), fixed = TRUE)
   Hash <- tools::md5sum(Output)
+  writeLines(Params[-2L], file.path(Root, "params.yml"))
+  expect_error(NGR::quartoRender("_master/document.qmd", profile = "docx", root = Root),
+    "params.client.name in params.yml", fixed = TRUE)
+  expect_identical(tools::md5sum(Output), Hash)
+  writeLines(Params, file.path(Root, "params.yml"))
   # A real unsupported body section fails in Python after Quarto has rendered.
   writeLines(c(Master, "", "```{=openxml}", "<w:p><w:pPr><w:sectPr/></w:pPr></w:p>", "```"), Input)
   expect_error(NGR::quartoRender("_master/document.qmd", profile = "docx", root = Root, args = "--quiet"), "failed with status")

@@ -167,6 +167,9 @@ MINVERSION <- "0.4.0"
           "--root DIR selects an existing project directory; default is the working directory.\n",
           "Uses yml/_quarto.yml and yml/_quarto-<profile>.yml from the project.\n",
           "Book masters supply chapters and appendices through frontmatter.\n",
+          "DOCX uses master title/lang and params.client.name, params.consultant.name,\n",
+          "  params.project_id from params.yml; the render date is automatic (dd/mm/yyyy).\n",
+          "  No srk block or manual date is required.\n",
           "Output: html/<stem>/, the manifest's HTML path, or docx/.\n",
           "Run ngr pull --from ngr first if yml/ does not exist.\n", sep = "")
       return(0L)

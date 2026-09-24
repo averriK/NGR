@@ -1,19 +1,36 @@
-# Private contract between the master, Pandoc and the CAN compositor.
-.docxSpec <- function(frontmatter) {
-  Fields <- c("client", "company", "project", "date")
-  if (!is.list(frontmatter$srk) || !setequal(names(frontmatter$srk), Fields)) {
-    stop("DOCX master requires srk.client, srk.company, srk.project and srk.date (issue date).", call. = FALSE)
+# Private contract between project metadata, Pandoc and the CAN compositor.
+.docxSpec <- function(frontmatter, params, date) {
+  Keys <- c(client = "params.client.name", company = "params.consultant.name", project = "params.project_id")
+  Values <- list(title = frontmatter$title, date = date)
+  for (Name in names(Keys)) {
+    x <- params
+    for (s in strsplit(Keys[[Name]], ".", fixed = TRUE)[[1L]]) {
+      if (!is.list(x)) {
+        x <- NULL
+        break
+      }
+      x <- x[[s]]
+    }
+    Values[Name] <- list(x)
   }
-  Values <- c(list(title = frontmatter$title), frontmatter$srk)
   for (Name in names(Values)) {
     x <- Values[[Name]]
     if (!is.character(x) || length(x) != 1L || is.na(x) || !nzchar(trimws(x)) || grepl("[[:cntrl:]]", x)) {
-      stop("DOCX metadata must be a non-empty single-line string: ", Name, call. = FALSE)
+      Source <- paste0(Name, " in the DOCX master")
+      if (Name %in% names(Keys)) Source <- paste0(Keys[[Name]], " in params.yml")
+      if (Name == "date") Source <- "date in the render stamp"
+      stop("DOCX requires ", Source, " as a non-empty single-line string.", call. = FALSE)
     }
+  }
+  Language <- frontmatter$lang
+  if (is.null(Language)) Language <- "en"
+  if (!is.character(Language) || length(Language) != 1L || is.na(Language) || !grepl("^(en|es)(-|$)", Language)) {
+    stop("DOCX master lang must be en or es (a regional suffix is allowed).", call. = FALSE)
   }
   Cover <- list(title = Values$title, client = Values$client, company = Values$company,
                 issue = Values$project, date = Values$date)
-  list(cover = Cover, headerFooter = Values[c("title", "date", "project", "company")], appendices = list())
+  list(cover = Cover, headerFooter = Values[c("title", "date", "project", "company")],
+       appendices = list(), lang = sub("-.*$", "", Language))
 }
 
 .docxAppendices <- function(frontmatter) {

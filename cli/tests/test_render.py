@@ -1,4 +1,5 @@
 import hashlib
+from datetime import date
 from html.parser import HTMLParser
 import json
 import os
@@ -53,9 +54,8 @@ class RenderTest(unittest.TestCase):
                 "_master/document.qmd": "---\ntitle: Word check\n---\n\n# Results\n\n| Name | Value |\n|---|---:|\n| Alpha | 17 |\n",
                 "_master/page.qmd": "---\ntitle: HTML check\n---\n\n# Evidence\n\n```{r}\npackageVersion(\"NGR\")\n```\n\nHTML sentinel 17.\n"
             }
-            Metadata = "srk:\n  client: Verificación del formato documental\n  company: SRK Consulting (Argentina) S.A.\n  project: NGR\n  date: Septiembre 2026\n"
-            for Name in ("_master/book.qmd", "_master/document.qmd"):
-                Inputs[Name] = Inputs[Name].replace("---\n", "---\n" + Metadata, 1)
+            Inputs["params.yml"] = "params:\n  client: {name: Verificación del formato documental}\n  consultant: {name: SRK Consulting (Argentina) S.A.}\n  project_id: NGR\n"
+            Inputs["_master/book.qmd"] = Inputs["_master/book.qmd"].replace("---\n", "---\nlang: es\n", 1)
             for Name, Content in Inputs.items():
                 (Candidate / Name).write_text(Content, encoding="utf-8")
             if os.environ.get("NGR_TEST_LIBRARY"):
@@ -111,7 +111,8 @@ class RenderTest(unittest.TestCase):
                         self.assertEqual("ngr-srk-can-components-1", Manifest["format"])
                         self.assertEqual(2 if Name == "book" else 0, len(Manifest["appendices"]))
                         self.assertIn(b"SRKDataTable", DATA)
-                        self.assertIn(b"Septiembre 2026", DATA)
+                        self.assertIn(date.today().strftime("%d/%m/%Y").encode(), DATA)
+                        self.assertIn(b"Preparado para" if Name == "book" else b"Prepared for", DATA)
                         NS = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
                         Styles = ElementTree.fromstring(ZIP.read("word/styles.xml"))
                         Font = Styles.find("w:style[@w:styleId='Heading1']/w:rPr/w:rFonts", NS)

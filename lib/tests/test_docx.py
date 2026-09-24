@@ -105,6 +105,29 @@ class DocxTests(unittest.TestCase):
                 Document = srk._xml(srk.readPackage(self.Output)["word/document.xml"])
                 self.assertEqual(2 + 2 * n, len(Document.findall(".//w:sectPr", srk.NS)))
 
+    def testCoverLabelsFollowLanguageWithoutChangingLayout(self):
+        Covers = []
+        for s, Labels in (("en", ("Prepared for", "Prepared by")), ("es", ("Preparado para", "Preparado por"))):
+            self.Spec["lang"] = s
+            self.compose()
+            Cover = srk._xml(srk.readPackage(self.Output)["word/document.xml"]).find("w:body/w:tbl", srk.NS)
+            Text = "".join(Cover.xpath(".//w:t/text()", namespaces=srk.NS))
+            for v in Labels:
+                self.assertIn(v, Text)
+            for v in self.Spec["cover"].values():
+                self.assertIn(v, Text)
+            for x in Cover.findall(".//w:t", srk.NS):
+                x.text = ""
+            Covers.append(etree.tostring(Cover, method="c14n"))
+        self.assertEqual(*Covers)
+
+    def testUnsupportedCoverLanguagePreservesOutput(self):
+        self.Spec["lang"] = "unsupported"
+        self.Output.write_bytes(b"prior output")
+        with self.assertRaisesRegex(ValueError, "lang must"):
+            self.compose()
+        self.assertEqual(b"prior output", self.Output.read_bytes())
+
     def testMissingDuplicateAndUnorderedBookmarksPreserveOutput(self):
         Cases = [[{"bookmark": "missing"}], [self.Spec["appendices"][0]] * 2, list(reversed(self.Spec["appendices"]))]
         for x in Cases:

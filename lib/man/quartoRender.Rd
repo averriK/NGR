@@ -41,9 +41,13 @@ resource paths resolve from the project root. Source files are not changed.
 \details{
 Requires Quarto on \code{PATH}; DOCX also requires Python 3.9 or later
 with \code{lxml} in that interpreter (\code{python3}, or \code{python} on Windows).
-DOCX masters require explicit \code{title} and \code{srk} fields: \code{client}, \code{company},
-\code{project} (code), and \code{date} (issue date), all non-empty strings. No metadata
-is inferred from the environment. The project DOCX profile must use a
+DOCX uses the master's \code{title} and \code{lang} (English when absent), and reads
+\code{params.client.name}, \code{params.consultant.name} and \code{params.project_id} from
+the project's \code{params.yml}. Required values are non-empty single-line
+strings; missing values fail before Quarto. The date is calculated for the
+render in \code{dd/mm/yyyy}, matching the print stamp. Cover labels follow
+English or Spanish. A master \code{srk} block is not read. Other Word metadata
+is left blank for editing in Word. The project DOCX profile must use a
 CAN-compatible reference and \code{number-sections: true}. Each appendix file
 needs one numbered level-1 heading; its Pandoc identifier selects the
 separator. Input DOCX sections within the body are currently unsupported.

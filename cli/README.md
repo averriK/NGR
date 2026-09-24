@@ -196,11 +196,20 @@ effects.
 
 ### CAN Word reports
 
-The master owns all report metadata. Supply `title` and a `srk` mapping with
-`client`, `company`, `project` (project code) and `date` (issue date). Every value
-must be an explicit, non-empty, single-line string; quote dates and numeric codes
-in YAML. The cover, header and footer use these fields. The generation timestamp
-is a separate publication stamp.
+The master supplies `title` and `lang`; English is used when `lang` is absent.
+Cover labels follow English or Spanish, including regional language tags.
+NGR reads the project's existing `params.yml`: `params.client.name` for the
+client, `params.consultant.name` for the consultant and `params.project_id` for
+the project code. The title and these values must be non-empty single-line
+strings. A missing or invalid project field fails before Quarto with its key
+and `params.yml` in the diagnostic.
+
+The cover, header and footer use the same automatic `dd/mm/yyyy` render date
+as the `Printed` stamp. NGR does not read a master `srk` block or a manual
+issue date. No additional project fields are required: document number,
+revision, distribution and other Word-specific details remain blank for
+editing in Word. Existing project masters and `params.yml` need no migration
+for this metadata contract.
 
 The DOCX profile requires `number-sections: true` and a CAN-compatible
 `styles/reference.docx`. Each appendix file listed by the master needs exactly

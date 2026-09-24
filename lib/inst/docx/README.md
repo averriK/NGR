@@ -1,6 +1,7 @@
 # CAN DOCX resources
 
-`quartoRender()` owns the complete render. It validates master metadata, resolves
+`quartoRender()` owns the complete render. It resolves metadata from the master
+title/lang, existing project `params.yml` and the automatic print date, resolves
 appendix heading IDs with Pandoc, runs Quarto once, and invokes this installed
 Python compositor before delivering each DOCX. The CLI uses that same R API.
 These Python commands are private build/process interfaces, not a separate user CLI.

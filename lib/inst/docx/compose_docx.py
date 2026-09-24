@@ -427,8 +427,10 @@ def _appendixTable(heading, section):
 
 def _readSpec(path):
     Spec = json.loads(Path(path).read_text(encoding="utf-8"))
-    if set(Spec) != {"cover", "headerFooter", "appendices"} or set(Spec["cover"]) != set(SLOTS) or set(Spec["headerFooter"]) != {"title", "date", "project", "company"}:
-        raise ValueError("Spec requires explicit cover, headerFooter and appendices fields")
+    if set(Spec) != {"cover", "headerFooter", "appendices", "lang"} or set(Spec["cover"]) != set(SLOTS) or set(Spec["headerFooter"]) != {"title", "date", "project", "company"}:
+        raise ValueError("Spec requires explicit cover, headerFooter, appendices and lang fields")
+    if Spec["lang"] not in ("en", "es"):
+        raise ValueError("Spec lang must be en or es")
     for x in list(Spec["cover"].values()) + list(Spec["headerFooter"].values()):
         if not isinstance(x, str) or not x.strip() or any(ord(v) < 32 for v in x):
             raise ValueError("Metadata must be non-empty single-line strings")
@@ -624,6 +626,10 @@ def composeDocument(templatePath, contentPath, specPath, outputPath):
     for s, v in Spec["cover"].items():
         x = _one(Cover.xpath(".//w:p[.//w:t=$token]", namespaces=NS, token="{{" + s + "}}"), "prepared cover slot " + s)
         _replaceText(x, v)
+    if Spec["lang"] == "es":
+        for s, v in (("Prepared for", "Preparado para"), ("Prepared by", "Preparado por")):
+            x = _one(Cover.xpath(".//w:t[.=$label]", namespaces=NS, label=s), "cover label " + s)
+            x.text = v
     Required = set(Cover.xpath(".//w:pStyle/@w:val | .//w:rStyle/@w:val | .//w:tblStyle/@w:val", namespaces=NS))
     Required.update(Footer.xpath(".//w:pStyle/@w:val | .//w:rStyle/@w:val", namespaces=NS))
     Required.update(("Heading8", "Heading9", "BodyText", "Normal"))

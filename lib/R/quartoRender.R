@@ -18,9 +18,13 @@
 #' @return Invisibly, a character vector of delivered file paths.
 #' @details Requires Quarto on `PATH`; DOCX also requires Python 3.9 or later
 #'   with `lxml` in that interpreter (`python3`, or `python` on Windows).
-#'   DOCX masters require explicit `title` and `srk` fields: `client`, `company`,
-#'   `project` (code), and `date` (issue date), all non-empty strings. No metadata
-#'   is inferred from the environment. The project DOCX profile must use a
+#'   DOCX uses the master's `title` and `lang` (English when absent), and reads
+#'   `params.client.name`, `params.consultant.name` and `params.project_id` from
+#'   the project's `params.yml`. Required values are non-empty single-line
+#'   strings; missing values fail before Quarto. The date is calculated for the
+#'   render in `dd/mm/yyyy`, matching the print stamp. Cover labels follow
+#'   English or Spanish. A master `srk` block is not read. Other Word metadata
+#'   is left blank for editing in Word. The project DOCX profile must use a
 #'   CAN-compatible reference and `number-sections: true`. Each appendix file
 #'   needs one numbered level-1 heading; its Pandoc identifier selects the
 #'   separator. Input DOCX sections within the body are currently unsupported.
@@ -74,7 +78,15 @@ quartoRender <- function(input, profile, root = getwd(), output = NULL,
   }, add = TRUE)
   DATA <- list()
   if (file.exists(manifest)) DATA <- jsonlite::fromJSON(manifest, simplifyVector = FALSE)
-  Sys.setenv(NGR_RENDER_STAMP = quartoRenderStamp(DATA, root = Root))
+  RenderStamp <- quartoRenderStamp(DATA, root = Root)
+  Sys.setenv(NGR_RENDER_STAMP = RenderStamp)
+  Frontmatter <- list()
+  if (profile %in% c("book", "docx")) Frontmatter <- quartoReadFrontmatter(input)
+  if (profile == "docx") {
+    if (!file_test("-f", "params.yml")) stop("DOCX metadata file not found: params.yml", call. = FALSE)
+    Spec <- .docxSpec(Frontmatter, params = yaml::read_yaml("params.yml"),
+                      date = sub("^Printed: ", "", RenderStamp))
+  }
   Stage <- tempfile("ngr-render-")
   if (!dir.create(Stage)) stop("Cannot create render directory: ", Stage, call. = FALSE)
   on.exit(fs::dir_delete(Stage), add = TRUE)
@@ -86,10 +98,7 @@ quartoRender <- function(input, profile, root = getwd(), output = NULL,
   writeLines(c("html/", "docx/", ".quarto/", "_freeze/", "_ngr-output/"),
              file.path(Stage, ".quartoignore"))
   setwd(Stage)
-  Frontmatter <- list()
-  if (profile %in% c("book", "docx")) Frontmatter <- quartoReadFrontmatter(input)
   if (profile == "docx") {
-    Spec <- .docxSpec(Frontmatter)
     Python <- if (.Platform$OS.type == "windows") "python" else "python3"
     Composer <- system.file("docx", "compose_docx.py", package = "NGR", mustWork = TRUE)
     Template <- system.file("docx", "srk-template.zip", package = "NGR", mustWork = TRUE)
