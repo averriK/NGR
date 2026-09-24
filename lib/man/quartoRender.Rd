@@ -39,12 +39,19 @@ Single-file masters are moved to the root of the disposable copy so their
 resource paths resolve from the project root. Source files are not changed.
 }
 \details{
-Requires Quarto on \code{PATH}; DOCX and staging symbolic links on
-Windows also require Python 3. The DOCX
-repair script is a private resource of the installed NGR package.
-Rendering and DOCX repair finish before publication begins. HTML output
-replaces the selected directory; DOCX overwrites delivered files and keeps
-other documents. Publication is not transactional: a copy failure can
-leave partial output. Temporary files, the working directory and the
+Requires Quarto on \code{PATH}; DOCX also requires Python 3.9 or later
+with \code{lxml} in that interpreter (\code{python3}, or \code{python} on Windows).
+DOCX masters require explicit \code{title} and \code{srk} fields: \code{client}, \code{company},
+\code{project} (code), and \code{date} (issue date), all non-empty strings. No metadata
+is inferred from the environment. The project DOCX profile must use a
+CAN-compatible reference and \code{number-sections: true}. Each appendix file
+needs one numbered level-1 heading; its Pandoc identifier selects the
+separator. Input DOCX sections within the body are currently unsupported.
+The installed library owns the Python compositor and semantic filters.
+Quarto resolves citations and cross-references once for the complete book.
+Rendering and composition finish before publication begins. HTML output
+replaces the selected directory; each DOCX replaces its destination through
+a sibling temporary file, keeping other documents. Publication of multiple
+files is not a transaction. Temporary files, the working directory and the
 publication-stamp environment variable are restored on ordinary exit.
 }

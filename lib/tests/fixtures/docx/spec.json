@@ -1,0 +1,26 @@
+{
+  "cover": {
+    "title": "Formato de informes SRK",
+    "client": "Verificación del formato documental",
+    "company": "SRK Consulting (Argentina) S.A.",
+    "issue": "NGR",
+    "date": "Septiembre 2026"
+  },
+  "headerFooter": {
+    "title": "Formato de informes SRK",
+    "date": "Septiembre 2026",
+    "project": "NGR",
+    "company": "SRK Consulting (Argentina) S.A."
+  },
+  "appendices": [
+    {
+      "bookmark": "sec-demo-apx-a"
+    },
+    {
+      "bookmark": "sec-demo-apx-b"
+    },
+    {
+      "bookmark": "sec-demo-apx-c"
+    }
+  ]
+}

@@ -11,7 +11,11 @@ Modified or foreign runtime files block replacement or removal.
 Requirements depend on the operation. All commands use `cli/main.R` and the
 installed NGR package. The macOS launcher uses Bash; Windows uses `ngr.cmd`
 from CMD and `ngr.ps1` from PowerShell. Both are installed in the same bin directory.
-DOCX correction needs Python >=3.9 (optional; the installer warns when absent).
+DOCX composition needs Python >=3.9 with `lxml` in the interpreter selected by
+R (`python3` on macOS, `python` on Windows). Provision it explicitly with
+`python3 -m pip install lxml` or `python -m pip install lxml` on Windows,
+using the environment that will run NGR. The installer checks Python's presence;
+DOCX rendering checks `lxml` before invoking Quarto. Other profiles do not need it.
 On Windows, staging a project
 with symbolic links also uses Python's standard `os.symlink` operation to preserve
 file/directory links, including dangling links. Rendering needs Quarto and
@@ -176,8 +180,8 @@ payload and the recorded build. `pull`, `status` and source checks use `NGR::pul
 `NGR::compareResources()` and `NGR::checkResources()`. These APIs also work
 from R without the CLI. `NGR::quartoRender()` owns staging, YAML composition,
 publication provenance, Quarto execution, DOCX repair and output delivery.
-The unchanged Python repair script is distributed inside the R package and
-resolved through `system.file()`. The canonical family kit in `install/`
+The CAN compositor, semantic filters and prepared components are distributed
+inside the R package and resolved through `system.file()`. The canonical family kit in `install/`
 checks the installed version and the declared exports before replacing the
 CLI; an older package must be updated separately.
 `NGR::quartoRenderManifest()` owns batch selection, preflight and execution.
@@ -189,6 +193,35 @@ forms `netlifyRegisterManifest()`, `netlifyDeployManifest()` and
 existing directories with `--no-build`; dry runs do not contact the provider.
 Preflight precedes batch mutations; a later failure can retain earlier completed
 effects.
+
+### CAN Word reports
+
+The master owns all report metadata. Supply `title` and a `srk` mapping with
+`client`, `company`, `project` (project code) and `date` (issue date). Every value
+must be an explicit, non-empty, single-line string; quote dates and numeric codes
+in YAML. The cover, header and footer use these fields. The generation timestamp
+is a separate publication stamp.
+
+The DOCX profile requires `number-sections: true` and a CAN-compatible
+`styles/reference.docx`. Each appendix file listed by the master needs exactly
+one numbered level-1 heading, preferably with an explicit `{#sec-...}` identifier.
+Part entries are supported. Quarto resolves citations, bibliography and crossrefs
+for the entire document once; Python then composes the cover and appendix dividers.
+Native tables receive CAN styles. Preformatted tables retain widths, grids,
+merges and repeated headers. Input bodies with internal section breaks, including
+landscape sections, are rejected before replacing an existing output.
+
+Existing projects require an explicit resource migration. Inspect with
+`ngr status styles/reference.docx yml/_quarto-docx.yml`; after reviewing local
+customizations, update those managed resources with
+`ngr pull --source ngr styles/reference.docx yml/_quarto-docx.yml --force`.
+The updated profile removes the old `appendix-style.lua` heuristic. Pull does not
+delete retired project files; an old unused copy may remain. Render never replaces
+project styles. Compatible customized references must retain the required CAN
+style roles and `srk.title/company/project/date` header/footer controls.
+
+The canonical reference is generated in `lib/inst/docx/reference.docx`; the scaffold
+copy must be identical. See [resource generation](../lib/inst/docx/README.md).
 
 ## Focused checks
 

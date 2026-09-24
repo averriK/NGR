@@ -16,13 +16,20 @@
 #'   or absolute. An absent manifest produces a draft publication stamp.
 #'
 #' @return Invisibly, a character vector of delivered file paths.
-#' @details Requires Quarto on `PATH`; DOCX and staging symbolic links on
-#' Windows also require Python 3. The DOCX
-#'   repair script is a private resource of the installed NGR package.
-#'   Rendering and DOCX repair finish before publication begins. HTML output
-#'   replaces the selected directory; DOCX overwrites delivered files and keeps
-#'   other documents. Publication is not transactional: a copy failure can
-#'   leave partial output. Temporary files, the working directory and the
+#' @details Requires Quarto on `PATH`; DOCX also requires Python 3.9 or later
+#'   with `lxml` in that interpreter (`python3`, or `python` on Windows).
+#'   DOCX masters require explicit `title` and `srk` fields: `client`, `company`,
+#'   `project` (code), and `date` (issue date), all non-empty strings. No metadata
+#'   is inferred from the environment. The project DOCX profile must use a
+#'   CAN-compatible reference and `number-sections: true`. Each appendix file
+#'   needs one numbered level-1 heading; its Pandoc identifier selects the
+#'   separator. Input DOCX sections within the body are currently unsupported.
+#'   The installed library owns the Python compositor and semantic filters.
+#'   Quarto resolves citations and cross-references once for the complete book.
+#'   Rendering and composition finish before publication begins. HTML output
+#'   replaces the selected directory; each DOCX replaces its destination through
+#'   a sibling temporary file, keeping other documents. Publication of multiple
+#'   files is not a transaction. Temporary files, the working directory and the
 #'   publication-stamp environment variable are restored on ordinary exit.
 #' @export
 quartoRender <- function(input, profile, root = getwd(), output = NULL,
@@ -81,13 +88,23 @@ quartoRender <- function(input, profile, root = getwd(), output = NULL,
   setwd(Stage)
   Frontmatter <- list()
   if (profile %in% c("book", "docx")) Frontmatter <- quartoReadFrontmatter(input)
+  if (profile == "docx") {
+    Spec <- .docxSpec(Frontmatter)
+    Python <- if (.Platform$OS.type == "windows") "python" else "python3"
+    Composer <- system.file("docx", "compose_docx.py", package = "NGR", mustWork = TRUE)
+    Template <- system.file("docx", "srk-template.zip", package = "NGR", mustWork = TRUE)
+    DocxProfile <- .docxProfile(yaml::read_yaml(file.path("yml", Profile)), module = Composer, python = Python)
+    Spec$appendices <- .docxAppendices(Frontmatter)
+    SpecPath <- file.path(Stage, "_ngr-docx.json")
+    jsonlite::write_json(Spec, path = SpecPath, auto_unbox = TRUE, pretty = TRUE)
+  }
   Book <- profile == "book" || (profile == "docx" && quartoHasBookManifest(Frontmatter))
   Config <- yaml::read_yaml("yml/_quarto.yml")
   Command <- c("render", "--profile", profile, "--output-dir", "_ngr-output")
   if (Book) {
     Config <- quartoMergeBookManifest(base = Config, manifest = Frontmatter)
     if (profile == "docx") {
-      quartoWriteYaml(quartoDocxBookProfile(yaml::read_yaml(file.path("yml", Profile))),
+      quartoWriteYaml(quartoDocxBookProfile(DocxProfile),
                       path = Profile)
       Command <- c(Command, "--to", "docx", "--output", paste0(Stem, ".docx"))
     }
@@ -125,7 +142,8 @@ quartoRender <- function(input, profile, root = getwd(), output = NULL,
                  "--output-dir", "_ngr-output")
   }
   quartoWriteYaml(Config, path = "_quarto.yml")
-  if (!(Book && profile == "docx")) {
+  if (profile == "docx" && !Book) quartoWriteYaml(DocxProfile, path = Profile)
+  if (profile != "docx") {
     .copyRenderPath(from = file.path("yml", Profile), to = Profile)
   }
   message("[render] ", profile, if (Book && profile == "docx") " book", " -> ", output, "/")
@@ -138,9 +156,10 @@ quartoRender <- function(input, profile, root = getwd(), output = NULL,
     FILES <- list.files("_ngr-output", pattern = "\\.docx$", recursive = TRUE, full.names = TRUE)
     if (!length(FILES)) stop("DOCX output not found in staged output.", call. = FALSE)
     for (FILE in FILES) {
-      .runRenderCommand(if (.Platform$OS.type == "windows") "python" else "python3", args = c(
-        system.file("docx", "fix_docx.py", package = "NGR", mustWork = TRUE), FILE
-      ))
+      Candidate <- paste0(FILE, ".composed")
+      .runRenderCommand(Python, args = c(Composer, "compose", "--template", Template,
+                        "--content", FILE, "--spec", SpecPath, "--output", Candidate))
+      if (!file.rename(Candidate, FILE)) stop("Cannot replace staged DOCX: ", FILE, call. = FALSE)
     }
   }
   Destination <- file.path(Root, output)
@@ -151,7 +170,12 @@ quartoRender <- function(input, profile, root = getwd(), output = NULL,
     stop("Cannot create output directory: ", Destination, call. = FALSE)
   }
   for (FILE in list.files("_ngr-output", all.files = TRUE, no.. = TRUE)) {
-    .copyRenderPath(from = file.path("_ngr-output", FILE), to = file.path(Destination, FILE))
+    if (profile == "docx" && grepl("[.]docx$", FILE)) {
+      .replaceResource(from = file.path("_ngr-output", FILE), to = file.path(Destination, FILE))
+    }
+    if (!(profile == "docx" && grepl("[.]docx$", FILE))) {
+      .copyRenderPath(from = file.path("_ngr-output", FILE), to = file.path(Destination, FILE))
+    }
   }
   FILES <- list.files("_ngr-output", all.files = TRUE, recursive = TRUE)
   invisible(file.path(Destination, FILES))

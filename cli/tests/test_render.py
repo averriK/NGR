@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import unittest
 import zipfile
+from xml.etree import ElementTree
 
 
 NGR_TEST_BIN = os.environ["NGR_TEST_BIN"]
@@ -45,12 +46,16 @@ class RenderTest(unittest.TestCase):
             Inputs = {
                 "index.qmd": "# Introduction\n\nNGR composition check.\n",
                 "chapter.qmd": "# Results\n\n| Name | Value |\n|---|---:|\n| Alpha | 17 |\n",
-                "appendix.qmd": "# Appendix data\n\nPreserved appendix.\n",
-                "_master/book.qmd": "---\ntitle: Fusion check\nchapters:\n  - index.qmd\n  - chapter.qmd\nappendices:\n  - appendix.qmd\n---\n",
+                "appendix.qmd": "# Appendix data {#sec-apx-a}\n\nPreserved appendix.\n",
+                "appendix-b.qmd": "# Tablas y notas {#sec-apx-b}\n\nVer @sec-apx-a.\n",
+                "_master/book.qmd": "---\ntitle: Fusion check\nchapters:\n  - index.qmd\n  - chapter.qmd\nappendices:\n  - part: Apéndices\n    chapters:\n      - appendix.qmd\n      - appendix-b.qmd\n---\n",
                 "_master/slides.qmd": "---\ntitle: Presentation check\n---\n\n## Evidence\n\nSlide sentinel 17.\n",
                 "_master/document.qmd": "---\ntitle: Word check\n---\n\n# Results\n\n| Name | Value |\n|---|---:|\n| Alpha | 17 |\n",
                 "_master/page.qmd": "---\ntitle: HTML check\n---\n\n# Evidence\n\n```{r}\npackageVersion(\"NGR\")\n```\n\nHTML sentinel 17.\n"
             }
+            Metadata = "srk:\n  client: Verificación del formato documental\n  company: SRK Consulting (Argentina) S.A.\n  project: NGR\n  date: Septiembre 2026\n"
+            for Name in ("_master/book.qmd", "_master/document.qmd"):
+                Inputs[Name] = Inputs[Name].replace("---\n", "---\n" + Metadata, 1)
             for Name, Content in Inputs.items():
                 (Candidate / Name).write_text(Content, encoding="utf-8")
             if os.environ.get("NGR_TEST_LIBRARY"):
@@ -79,6 +84,9 @@ class RenderTest(unittest.TestCase):
                 subprocess.run([NGR_REFERENCE_BIN, "init", "--force", "lua"], cwd=Reference,
                                check=True, capture_output=True)
                 DATA = json.loads((Reference / "qrt.manifest.json").read_text())
+                # DOCX intentionally migrates to CAN; legacy parity applies to
+                # the unaffected HTML profiles. CAN has its own format oracle.
+                DATA["artifacts"] = [x for x in DATA["artifacts"] if x["profile"] != "docx"]
                 for FILE, Receipt in DATA["scaffolds"]["ngr"]["files"].items():
                     if FILE.startswith("lua/"):
                         Receipt["md5"] = hashlib.md5((Reference / FILE).read_bytes()).hexdigest()
@@ -95,13 +103,26 @@ class RenderTest(unittest.TestCase):
                 if os.environ.get("NGR_TEST_LIBRARY"):
                     self.assertIn((Path(os.environ["NGR_TEST_LIBRARY"]).resolve() / "NGR").as_posix(),
                                   (Project / "html/page-custom/index.html").read_text(encoding="utf-8"))
-                for Name in ("book", "document"):
+                for Name in (("book", "document") if Binary == NGR_TEST_BIN else ()):
                     with zipfile.ZipFile(Project / "docx" / f"{Name}.docx") as ZIP:
                         DATA = ZIP.read("word/document.xml")
                         self.assertIn(b"Alpha", DATA)
-                        self.assertIn(b'autofit', DATA)
+                        Manifest = json.loads(ZIP.read("word/srk-composition.json"))
+                        self.assertEqual("ngr-srk-can-components-1", Manifest["format"])
+                        self.assertEqual(2 if Name == "book" else 0, len(Manifest["appendices"]))
+                        self.assertIn(b"SRKDataTable", DATA)
+                        self.assertIn(b"Septiembre 2026", DATA)
+                        NS = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+                        Styles = ElementTree.fromstring(ZIP.read("word/styles.xml"))
+                        Font = Styles.find("w:style[@w:styleId='Heading1']/w:rPr/w:rFonts", NS)
+                        self.assertEqual("Arial", Font.get("{" + NS["w"] + "}ascii"))
                         if Name == "book":
                             self.assertIn(b"Preserved appendix", DATA)
+                            Link = ElementTree.fromstring(DATA).find(".//w:hyperlink[@w:anchor='sec-apx-a']", NS)
+                            self.assertIsNotNone(Link)
+                            self.assertIn("A", "".join(Link.itertext()))
+            DATA = subprocess.run([NGR_TEST_BIN, "render", "_master/document.qmd", "--profile", "docx", "--", "--quiet"], cwd=Candidate, capture_output=True, text=True)
+            self.assertEqual(DATA.returncode, 0, DATA.stderr)
             if NGR_REFERENCE_BIN:
                 for Name in ("page-custom", "slides", "book"):
                     Texts = []
@@ -110,12 +131,6 @@ class RenderTest(unittest.TestCase):
                         Parser.feed((Project / "html" / Name / "index.html").read_text(encoding="utf-8"))
                         Texts.append(Parser.Text)
                     self.assertEqual(*Texts)
-                for Name in ("book", "document"):
-                    Documents = []
-                    for Project in (Candidate, Reference):
-                        with zipfile.ZipFile(Project / "docx" / f"{Name}.docx") as ZIP:
-                            Documents.append({x: ZIP.read(x) for x in ("word/document.xml", "word/styles.xml", "word/numbering.xml")})
-                    self.assertEqual(*Documents)
 
     def testExternalProductsNeverRunProducers(self):
         with tempfile.TemporaryDirectory(dir=NGR_TEST_ROOT) as DIR:
