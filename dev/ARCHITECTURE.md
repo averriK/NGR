@@ -9,8 +9,67 @@ The owner-selected [installation policy](../install/README.md) governs all insta
 | `install/` | macOS/Linux and Windows entry points; library/dependency/CLI installers; package checks and CRAN/release tooling |
 | `app/`, `skill/`, `mcp/` | Their implemented components; reserved directories are not installable products |
 | `lib/vignettes/`, `lib/man/` | Public articles and R reference, published by pkgdown |
-| `dev/` | Plans, experiments, audits, SoT evidence and continuity |
+| `dev/` | Live continuity state, this document, open defects and zipped legacy; see [dev/ maintenance](#dev-maintenance) |
 | `.github/` | Repository automation |
+
+## Owner rulings
+
+Rulings given by the owner in September 2026 that still constrain the product
+or the repository and that the code does not show by itself. Each names the
+closed chain it came from; those chains were deleted under the maintenance rule.
+
+- **Boundary with AOM.** The canonical installer and the canonical CLI contract
+  belong to AOM. NGR delivers an accepted source and candidate; AOM keeps the
+  canonical installation and the alignment of the consumer skill.
+  (cli-repair, cli-root, ngr-integration, 2026-09-20)
+- **Scientific contracts.** Scientific parameters and paths are consumed from
+  their producer contracts; a producer contract is never changed to fit an
+  incorrect reader. NGR hydrates and renders scaffolds and holds no closed
+  catalogue of scientific products; the readers live in the scaffold source,
+  `libraries/reports/sha`. (cli-repair, report-contracts, 2026-09-20)
+- **Installation.** The normal reinstallation from a checkout is
+  `sudo bash install/install.sh`. The owner rejected reinstalling through the
+  `--tarball` flow: «no entendiste cómo se instala ni cómo funciona el
+  instalador. rechazado». `--tarball` remains the documented special case in
+  `install/USAGE.md`. (srk-can-install, 2026-09-24)
+- **Visual acceptance of Word output.** The owner judges DOCX layouts in
+  Microsoft Word. A LibreOffice rendering does not demonstrate Word fidelity,
+  and the owner asked to stop PDF conversions for that purpose. Agents do not
+  operate the owner's Word or the documents it has open.
+  (srk-cover-comparison, srk-template, ngr-repair-build, 2026-09-24)
+- **Library in production.** Any change to existing implementation goes
+  through a Ship of Theseus plan: exact baseline, identifiable candidate,
+  competent oracle, integration of the accepted change only.
+  (cli-repair, 2026-09-20)
+
+Pending owner decision carried from the 2026-09-24 repair: the interface
+language (`lang`) of the DOCX preliminaries was deferred by the owner.
+
+## dev/ maintenance
+
+Rule confirmed by the owner on 2026-09-27 together with the maintainer of the
+common rule (gmsp session):
+
+1. `dev/SoT/` and `dev/plan/` hold only live chains: folders whose `STATE.md`
+   is `ACTIVE` or `BLOCKED`.
+2. A `DONE` folder is deleted in the commit that closes it. Before that
+   commit, the owner rulings that survive move to this document and the open
+   waits and defects move to the successor chain.
+3. `dev/` contains only `dev/SoT/ACTIVE.md`, this document, the live
+   `STATE.md` chains, `dev/legacy/`, `dev/bugs/` and what a live state cites.
+4. Everything under `dev/` is tracked and carries no evidence bytes: no
+   renders, workspaces, frozen baselines or installed copies.
+5. The product (`README.md`, `cli/`, `install/`, `lib/`, `skills/`) does not
+   link to `dev/`.
+6. Defects: one open defect per file under `dev/bugs/` of the owning
+   repository, with no imposed file format. The commit that fixes a defect
+   deletes its file and names it. Reports written by other agents for NGR
+   belong in `dev/bugs/`, not in a root `bugs/` folder.
+
+Legacy lives in `dev/legacy/`, tracked, as one zip per topic plus its
+`README.md` index with SHA-256 values; the repository root has no `legacy/`
+folder. Originals leave the tree when their zip is created; Git keeps their
+history in the cited commits.
 
 ## Installation and package lifecycle
 

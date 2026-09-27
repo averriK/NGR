@@ -77,8 +77,9 @@ file and replacing the destination. This is not full OOXML schema validation.
 `python3 lib/tests/test_docx.py` and the same command with `-O` exercise a real
 Quarto fixture, object preservation, zero/two/three appendices and error cases.
 R tests cover the installed API; `cli/tests/test_render.py` covers installed CLI
-individual and manifest routes. Rendered Word and LibreOffice PDF review remains
-necessary for new layouts and template revisions.
+individual and manifest routes. New layouts and template revisions are accepted
+visually by the owner in Microsoft Word; a LibreOffice rendering does not
+demonstrate Word fidelity.
 
 Projects keep their own reference and profile. Follow the explicit migration in
 `cli/README.md`; render diagnoses an incompatible reference without overwriting it.
