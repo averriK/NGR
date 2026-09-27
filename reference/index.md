@@ -44,7 +44,7 @@
 - [`quartoRenderManifest()`](https://averriK.github.io/NGR/reference/quartoRenderManifest.md)
   : Render a selection of project artifacts
 - [`quartoRenderStamp()`](https://averriK.github.io/NGR/reference/quartoRenderStamp.md)
-  : Resolve the publication stamp from scaffold provenance
+  : Resolve the print stamp of a render from scaffold provenance
 
 ## Netlify publication
 
