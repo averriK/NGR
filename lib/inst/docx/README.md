@@ -13,21 +13,23 @@ Quarto runs; NGR never installs Python modules on import or render.
 
 ## Generation
 
-The admitted source is the human-formatted
-`dev/lib/CAPR003324_Crawford_SeismicHazard_20260831.docx`, SHA-256
+The admitted source is the human-formatted client report
+`CAPR003324_Crawford_SeismicHazard_20260831.docx`, SHA-256
 `7ec329ffa48eea32f473cd9efcf1b39c054bdc43b7f1e8de4d1c0884e83d7605`.
-Both generators reject another source. Run from the repository root:
+It is not kept in the repository; both generators verify that hash and
+reject another source. Run from the repository root:
 
 ```sh
-python3 lib/inst/docx/build_reference.py --source dev/lib/CAPR003324_Crawford_SeismicHazard_20260831.docx --output lib/inst/docx/reference.docx
-python3 lib/inst/docx/compose_docx.py prepare-template --source dev/lib/CAPR003324_Crawford_SeismicHazard_20260831.docx --output lib/inst/docx/srk-template.zip
+python3 lib/inst/docx/build_reference.py --source /path/to/CAPR003324_Crawford_SeismicHazard_20260831.docx --output lib/inst/docx/reference.docx
+python3 lib/inst/docx/compose_docx.py prepare-template --source /path/to/CAPR003324_Crawford_SeismicHazard_20260831.docx --output lib/inst/docx/srk-template.zip
 cp lib/inst/docx/reference.docx cli/scaffold/styles/reference.docx
 python3 lib/inst/docx/compose_docx.py check-reference --reference cli/scaffold/styles/reference.docx
 ```
 
 ZIP timestamps and member ordering are fixed. The reference and scaffold copy
 must be byte-identical. The source report is needed only for regeneration;
-the installed renderer consumes the prepared resources and never reads `dev/`.
+the installed renderer consumes the prepared resources and never reads the
+source report.
 The ZIP contains normalized components; it is not a Word `.dotx` template.
 Component format `ngr-srk-can-components-2` includes the original CAN cover and
 inner title-page table, with variable text replaced by slots. The title page uses

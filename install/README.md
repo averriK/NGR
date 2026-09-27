@@ -14,7 +14,6 @@ Windows entry points.
 | `install/` | Package tooling: prepare dependencies, document, build, check exact artifacts, and explicit CRAN/R-hub release operations |
 | `lib/` | Independently buildable R package and public APIs |
 | `cli/` | CLI payload, argument adapter and operational resources/tests |
-| `dev/` | Plans, experiments, SoT comparisons, audits and continuity |
 | `lib/vignettes/`, `lib/man/` | Public documentation sources rendered by pkgdown |
 
 There is one owner for each installer/helper, under `install/`. Move and
@@ -22,8 +21,8 @@ reuse the existing implementations without keeping duplicate versions.
 Preserve executable behavior, callers and tests while migrating paths.
 
 `lib/inst/` may contain resources needed by the installed R package. It must
-not contain repository installation, development or release tooling. Neither
-`install/` nor `dev/` enters the R package. The CLI receipt owns a minimal
+not contain repository installation, development or release tooling. `install/`
+does not enter the R package. The CLI receipt owns a minimal
 removal bundle under its runtime; it contains no package implementation or
 release tooling.
 

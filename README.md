@@ -1,6 +1,6 @@
 # NGR
 
-[Documentation](https://averriK.github.io/NGR/) · [R package](lib/) · [Architecture and development](dev/ARCHITECTURE.md)
+[Documentation](https://averriK.github.io/NGR/) · [R package](lib/)
 
 | Component | Source | Status |
 |---|---|---|

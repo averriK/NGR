@@ -134,7 +134,7 @@ h1, h2, h3, h4, h5, h6 {
 
 // SRK: flat headings, no rules/underlines. Sizes are set as explicit CSS
 // rules because Bootstrap's responsive calc() otherwise overrides the SCSS
-// size variables (E1, Hallazgo 5 in dev/plan/book-styles).
+// size variables.
 h1 { font-size: $h1-font-size; margin-top: 0; }
 h2 { font-size: $h2-font-size; }
 h3 { font-size: $h3-font-size; }
@@ -506,7 +506,7 @@ code {
 
 // SRK front cover (outer cover of cover.docx) — web replica. The HTML is
 // emitted by the project/psha builder with these classes; qrt only styles
-// them. Contract: dev/plan/book-styles/COVER-layout-20260720.md.
+// them.
 // cover.docx scale over a 1rem body: title 22pt/10pt = 2.2x, meta 12pt = 1.2x.
 .srk-cover-front {
   margin: 0 0 3rem 0;
@@ -617,8 +617,7 @@ code {
 // Use Quarto's title-block banner structure when enabled. We keep the gradient
 // background and typography but do not inject the logo here because the SRK
 // logo file has a white background that clashes with the banner.
-// SRK flat title banner: white, dark title, orange rule (D2 in
-// dev/plan/book-styles/active.md).
+// SRK flat title banner: white, dark title, orange rule.
 .quarto-title-block .quarto-title-banner {
   margin-bottom: 2rem;
   padding: 2rem 0 1.25rem;
