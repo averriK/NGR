@@ -43,3 +43,5 @@ lib/R/.tmp_webshot/
 /lib/*.Rcheck/
 /lib/vignettes/*.html
 /lib/vignettes/*.pdf
+# Python bytecode caches
+__pycache__/
