@@ -175,7 +175,7 @@ package, loaded through normal R library resolution. `--help` and `--version`
 need no library. `cli/main.R` declares the minimum NGR version (`MINVERSION`,
 repeated in `install/requirements.R` and `cli/VERSION`): a command that
 needs the library names a missing or older one instead of failing inside it,
-and `ngr --version` reports the CLI version, the package, the library, the
+and `ngr --version` reports the CLI version, the package, the
 payload and the recorded build. `pull`, `status` and source checks use `NGR::pullResources()`,
 `NGR::compareResources()` and `NGR::checkResources()`. These APIs also work
 from R without the CLI. `NGR::quartoRender()` owns staging, YAML composition,

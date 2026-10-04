@@ -100,6 +100,8 @@ class CliTest(unittest.TestCase):
             DATA = self.runCli("status", env=Environment)
             self.assertEqual(DATA.returncode, 1, DATA.stdout + DATA.stderr)
             self.assertIn("is required; found 0.0.1", DATA.stderr)
+            # The failure names the version found, never the path of the library.
+            self.assertNotIn(str(Library), DATA.stderr)
             self.assertEqual(self.runCli("--help", env=Environment).returncode, 0)
         self.assertEqual(list(self.Root.iterdir()), [])
 

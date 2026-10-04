@@ -17,19 +17,18 @@ MINVERSION <- "0.4.0"
     stop("the NGR R package >= ", MINVERSION, " is not installed in the active R library", call. = FALSE)
   }
   if (utils::packageVersion("NGR") < MINVERSION) {
-    stop("NGR >= ", MINVERSION, " is required; found ", utils::packageVersion("NGR"), " at ",
-         find.package("NGR"), call. = FALSE)
+    stop("NGR >= ", MINVERSION, " is required; found ", utils::packageVersion("NGR"), call. = FALSE)
   }
   invisible(NULL)
 }
 
 .showVersion <- function(runtime) {
   # Contract D7: the CLI's own version first (cli/VERSION line 1), then the
-  # package, its library, this payload and the recorded build.
+  # package, this payload and the recorded build. The path of the library is
+  # not printed (owner ruling of 2026-10-04).
   cat(readLines(file.path(runtime, "VERSION"), n = 1L), "\n", sep = "")
   if (suppressPackageStartupMessages(requireNamespace("NGR", quietly = TRUE))) {
     cat("package: NGR ", as.character(utils::packageVersion("NGR")), "\n", sep = "")
-    cat("library: ", find.package("NGR"), "\n", sep = "")
   } else {
     cat("package: NGR is not installed in the active R library\n")
   }
@@ -143,7 +142,7 @@ MINVERSION <- "0.4.0"
     }
     return(as.integer(Check && Result$changed))
   }
-  message("NGR ", utils::packageVersion("NGR"), " at ", find.package("NGR"))
+  message("NGR ", utils::packageVersion("NGR"))
   withCallingHandlers(NGR::checkResources(source = Values$source), message = function(e) {
     cat(conditionMessage(e))
     invokeRestart("muffleMessage")
