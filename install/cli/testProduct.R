@@ -49,6 +49,11 @@ runChecks <- function(root, library) {
   stopifnot(identical(unname(tools::md5sum(file.path(Prefix, Record$file))), Record$md5))
   Acceptance <- file.path(root, "install/acceptance.R")
   if (!file.exists(Acceptance)) stop("Missing product acceptance: ", Acceptance)
+  # The acceptance runs in this process; its package calls must resolve from the
+  # selected library, as the installed CLI does through R_LIBS.
+  Libraries <- .libPaths()
+  on.exit(.libPaths(Libraries), add = TRUE)
+  .libPaths(c(library, Libraries))
   source(Acceptance, local = TRUE)
   runCommand(Rscript, c("--vanilla", file.path(root, "install/cli/manage.R"), "install", Prefix))
   stopifnot(identical(Hash, tools::md5sum(Files)))

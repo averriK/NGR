@@ -66,7 +66,8 @@ Write-Stage 1 'Requirements'
 $Rscript = Resolve-Rscript
 if (-not $Rscript) { Stop-Install 'R is not installed or Rscript.exe is not on PATH or in the registry. Install R from https://cran.r-project.org/ and run this installer again.' }
 $rVersion = (& $Rscript --vanilla -e 'cat(R.version$major, R.version$minor, sep = ''.'')') -join ''
-$rMinimum = ((Get-Content -LiteralPath (Join-Path $Root 'lib\DESCRIPTION') | Select-String -Pattern 'R \(>= ([0-9.]+)\)').Matches | Select-Object -First 1).Groups[1].Value
+$rDeclared = Get-Content -LiteralPath (Join-Path $Root 'lib\DESCRIPTION') | Select-String -Pattern 'R \(>= ([0-9.]+)\)' | Select-Object -First 1
+$rMinimum = if ($rDeclared) { $rDeclared.Matches[0].Groups[1].Value } else { '' }
 if ($rMinimum) {
     $rOk = (& $Rscript --vanilla -e "cat(as.character(utils::compareVersion('$rVersion', '$rMinimum') >= 0))") -join ''
     if ($rOk -ne 'TRUE') { Stop-Install "R $rVersion is older than the required $rMinimum`: $Rscript" }
@@ -77,7 +78,9 @@ if ($gitFound) { Write-Ok 'git found; the receipt records the source commit' } e
 $pandocFound = [bool](Get-Command pandoc.exe -CommandType Application -ErrorAction SilentlyContinue)
 if (-not $pandocFound) { Write-Warn2 'pandoc not found; documentation builds remain a separate maintenance operation' }
 
-$facts = (& $Rscript --vanilla -e '
+# A CRLF checkout (core.autocrlf=true) ends each line of this R code in a CR,
+# which R on Windows does not parse: Rscript receives LF line breaks only.
+$facts = (& $Rscript --vanilla -e ('
 Args <- commandArgs(TRUE)
 Dcf <- read.dcf(file.path(Args[1L], ''lib/DESCRIPTION''), fields = c(''Package'', ''Version''))
 cat(Dcf[1L, ''Package''], Dcf[1L, ''Version''], sep = ''\n'')
@@ -87,7 +90,7 @@ if (file.exists(File)) {
   Field <- function(x) if (length(x)) x else ''''
   cat(Field(Cli$command), Field(Cli$runtime),
       paste(Cli$tools, collapse = '' ''), paste(Cli$optional, collapse = '' ''), sep = ''\n'')
-}' $Root) | ForEach-Object { $_ }
+}' -replace "`r", '') $Root) | ForEach-Object { $_ }
 $PackageName = $facts[0]
 $sourceVersion = $facts[1]
 $Command = $facts[2]

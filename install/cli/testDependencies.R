@@ -1,3 +1,8 @@
+# A local directory as a repository URL: a Windows path needs the third slash.
+fileUrl <- function(path) {
+  path <- gsub("\\", "/", path, fixed = TRUE)
+  paste0(if (startsWith(path, "/")) "file://" else "file:///", path)
+}
 # Native dependency and artifact installation, using an offline repository.
 runChecks <- function(kit) {
   source(file.path(kit, "package.R"), local = TRUE)
@@ -15,7 +20,7 @@ runChecks <- function(kit) {
   Other <- file.path(Work, "read only")
   dir.create(Library)
   dir.create(Other)
-  options(repos = c(CRAN = paste0("file://", dirname(dirname(Repository)))), pkgType = "source")
+  options(repos = c(CRAN = fileUrl(dirname(dirname(Repository)))), pkgType = "source")
   .libPaths(c(Library, Other, Libraries))
 
   buildFixture <- function(name, version, imports = character(), code = "probe <- function() TRUE") {
@@ -54,7 +59,7 @@ runChecks <- function(kit) {
     identical(Preserved, tools::md5sum(names(Preserved))))
   message("PASS native: outdated direct/transitive dependencies replaced only in selected library")
 
-  options(repos = c(CRAN = paste0("file://", Work, "/unavailable")))
+  options(repos = c(CRAN = fileUrl(file.path(Work, "unavailable"))))
   installRequirements(path = Product$root, library = Library, packages = character(), dependencies = NA)
   expectFailure(installRequirements(path = Product$root, library = Library,
     packages = "aommissing", dependencies = FALSE), "Package installation failed")

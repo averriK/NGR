@@ -54,7 +54,7 @@ runChecks <- function(root) {
     writeLines(character(), Profile)
     stopifnot(identical(runCommand(Launcher, "--identity"), "normal-profile"))
     OUT <- runCommand(Launcher, "--paths")
-    stopifnot(R.home() %in% OUT, normalizePath(file.path(Fixture, "library")) %in% OUT,
+    stopifnot(R.home() %in% OUT, normalizePath(file.path(Fixture, "library"), winslash = "/") %in% OUT,
               Sys.getenv("PATH") %in% OUT)
     if (.Platform$OS.type != "windows") {
       Fake <- file.path(Work, "fake")

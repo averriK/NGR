@@ -184,7 +184,8 @@ if [[ -f "$receipt" ]]; then
 fi
 if [[ "$(id -u)" != 0 ]]; then
   parent="$PREFIX"
-  while [[ ! -e "$parent" && "$parent" != / ]]; do parent="${parent%/*}"; done
+  # The parent of a first-level name is the root, which the cut leaves empty.
+  while [[ ! -e "$parent" && "$parent" != / ]]; do parent="${parent%/*}"; parent="${parent:-/}"; done
   [[ -w "$parent" ]] || fail "$PREFIX is not writable by $USER_NAME; run: sudo bash install/install.sh"
 fi
 if [[ "$replace" == true && "$YES" -ne 1 ]]; then

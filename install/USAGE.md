@@ -97,8 +97,19 @@ macOS checks do not certify native Windows or real sudo.
 ## Product declarations and tests
 
 `requirements.R` names `command`, optional `runtime`, `exports`, `packages`
-(an unnamed character vector), `tools` and optional tools. NGR declares
-`pathEnv = "NGR_COMMAND_PATH"` to preserve the caller's executable search path.
+(an unnamed character vector), `tools` and optional tools. A CLI that starts
+external executables also declares `pathEnv`, an upper-case name ending in
+`_COMMAND_PATH` (NGR: `pathEnv = "NGR_COMMAND_PATH"`). R startup files such as
+`~/.Renviron` can replace `PATH`. The generated launchers export the caller's
+`PATH` in that variable, and the product's `cli/main.R` must restore it before
+starting any executable:
+
+```r
+Path <- Sys.getenv("NGR_COMMAND_PATH", unset = NA_character_)
+if (!is.na(Path)) Sys.setenv(PATH = Path)
+Sys.unsetenv("NGR_COMMAND_PATH")
+```
+
 `manifest.json` lists the payload and the command's three `bin/` entries.
 The manager generates those launchers from the managed `install/cli/command.*`
 templates; old product-owned launchers are not read. There is no `launchers`

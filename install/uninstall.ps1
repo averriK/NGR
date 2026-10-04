@@ -32,12 +32,14 @@ $Rscript = Resolve-Rscript
 if (-not $Rscript) { Stop-Install 'Rscript.exe is not on PATH or in the registry; the receipt cannot be read.' }
 if (-not $Library) { $Library = (& $Rscript --vanilla -e 'cat(path.expand(Sys.getenv(''R_LIBS_USER'')))') -join '' }
 if (-not $Library) { Stop-Install "R reports no user library (R_LIBS_USER) for $env:USERNAME" }
-$facts = (& $Rscript --vanilla -e '
+# A CRLF checkout (core.autocrlf=true) ends each line of this R code in a CR,
+# which R on Windows does not parse: Rscript receives LF line breaks only.
+$facts = (& $Rscript --vanilla -e ('
 Args <- commandArgs(TRUE)
 Dcf <- read.dcf(file.path(Args[1L], ''lib/DESCRIPTION''), fields = ''Package'')
 Cli <- source(file.path(Args[1L], ''install/requirements.R''), local = TRUE)$value
 cat(Dcf[1L, ''Package''], Cli$command, sep = ''\n'')
-cat(if (length(Cli$runtime)) Cli$runtime else Cli$command, ''\n'', sep = '''')' $Root) | ForEach-Object { $_ }
+cat(if (length(Cli$runtime)) Cli$runtime else Cli$command, ''\n'', sep = '''')' -replace "`r", '') $Root) | ForEach-Object { $_ }
 $PackageName = $facts[0]
 $Command = $facts[1]
 $Runtime = $facts[2]

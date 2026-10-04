@@ -53,6 +53,20 @@
   if (!length(packages)) return(invisible(NULL))
   message("Installing ", paste(packages, collapse = ", "), "\nLibrary: ", library,
           "\nRepository: ", paste(repos, collapse = ", "), "\nType: ", type)
+  # The installer runs R with --vanilla. The Unix front end of R then exports
+  # an empty R_PROFILE_USER, so the R processes a source installation starts
+  # skip the user profile. Rscript.exe does not, and Windows cannot hold an
+  # empty variable: an empty file takes its place for this call.
+  if (.Platform$OS.type == "windows") {
+    Profile <- Sys.getenv("R_PROFILE_USER", unset = NA_character_)
+    Empty <- tempfile("no-profile-")
+    file.create(Empty)
+    Sys.setenv(R_PROFILE_USER = Empty)
+    on.exit({
+      if (is.na(Profile)) Sys.unsetenv("R_PROFILE_USER") else Sys.setenv(R_PROFILE_USER = Profile)
+      unlink(Empty)
+    }, add = TRUE)
+  }
   # install.packages returns NULL even after some failures. A warning is not
   # permission to publish a CLI backed by an old or incomplete installation.
   withCallingHandlers(

@@ -15,6 +15,8 @@
   while (!file.exists(Parent) && !dir.exists(Parent)) {
     Link <- Sys.readlink(Parent)
     if (!is.na(Link) && nzchar(Link)) stop("Broken symlink: ", Parent, call. = FALSE)
+    # A drive that does not exist is its own parent on Windows: the walk would not end.
+    if (identical(Parent, dirname(Parent))) stop("Installation parent does not exist: ", Parent, call. = FALSE)
     Parts <- c(basename(Parent), Parts)
     Parent <- dirname(Parent)
   }
