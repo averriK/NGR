@@ -25,8 +25,8 @@ declared checks and scientific content can require additional software.
 
 ## Project workflow
 
-Run in the project directory, or select it with `--root DIR` (CLI 0.3.0-dev
-or later). `DIR` must exist; a relative `DIR` is resolved from the caller's
+Run in the project directory, or select it with `--root DIR`. `DIR` must
+exist; a relative `DIR` is resolved from the caller's
 working directory. Source manifests, masters, artifact paths and
 `.netlify/sites.env` resolve from the selected project. Operations retain
 their existing path rules: supported absolute paths keep their destinations,
@@ -171,12 +171,11 @@ See `ngr render --help` and `ngr deploy --help` for exact arguments.
 
 The single `cli/main.R` interprets the arguments, prints results and sets the
 exit status; every operation is an exported function of the installed NGR
-package, loaded through normal R library resolution. `--help` and `--version`
-need no library. `cli/main.R` declares the minimum NGR version (`MINVERSION`,
-repeated in `install/requirements.R` and `cli/VERSION`): a command that
-needs the library names a missing or older one instead of failing inside it,
-and `ngr --version` reports the CLI version, the package, the
-payload and the recorded build. `pull`, `status` and source checks use `NGR::pullResources()`,
+package, loaded through normal R library resolution. `--help` needs no
+library. The command and the installed NGR package share one version: a
+command that needs the library names a missing one instead of failing inside
+it, and `ngr --version` reports the package version, the payload and the
+recorded build. `pull`, `status` and source checks use `NGR::pullResources()`,
 `NGR::compareResources()` and `NGR::checkResources()`. These APIs also work
 from R without the CLI. `NGR::quartoRender()` owns staging, YAML composition,
 publication provenance, Quarto execution, DOCX repair and output delivery.

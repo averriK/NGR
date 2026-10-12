@@ -3,35 +3,23 @@
 # arguments, prints results and sets the exit status; every operation is an
 # exported NGR function.
 
-# First NGR library version whose exports this CLI calls; install/requirements.R
-# declares the same minimum (the kit test compares both) and cli/VERSION line 2
-# repeats it for install/cli/checkRuntime.R.
-MINVERSION <- "0.4.0"
-
 .failUsage <- function(...) stop(errorCondition(paste0(...), class = "ngrUsageError"))
 
 .splitAliases <- function(value) Filter(nzchar, strsplit(value, ",", fixed = TRUE)[[1L]])
 
 .loadLibrary <- function() {
   if (!suppressPackageStartupMessages(requireNamespace("NGR", quietly = TRUE))) {
-    stop("the NGR R package >= ", MINVERSION, " is not installed in the active R library", call. = FALSE)
-  }
-  if (utils::packageVersion("NGR") < MINVERSION) {
-    stop("NGR >= ", MINVERSION, " is required; found ", utils::packageVersion("NGR"), call. = FALSE)
+    stop("the NGR R package is not installed in the active R library", call. = FALSE)
   }
   invisible(NULL)
 }
 
 .showVersion <- function(runtime) {
-  # Contract D7: the CLI's own version first (cli/VERSION line 1), then the
-  # package, this payload and the recorded build. The path of the library is
-  # not printed (owner ruling of 2026-10-04).
-  cat(readLines(file.path(runtime, "VERSION"), n = 1L), "\n", sep = "")
-  if (suppressPackageStartupMessages(requireNamespace("NGR", quietly = TRUE))) {
-    cat("package: NGR ", as.character(utils::packageVersion("NGR")), "\n", sep = "")
-  } else {
-    cat("package: NGR is not installed in the active R library\n")
-  }
+  # One version per module: the command reports the installed package's, then
+  # this payload and the recorded build. The path of the library is not
+  # printed (owner rulings of 2026-10-04 and 2026-10-12).
+  .loadLibrary()
+  cat("NGR ", as.character(utils::packageVersion("NGR")), "\n", sep = "")
   File <- sub("^--file=", "", grep("^--file=", commandArgs(), value = TRUE)[[1L]])
   File <- gsub("~+~", " ", File, fixed = TRUE)
   # Lexical cleanup only (never resolve symlinks): the verifier compares the

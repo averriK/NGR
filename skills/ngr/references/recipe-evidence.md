@@ -1,7 +1,7 @@
 # Recipe evidence
 
 Use this recorded coverage when recommending commands or explaining whether a
-recipe has been accepted. The records target CLI 0.3.0-dev with NGR 0.4.0.
+recipe has been accepted. The records target NGR 0.4.0; the command shares that version.
 They establish the operations and limits below, not every form documented in
 the operation references. Project-specific acceptance supplied for the task
 can establish additional coverage. If no matching acceptance is available,
