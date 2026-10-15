@@ -151,16 +151,15 @@ complete installation contract.</p>
 <h2 id="select-your-project-directory">Select your project directory<a class="anchor" aria-label="anchor" href="#select-your-project-directory"></a>
 </h2>
 <p>Run from the project directory or select it with
-<code>--root DIR</code> (CLI 0.3.0-dev or later). <code>DIR</code> must
-exist; a relative value is resolved from the caller’s working directory.
-Relative source manifests, masters, outputs and the
-<code>.netlify/sites.env</code> registry use the selected project.
-Operations retain their existing path rules: supported absolute paths
-keep their destinations, and Quarto masters remain project-relative.
-Omitting <code>--root</code> preserves the working-directory behavior.
-The option may appear before or after the command, also as
-<code>--root=DIR</code>, once and before any <code>--</code> argument
-separator.</p>
+<code>--root DIR</code>. <code>DIR</code> must exist; a relative value
+is resolved from the caller’s working directory. Relative source
+manifests, masters, outputs and the <code>.netlify/sites.env</code>
+registry use the selected project. Operations retain their existing path
+rules: supported absolute paths keep their destinations, and Quarto
+masters remain project-relative. Omitting <code>--root</code> preserves
+the working-directory behavior. The option may appear before or after
+the command, also as <code>--root=DIR</code>, once and before any
+<code>--</code> argument separator.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">ngr</span> <span class="at">--root</span> /path/to/project status <span class="at">--check</span></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="ex">ngr</span> render <span class="at">--root</span> /path/to/project <span class="at">--manifest</span> manifest.json <span class="at">--dry-run</span></span></code></pre></div>
 <p>The source manifest and master in this example must already exist.

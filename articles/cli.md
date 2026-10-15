@@ -91,15 +91,15 @@ contract.
 
 ## Select your project directory
 
-Run from the project directory or select it with `--root DIR` (CLI
-0.3.0-dev or later). `DIR` must exist; a relative value is resolved from
-the caller’s working directory. Relative source manifests, masters,
-outputs and the `.netlify/sites.env` registry use the selected project.
-Operations retain their existing path rules: supported absolute paths
-keep their destinations, and Quarto masters remain project-relative.
-Omitting `--root` preserves the working-directory behavior. The option
-may appear before or after the command, also as `--root=DIR`, once and
-before any `--` argument separator.
+Run from the project directory or select it with `--root DIR`. `DIR`
+must exist; a relative value is resolved from the caller’s working
+directory. Relative source manifests, masters, outputs and the
+`.netlify/sites.env` registry use the selected project. Operations
+retain their existing path rules: supported absolute paths keep their
+destinations, and Quarto masters remain project-relative. Omitting
+`--root` preserves the working-directory behavior. The option may appear
+before or after the command, also as `--root=DIR`, once and before any
+`--` argument separator.
 
 ``` sh
 ngr --root /path/to/project status --check
