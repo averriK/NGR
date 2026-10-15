@@ -1,5 +1,6 @@
 local({
   source("../install/package.R", local = TRUE)
-  .entryArguments("NGR", character())
+  Package <- .packageInfo(".")
+  .entryArguments(Package$package, character())
   dispatchRhub(path = ".")
 })
