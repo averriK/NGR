@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "model": "AOM",
-  "release": "0.5.4",
-  "sha256": "acb170b8fab704fe947c0194ad8cf347b0a629e2681be772923a0b253f3c43f0",
+  "release": "0.5.5",
+  "sha256": "775c148c2bc1f5c8aff83263a247d06df974c6acdf8793e97b76d7570e21b821",
   "package": "NGR",
   "answers": null,
   "managed": [
@@ -102,21 +102,6 @@
       "mode": "0644"
     },
     {
-      "path": "install/cran-check.R",
-      "sha256": "7f194b37cfb27c9757f6b2a77d20570a0ac56b4022604c937dc430cfb9fec460",
-      "mode": "0644"
-    },
-    {
-      "path": "install/cran-release.R",
-      "sha256": "5e58e243c3b90fb540bf35fd23901bf18774b49b6cbd81006516e2f1865485ed",
-      "mode": "0644"
-    },
-    {
-      "path": "install/cran-submit.R",
-      "sha256": "1b8e84e88475520019c59c690a64680b80e3ed0736c2b5faa507240bff99a099",
-      "mode": "0644"
-    },
-    {
       "path": "install/install.ps1",
       "sha256": "1f076394047f3dc579ec2298ea949ef11ad72aa36bada3de1ad261b5d70476df",
       "mode": "0644"
@@ -139,11 +124,6 @@
     {
       "path": "install/product.R",
       "sha256": "f141f1e43fa2f1cf9a3f6fb34e4415be1fdf63ebebbd89bfaaf28a11c81e81c0",
-      "mode": "0644"
-    },
-    {
-      "path": "install/rhub-check.R",
-      "sha256": "e0603d1005643ddd923d8ab101977543b796ab37a8e0813bb88ac02ceba794ea",
       "mode": "0644"
     },
     {
