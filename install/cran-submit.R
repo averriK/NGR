@@ -1,14 +1,21 @@
-## Guarded interactive CRAN submission of the package under lib/.
-## Run only after main, CI, R-hub and the public pkgdown site are verified.
+## Guarded interactive CRAN submission of the package under lib/. Run from any
+## directory: source("install/cran-submit.R") after main, CI, R-hub and the
+## public pkgdown site are verified.
 
 local({
+  # The script locates itself, under Rscript (--file=) or source() (ofile),
+  # and works from the module's lib/ whatever the caller's directory.
+  File <- sub("^--file=", "", grep("^--file=", commandArgs(), value = TRUE))
+  if (!length(File)) File <- unlist(lapply(seq_len(sys.nframe()), function(i) sys.frame(i)$ofile))
+  if (!length(File)) stop("Run this script with Rscript or source()", call. = FALSE)
+  Here <- dirname(normalizePath(gsub("~+~", " ", File[[1L]], fixed = TRUE), winslash = "/", mustWork = TRUE))
+  WD <- setwd(file.path(dirname(Here), "lib"))
+  on.exit(setwd(WD), add = TRUE)
+  source(file.path(Here, "package.R"), local = TRUE)
   if (!interactive()) {
     stop("CRAN submission must run in an interactive R session", call. = FALSE)
   }
-  if (!file.exists("DESCRIPTION")) {
-    stop("Run ../install/cran-submit.R from the package root (lib/)", call. = FALSE)
-  }
-  Package <- unname(read.dcf("DESCRIPTION", fields = "Package")[1L, "Package"])
+  Package <- .packageInfo(".")
 
   .gitOutput <- function(args) {
     OUT <- system2("git", args = args, stdout = TRUE, stderr = TRUE)
@@ -22,7 +29,7 @@ local({
 
   Branch <- .gitOutput(c("branch", "--show-current"))
   if (!identical(Branch, "main")) {
-    stop("CRAN submission of ", Package, " must run from main", call. = FALSE)
+    stop("CRAN submission of ", Package$package, " must run from main", call. = FALSE)
   }
 
   Status <- .gitOutput(c("status", "--porcelain"))
@@ -37,7 +44,7 @@ local({
          call. = FALSE)
   }
 
-  message("Submitting ", Package, " from main ", substr(Head, 1L, 7L))
+  message("Submitting ", Package$package, " ", Package$version, " from main ", substr(Head, 1L, 7L))
   devtools::submit_cran(pkg = ".")
 })
 
