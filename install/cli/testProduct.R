@@ -44,17 +44,22 @@ runChecks <- function(root, library) {
   stopifnot(!dir.exists(Prefix))
   runCommand(Rscript, c("--vanilla", file.path(root, "install/cli/manage.R"), "install", Prefix))
   runCommand(Launcher, "--help")
-  runCommand(Launcher, "--version")
+  # One version per module: the first line of --version is the package and its version, and no
+  # other line reports a version of the command.
+  Version <- runCommand(Launcher, "--version")
+  stopifnot(identical(Version[1L], paste(Package, utils::packageVersion(Package, lib.loc = library))),
+            !any(grepl("\\bCLI\\b.*[0-9]+[.][0-9]+", Version)))
   Record <- jsonlite::read_json(file.path(Prefix, "libexec", Runtime, "install.json"), simplifyVector = TRUE)
   stopifnot(identical(unname(tools::md5sum(file.path(Prefix, Record$file))), Record$md5))
   Acceptance <- file.path(root, "install/acceptance.R")
   if (!file.exists(Acceptance)) stop("Missing product acceptance: ", Acceptance)
   # The acceptance runs in this process; its package calls must resolve from the
-  # selected library, as the installed CLI does through R_LIBS.
+  # selected library, as the installed CLI does through R_LIBS. It reads this
+  # harness through a child environment and cannot overwrite its locals.
   Libraries <- .libPaths()
   on.exit(.libPaths(Libraries), add = TRUE)
   .libPaths(c(library, Libraries))
-  source(Acceptance, local = TRUE)
+  source(Acceptance, local = new.env(parent = environment()))
   runCommand(Rscript, c("--vanilla", file.path(root, "install/cli/manage.R"), "install", Prefix))
   stopifnot(identical(Hash, tools::md5sum(Files)))
   Foreign <- file.path(Prefix, "libexec", Runtime, "foreign.txt")

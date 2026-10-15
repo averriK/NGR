@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "model": "AOM",
-  "release": "0.5.5",
-  "sha256": "775c148c2bc1f5c8aff83263a247d06df974c6acdf8793e97b76d7570e21b821",
+  "release": "0.5.6",
+  "sha256": "e39e7419c4afe1fd35b86f545bd86a93cc7653e4a0635762415bdfe811b2e549",
   "package": "NGR",
   "answers": null,
   "managed": [
@@ -13,7 +13,7 @@
     },
     {
       "path": "install/build.R",
-      "sha256": "66cf0df272deda7e86e53bd3c8c3be8cb8dcc3b30c3199e246d8430f7b469af7",
+      "sha256": "39723f46661ba5439d8708e2978eea6474abf6f8f9fef6162643eb291816129a",
       "mode": "0644"
     },
     {
@@ -83,7 +83,7 @@
     },
     {
       "path": "install/cli/testProduct.R",
-      "sha256": "5945ddec062f0a44128c06866785568b5c48ec9218fbddddbc8beaf18bff2609",
+      "sha256": "344185cd2c890e97c141ae1cbdddc43771a3bd8e63177a5f90d13ecee9376a24",
       "mode": "0644"
     },
     {
