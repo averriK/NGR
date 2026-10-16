@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# Regenerate install/manifest.json from the cli/ tree: every file under cli/
-# is payload except README.md and tests/. Run after adding or removing a CLI
-# file. Usage: bash install/update-manifest.sh
+# Refresh CLI entries; preserve the manifest's explicit non-CLI resources.
 set -euo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
@@ -17,7 +15,21 @@ Requirements <- source(file.path(Args[1L], "install/requirements.R"), local = TR
 Launchers <- paste0(Requirements$command, c("", ".cmd", ".ps1"))
 Files <- c(Files[!startsWith(Files, "bin/") & !Files %in% Launchers], file.path("bin", Launchers))
 Files <- sort(Files, method = "radix")
-jsonlite::write_json(list(manifest_version = 1L, files = Files),
+source(file.path(Args[1L], "install/cli/manifest.R"), local = TRUE)
+Manifest <- .readManifest(file.path(Args[1L], "install/manifest.json"), Requirements$command)
+if (Manifest$manifest_version == 1L) Manifest$files <- list()
+Manifest$files <- Filter(function(x) !startsWith(x$source, "cli/") &&
+                          !any(x$installed %in% file.path("bin", Launchers)), Manifest$files)
+if (Manifest$manifest_version == 2L) {
+  Manifest$files <- c(lapply(Files, function(path) {
+    Source <- paste0("cli/", path)
+    if (path %in% file.path("bin", Launchers)) Source <- paste0("install/cli/command", c(".sh", ".cmd", ".ps1")[match(basename(path), Launchers)])
+    list(origin = "product", source = Source, installed = path, kind = "runtime",
+         mode = if (identical(path, file.path("bin", Requirements$command))) "0755" else "0644")
+  }), Manifest$files)
+}
+if (Manifest$manifest_version == 1L) Manifest$files <- as.list(Files)
+jsonlite::write_json(Manifest,
                      file.path(Args[1L], "install", "manifest.json"),
                      auto_unbox = TRUE, pretty = TRUE)
 message("install/manifest.json: ", length(Files), " files")

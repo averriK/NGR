@@ -5,8 +5,8 @@ fileUrl <- function(path) {
 }
 # Native dependency and artifact installation, using an offline repository.
 runChecks <- function(kit) {
-  source(file.path(kit, "package.R"), local = TRUE)
-  stopifnot(!any(grepl("pak::", readLines(file.path(kit, "package.R")), fixed = TRUE)))
+  source(file.path(dirname(kit), "lib/inst/package.R"), local = TRUE)
+  stopifnot(!any(grepl("pak::", readLines(file.path(dirname(kit), "lib/inst/package.R")), fixed = TRUE)))
   Work <- tempfile("native dependencies ü ")
   dir.create(Work)
   on.exit(unlink(Work, recursive = TRUE), add = TRUE)

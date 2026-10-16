@@ -8,6 +8,7 @@ runChecks <- function(kit) {
   dir.create(file.path(Fixture, "install"))
   stopifnot(all(file.copy(list.files(kit, full.names = TRUE), file.path(Fixture, "install"), recursive = TRUE)))
   for (Path in c("lib/R", "cli")) dir.create(file.path(Fixture, Path), recursive = TRUE)
+  stopifnot(file.copy(file.path(dirname(kit), "lib/inst"), file.path(Fixture, "lib"), recursive = TRUE))
   writeLines(c("Package: preflightprobe", "Version: 0.1.0", "Title: Installer Fixture",
     "Description: A disposable public installer fixture.", "Author: Fixture",
     "Maintainer: Fixture <fixture@example.org>", "License: MIT"), file.path(Fixture, "lib/DESCRIPTION"))

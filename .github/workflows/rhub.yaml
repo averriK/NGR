@@ -58,7 +58,7 @@ jobs:
       - uses: r-lib/actions/setup-pandoc@v2
       - name: Install R dependencies with the native installer
         shell: Rscript {0}
-        run: source("install/rhub.R")
+        run: source("inst/rhub.R")
       - uses: r-hub/actions/run-check@v1
         with:
           token: ${{ secrets.RHUB_TOKEN }}
@@ -102,7 +102,7 @@ jobs:
         run: |
           # CRAN has no macOS binaries for the current development R (4.7).
           if (Sys.info()[["sysname"]] == "Darwin" && grepl("Under development", R.version.string, fixed = TRUE)) options(pkgType = "source")
-          source("install/rhub.R")
+          source("inst/rhub.R")
       - uses: r-hub/actions/run-check@v1
         with:
           job-config: ${{ matrix.config.job-config }}

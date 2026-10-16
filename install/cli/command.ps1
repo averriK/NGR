@@ -6,5 +6,5 @@ $Rscript = Resolve-Rscript
 @PATH_EXPORT@
 # R diagnostics on stderr do not replace its process exit status.
 $ErrorActionPreference = 'Continue'
-& $Rscript (Join-Path $Runtime 'main.R') @args
+& $Rscript (Join-Path $Runtime 'install/cli/entry.R') @args
 exit $LASTEXITCODE

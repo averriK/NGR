@@ -29,38 +29,23 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
   if (!length(Runtime)) Runtime <- Command
   if (length(Runtime) != 1L || !grepl("^[A-Za-z0-9_-]+$", Runtime) ||
       !grepl("^[A-Za-z0-9_-]+$", Command)) stop("Invalid command or runtime name")
-  .relativePaths <- function(paths) {
-    is.character(paths) && !anyNA(paths) && all(nzchar(paths)) &&
-      !any(grepl("[:\\\\\t\r\n]", paths)) &&
-      !any(vapply(strsplit(paths, "/", fixed = TRUE),
-                  function(x) any(x %in% c("", ".", "..")), logical(1L)))
-  }
-  Package <- unname(read.dcf(file.path(root, "lib", "DESCRIPTION"),
-                             fields = "Package")[1L, 1L])
-  Manifest <- jsonlite::read_json(file.path(root, "install", "manifest.json"),
-                                  simplifyVector = TRUE)
-  if (!identical(Manifest$manifest_version, 1L) || !is.character(Manifest$files) ||
-      !length(Manifest$files) || anyNA(Manifest$files) || !all(nzchar(Manifest$files))) {
-    stop("install/manifest.json must be {\"manifest_version\":1,\"files\":[...]}",
-         call. = FALSE)
-  }
-  Files <- sort(Manifest$files, method = "radix")
-  if (anyDuplicated(Files)) stop("install/manifest.json lists a file twice", call. = FALSE)
-  Parts <- strsplit(Files, "/", fixed = TRUE)
-  Invalid <- vapply(Parts, function(x) any(x %in% c("", "..")), logical(1L)) |
-    startsWith(Files, "/") | grepl("^[A-Za-z]:", Files) | grepl("\\", Files, fixed = TRUE)
-  if (any(Invalid) || !.relativePaths(Files)) {
-    stop("Manifest paths must be relative to cli/, without absolute drives, \\\\ or ..: ",
-         paste(Files[Invalid], collapse = ", "), call. = FALSE)
-  }
+  source(file.path(source, "manifest.R"), local = TRUE)
+  Package <- unname(read.dcf(file.path(root, "lib", "DESCRIPTION"), fields = "Package")[1L, 1L])
+  Manifest <- .readManifest(file.path(root, "install/manifest.json"), Command)
   Launcher <- file.path("bin", Command)
   Launchers <- paste0(Launcher, c("", ".cmd", ".ps1"))
-  if (action != "uninstall" && !all(Launchers %in% Files)) {
-    stop("install/manifest.json must list all command launchers: ", paste(Launchers, collapse = ", "), call. = FALSE)
+  Binding <- NULL
+  Found <- find.package(Package, quiet = TRUE)
+  if (action == "install" && Manifest$manifest_version == 2L) {
+    if (!length(Found)) stop("Install the package before publishing its CLI")
+    source(file.path(root, "lib/inst/package.R"), local = TRUE)
+    Binding <- .packageRecord(Found, source = file.path(root, "lib"))
   }
-  Sources <- file.path(root, "cli", Files)
-  if (any(dirname(Files) == "bin" & !Files %in% Launchers)) stop("Only the declared command may occupy bin/")
-  Sources[Files %in% Launchers] <- file.path(source, paste0("command", c(".sh", ".cmd", ".ps1")[match(Files[Files %in% Launchers], Launchers)]))
+  Resources <- Manifest$files
+  Payload <- Filter(function(x) x$origin == "product", Resources)
+  Files <- vapply(Payload, `[[`, character(1L), "installed")
+  Sources <- vapply(Payload, function(x) file.path(root, x$source), character(1L))
+  Modes <- vapply(Payload, `[[`, character(1L), "mode")
   PathEnv <- Requirements$pathEnv
   if (length(PathEnv) && (length(PathEnv) != 1L || is.na(PathEnv) ||
       !grepl("^[A-Z][A-Z0-9_]*_COMMAND_PATH$", PathEnv))) stop("Invalid pathEnv declaration")
@@ -69,31 +54,15 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
       stop("Missing CLI source: ", paste(Sources[!file.exists(Sources)], collapse = ", "),
            call. = FALSE)
     }
-    # Directories covered by the manifest must not hold unlisted files (psha
-    # parity); cli/README.md and cli/tests/ are documentation, not payload.
-    for (DIR in unique(dirname(Files))) {
-      if (DIR %in% c(".", "bin")) next
-      Directory <- file.path(root, "cli", DIR)
-      Present <- file.path(DIR, list.files(Directory, recursive = TRUE,
-                                           include.dirs = FALSE, no.. = TRUE))
-      Unlisted <- setdiff(Present, Files)
-      if (length(Unlisted)) {
-        stop("install/manifest.json is out of date; unlisted under cli/: ",
-             paste(Unlisted, collapse = ", "),
-             "; regenerate with install/update-manifest.sh", call. = FALSE)
+    # Preserve the completeness check of legacy manifests during migration.
+    if (Manifest$manifest_version == 1L) {
+      for (DIR in setdiff(unique(dirname(Files)), c(".", "bin"))) {
+        Directory <- file.path(root, "cli", DIR)
+        if (!dir.exists(Directory)) next
+        Present <- file.path(DIR, list.files(Directory, recursive = TRUE, no.. = TRUE))
+        if (length(setdiff(Present, Files))) stop("install/manifest.json is out of date; regenerate with install/update-manifest.sh")
       }
     }
-  }
-  # Keep removal independent of the original checkout, using the same manager
-  # and wrappers. These files belong to the receipt like the runtime payload.
-  Removal <- c("lib/DESCRIPTION", "install/requirements.R", "install/manifest.json",
-               "install/uninstall.sh", "install/uninstall.ps1",
-               "install/cli/manage.R", "install/cli/checkPaths.ps1", "install/cli/publish.sh",
-               "install/cli/r.sh", "install/cli/r.ps1", "install/cli/verify.R")
-  Files <- c(Files, Removal)
-  Sources <- c(Sources, file.path(root, Removal))
-  if (action != "uninstall" && !all(file.exists(Sources))) {
-    stop("Incomplete installer distribution: ", paste(Sources[!file.exists(Sources)], collapse = ", "))
   }
   prefix <- path.expand(prefix)
   if (Windows) {
@@ -126,7 +95,7 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
     if (length(Commit)) Extra <- c(Extra, file.path("libexec", Runtime, Requirements$buildInfo))
   }
   Targets <- c(Destination, Extra)
-  if (anyDuplicated(Targets)) stop("Manifest repeats a generated target")
+  if (anyDuplicated(tolower(Targets))) stop("Manifest repeats a generated target")
   if (file.path("libexec", Runtime, "install.json") %in% Targets) {
     stop("The manifest cannot replace the installation receipt")
   }
@@ -217,13 +186,6 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
     stop("No installation receipt for existing managed path", call. = FALSE)
   }
   if (any(dir.exists(Paths))) stop("Managed file path is a directory", call. = FALSE)
-  Kit <- c("installProduct.R", "product.R", "package.R", "build.R",
-           "install.sh", "install.ps1", "uninstall.sh", "uninstall.ps1",
-           "update-manifest.sh",
-           file.path("cli", c("manage.R", "checkPaths.ps1", "r.sh", "r.ps1",
-                              "command.sh", "command.cmd", "command.ps1", "verify.R",
-                              "publish.sh", "test-installers.sh", "test-installers.ps1",
-                              "testManager.R", "testWrapper.R", "testProduct.R", "testRegression.R")))
   if (action %in% c("check", "inspect")) {
     for (DIR in unique(dirname(Paths))) {
       while (!file.exists(DIR)) {
@@ -296,8 +258,7 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
   if (action == "install") {
     Prepared <- file.path(Recovery, paste0(as.character(seq_along(Paths)), ".next"))
     if (!all(file.copy(Sources, Prepared[seq_along(Files)])) ||
-        !all(Sys.chmod(Prepared[seq_along(Files)], "0644")) ||
-        !Sys.chmod(Prepared[match(Launcher, Files)], "0755")) {
+        !all(vapply(seq_along(Files), function(i) Sys.chmod(Prepared[i], Modes[i]), logical(1L)))) {
       stop("Cannot prepare CLI payloads", call. = FALSE)
     }
     for (i in which(Files %in% Launchers)) {
@@ -334,9 +295,20 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
       stop("The ", Package, " R package is required; install it before the CLI",
            call. = FALSE)
     }
-    Hash <- tools::md5sum(file.path(root, "install", Kit))
-    KitHash <- as.list(unname(Hash))
-    names(KitHash) <- Kit
+    if (!is.null(Binding)) {
+      for (i in seq_along(Resources)) {
+        Entry <- Resources[[i]]
+        if (Entry$origin == "product") {
+          j <- match(Entry$installed, Files)
+          Entry$file <- Destination[j]
+          Entry$sha256 <- digest::digest(file = Prepared[j], algo = "sha256")
+        }
+        if (Entry$origin == "package") {
+          Entry$sha256 <- digest::digest(file = file.path(Found, Entry$source), algo = "sha256")
+        }
+        Resources[[i]] <- Entry
+      }
+    }
     jsonlite::write_json(list(product = paste0(Command, "-cli"), schema = 4L,
                               installed_at_utc = Now,
                               package = list(name = Package,
@@ -346,11 +318,12 @@ Root <- normalizePath(file.path(Source, "..", ".."), winslash = "/", mustWork = 
                                                        sep = "."),
                                        rscript = file.path(R.home("bin"),
                                                            if (Windows) "Rscript.exe" else "Rscript")),
-                              source = Git, kit = KitHash, pathAdded = isTRUE(Record$pathAdded),
+                              source = Git, binding = if (is.null(Binding)) NULL else list(artifact = Binding$artifact, files = as.list(Binding$files)),
+                              resources = if (is.null(Binding)) NULL else Resources, pathAdded = isTRUE(Record$pathAdded),
                               file = Targets,
                               md5 = unname(tools::md5sum(Prepared[seq_along(Targets)])),
                               created = CreatedRel),
-                         Prepared[length(Paths)], auto_unbox = TRUE, pretty = TRUE)
+                         Prepared[length(Paths)], auto_unbox = TRUE, pretty = TRUE, null = "null")
   }
   if (!is.null(stage)) {
     Hashes <- rep("-", length(Paths))

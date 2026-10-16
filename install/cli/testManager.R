@@ -52,6 +52,9 @@ runChecks <- function(root, native) {
   Prefix <- file.path(Work, "retirement")
   runManager("check", Prefix)
   stopifnot(!dir.exists(Prefix))
+  writeLines("unlisted payload", file.path(Fixture, "cli/helpers/unlisted.R"))
+  runManager("check", Prefix, success = FALSE)
+  unlink(file.path(Fixture, "cli/helpers/unlisted.R"))
   # Exercise the R-to-PowerShell transport without certifying Windows itself.
   ENV <- new.env(parent = globalenv())
   for (Expr in parse(Manager)) {

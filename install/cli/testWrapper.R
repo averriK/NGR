@@ -7,6 +7,7 @@ runChecks <- function(kit) {
   dir.create(file.path(Fixture, "install"))
   stopifnot(all(file.copy(list.files(kit, full.names = TRUE), file.path(Fixture, "install"), recursive = TRUE)))
   for (DIR in c("lib/R", "cli/bin", "library")) dir.create(file.path(Fixture, DIR), recursive = TRUE)
+  stopifnot(file.copy(file.path(dirname(kit), "lib/inst"), file.path(Fixture, "lib"), recursive = TRUE))
   Library <- file.path(Fixture, "library")
   Rscript <- file.path(R.home("bin"), "Rscript")
   Windows <- .Platform$OS.type == "windows"
@@ -117,33 +118,13 @@ runChecks <- function(kit) {
   runWrapper("--build", success = FALSE)
   runWrapper(c("--component", "cli", "--tarball", "unused.tar.gz"), success = FALSE)
   local({
-    source(file.path(kit, "package.R"), local = TRUE)
+    source(file.path(dirname(kit), "lib/inst/package.R"), local = TRUE)
     Archive <- buildPackage(file.path(Fixture, "lib"), output = file.path(Work, "archive"),
                             documents = FALSE)
-    writePackage("0.4.5", "checkout")
     runWrapper(c("--tarball", Archive))
+    writePackage("0.4.4", "different-build-same-version")
+    runWrapper(c("--tarball", Archive), success = FALSE)
     stopifnot(identical(readPackage(), c("0.4.4", "archive")))
-  })
-  local({
-    source(file.path(kit, "package.R"), local = TRUE)
-    source(file.path(kit, "product.R"), local = TRUE)
-    Calls <- character()
-    installRequirements <- function(path, library, packages, dependencies) {
-      stopifnot(identical(dependencies, FALSE))
-      Calls <<- c(Calls, if (identical(packages, "jsonlite")) "CLI packages" else "tools")
-    }
-    installPackage <- function(file, library) Calls <<- c(Calls, basename(file))
-    .readArtifact <- function(file) list(file = file, package = sub("[.]tar.gz$", "", basename(file)),
-                                        version = "0.4.5", sha256 = "fixture")
-    .verifyInstallation <- function(package, library, version, packages, exports) stopifnot(identical(packages, "jsonlite"))
-    for (File in c("private.tar.gz", "installerprobe.tar.gz")) {
-      writeLines("fixture", file.path(Work, File))
-      writeLines("fixture", file.path(Work, paste0(File, ".rds")))
-    }
-    .runInstaller <- function(...) invisible(NULL)
-    installProduct(root = Fixture, args = c("--prefix", Prefix, "--library", Library,
-      "--dependency", file.path(Work, "private.tar.gz"), "--tarball", file.path(Work, "installerprobe.tar.gz")))
-    stopifnot(identical(Calls, c("tools", "private.tar.gz", "installerprobe.tar.gz", "CLI packages")))
   })
   message("PASS: single confirmation, Enter accepts replacement, N/EOF unchanged, new/partial installs, yes/check, foreign conflict, source/same-version updates, removed partial modes, exports, tarball, dependency order")
 }

@@ -25,7 +25,7 @@ jobs:
       - name: Install R dependencies
         shell: Rscript {0}
         run: |
-          source("install/package.R")
+          source("lib/inst/package.R")
           installRequirements(path = "lib", library = .libPaths()[1L], packages = "pkgdown", dependencies = TRUE)
 
       - name: Build site

@@ -144,7 +144,7 @@ if [[ -n "$previous" && "$previous" != "$PREFIX/bin/$COMMAND" ]]; then
   warn "a previous $COMMAND is first on PATH: $previous"
 fi
 for file in lib/DESCRIPTION install/requirements.R install/manifest.json \
-            install/cli/manage.R install/installProduct.R install/package.R install/product.R; do
+            install/cli/manage.R install/installProduct.R lib/inst/package.R install/product.R; do
   [[ -f "$ROOT_DIR/$file" ]] || fail "Missing source file: $file"
 done
 ok "Payload complete: manifest, manager and launchers listed in install/manifest.json"

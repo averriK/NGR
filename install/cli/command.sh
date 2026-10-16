@@ -5,4 +5,4 @@ runtime_dir="$(cd -- "$bin_dir/../libexec/@RUNTIME@" && pwd -P)"
 source "$runtime_dir/install/cli/r.sh"
 rscript_path="$(resolve_rscript)"
 @PATH_EXPORT@
-exec "$rscript_path" "$runtime_dir/main.R" "$@"
+exec "$rscript_path" "$runtime_dir/install/cli/entry.R" "$@"

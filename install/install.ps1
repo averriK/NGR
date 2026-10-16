@@ -131,7 +131,7 @@ Write-Host ''
 $previous = Get-Command $Command -CommandType Application -ErrorAction SilentlyContinue
 if ($previous -and $previous.Source -ne (Join-Path $Prefix "bin\$Command.cmd")) { Write-Warn2 "a previous $Command is first on PATH: $($previous.Source)" }
 foreach ($file in 'lib\DESCRIPTION', 'install\requirements.R', 'install\manifest.json', 'install\cli\manage.R',
-                  'install\cli\checkPaths.ps1', 'install\installProduct.R', 'install\package.R', 'install\product.R') {
+                  'install\cli\checkPaths.ps1', 'install\installProduct.R', 'lib\inst\package.R', 'install\product.R') {
     if (-not (Test-Path -LiteralPath (Join-Path $Root $file))) { Stop-Install "Missing source file: $file" }
 }
 Write-Ok 'Payload complete: manifest, manager and launchers listed in install\manifest.json'

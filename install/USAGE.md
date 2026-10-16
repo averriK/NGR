@@ -18,7 +18,8 @@ package is installed. Receipt handling requires `jsonlite` already visible to R.
 
 The default builds `lib/` without manuals or vignettes and installs it even
 when the existing version is equal or newer. `--tarball FILE` selects a recorded
-archive and its adjacent `.rds` instead. Repeat `--dependency FILE` to install
+archive and its adjacent `.rds` instead. Its recorded library sources must
+match this checkout; an equal version alone is insufficient. Repeat `--dependency FILE` to install
 private dependency archives in the supplied order. Dependencies and their version
 constraints come from DESCRIPTION; `requirements.R` adds CLI package names.
 The installer uses `utils::install.packages()` and the public `desc` metadata
@@ -35,7 +36,9 @@ Replacing an existing package or CLI asks once before any build or installation.
 The prompt defaults to `[Y/n]`: Enter or `y` accepts; `n` cancels unchanged.
 EOF fails. `--yes` skips that question.
 There are no public `--component` or `-Component` modes. R package maintenance
-and documentation building remain separate operations in `build.R`.
+and documentation building remain separate operations under `lib/inst/`.
+The product calls `lib/inst/install.R`; that library installer has no CLI-prefix
+dependency and can be sourced from the standalone package.
 
 ## Current R and its libraries
 
@@ -48,13 +51,17 @@ On Windows, the current R-core registry version selects the installation,
 with HKCU before HKLM. R's installer must register it; see the
 [R Windows FAQ](https://cran.r-project.org/bin/windows/base/rw-FAQ.html).
 
-The receipt records installation history. Launchers do not read its interpreter
-or library path and do not retain a version-specific `RSCRIPT` file. Each call
-uses the current R's normal library search and user startup. After upgrading R,
-install the product for that R when it is absent from the new search path.
-`--library` defaults to that R's `R_LIBS_USER`, including its Renviron files;
-discovery reads environment files without executing R profiles. A custom library must remain
-visible through the caller's normal `R_LIBS`/`R_LIBS_USER`. No profile is edited.
+The receipt records the interpreter as history. For manifest version 2 it
+also binds the selected artifact, installed library bytes and product resources.
+The launcher selects that recorded library and rejects an incompatible package,
+including a conflicting namespace loaded by a user profile. It still resolves
+the current R executable on each call; no version-specific RSCRIPT file is kept.
+Reinstall after an incompatible R upgrade. Version 1 manifests retain the
+legacy library-resolution behavior until migrated.
+
+`--library` defaults to R_LIBS_USER, including Renviron files; discovery does
+not execute profiles. Keep the bootstrap dependencies jsonlite and digest
+visible to the current R. No profile is edited.
 
 ## Local acceptance and rollback
 
@@ -110,7 +117,10 @@ if (!is.na(Path)) Sys.setenv(PATH = Path)
 Sys.unsetenv("NGR_COMMAND_PATH")
 ```
 
-`manifest.json` lists the payload and the command's three `bin/` entries.
+`manifest.json` version 2 explicitly records product/package origin, source,
+installed destination (product files only), optional module target, ownership
+and mode. Package resources stay in the R installation. Version 1 remains
+readable for existing modules. The manifest lists the payload and the command's three `bin/` entries.
 The manager generates those launchers from the managed `install/cli/command.*`
 templates; old product-owned launchers are not read. There is no `launchers`
 or `verify` policy switch. Run `bash install/update-manifest.sh` after changing

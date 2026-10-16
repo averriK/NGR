@@ -172,35 +172,15 @@ installProduct <- function(root, args, system = FALSE, check = FALSE) {
     utils::install.packages("digest", lib = Scratch, repos = "https://cloud.r-project.org")
     loadNamespace("digest", lib.loc = Scratch)
   }
-  Artifacts <- lapply(Files, .readArtifact)
-  if (anyDuplicated(vapply(Artifacts, `[[`, character(1L), "package"))) stop("Repeated package archive", call. = FALSE)
-  if (!is.null(Options$tarball) && !identical(tail(Artifacts, 1L)[[1L]]$package, Package$package)) {
-    stop("Selected archive is not package ", Package$package, call. = FALSE)
+  if (!is.null(Options$tarball)) {
+    Artifact <- .readArtifact(Options$tarball)
+    if (!identical(Artifact$files, .sourceHashes(Package$path))) {
+      stop("Selected archive was built from different library sources; use its matching checkout", call. = FALSE)
+    }
   }
-  if (length(Options$dependency) && any(vapply(head(Artifacts, length(Options$dependency)),
-      function(x) identical(x$package, Package$package), logical(1L)))) {
-    stop("The product package cannot also be a --dependency", call. = FALSE)
-  }
-  Tools <- c("digest", if (!is.null(Output)) "pkgbuild")
-  installRequirements(path = Package$path, library = Library, packages = Tools,
-                       dependencies = FALSE)
-  if (!dir.exists(Library)) stop("R library does not exist: ", Library, call. = FALSE)
-  .libPaths(unique(c(Library, Libraries)))
-  Sys.setenv(R_LIBS = paste(unique(c(Library, Libraries)), collapse = .Platform$path.sep))
-  for (Artifact in head(Artifacts, length(Options$dependency))) {
-    installPackage(file = Artifact$file, library = Library)
-  }
-  if (!is.null(Output)) {
-    installRequirements(path = Package$path, library = Library, packages = character(), dependencies = NA)
-  }
-  if (!is.null(Output)) {
-    FILE <- buildPackage(path = Package$path, output = Output, documents = FALSE)
-    Artifact <- .readArtifact(FILE)
-  }
-  if (is.null(Output)) Artifact <- tail(Artifacts, 1L)[[1L]]
-  installPackage(file = Artifact$file, library = Library)
-  Version <- Artifact$version
-  message("Selected artifact SHA-256: ", Artifact$sha256)
+  Installed <- installLibrary(path = Package$path, library = Library, build = Output,
+                              tarball = Options$tarball, dependencies = Options$dependency)
+  Version <- Installed$version
   installRequirements(path = Package$path, library = Library, packages = Packages, dependencies = FALSE)
   .verifyInstallation(package = Package$package, library = Library, version = Version,
                        packages = Packages, exports = Cli$exports)
